@@ -19,7 +19,7 @@ class RegionGrower(object):
 		else:
 			self.valid_candidate = self.valid_candidate_normal
 
-		self.p_bisecthres = math.cos((8.0 / 180.0) * math.pi)
+		self.p_bisecthres = math.cos((10.0 / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
 		self.p_thetathres_1 = (50.0 / 180.0) * math.pi # during bisect growing
 		self.p_thetathres_2 = (3.0 / 180.0) * math.pi # during theta growing
@@ -27,17 +27,18 @@ class RegionGrower(object):
 		self.p_mincount = 50
 
 		self.mah = MAHelper(datadict)
-		self.filt = self.mah.ma_radii < 190.
+		self.filt = self.mah.D['ma_radii'] < 190.
 		# import ipdb; ipdb.set_trace()
 
-		self.ma_coords = self.mah.ma_coords[self.filt]
-		# self.mah.m
+		self.ma_coords = self.mah.D['ma_coords'][self.filt]
+		# self.mah.D['m']
 		self.m = self.ma_coords.shape[0]
-		self.ma_bisec = self.mah.ma_bisec[self.filt]
-		self.ma_theta = self.mah.ma_theta[self.filt]
+		self.ma_bisec = self.mah.D['ma_bisec'][self.filt]
+		self.ma_theta = self.mah.D['ma_theta'][self.filt]
 
 		# elif method == 'normal':
-		self.find_neighbours()
+		# self.find_neighbours()
+		self.neighbours_dist, self.neighbours_idx = self.mah.get_neighbours_ma(self.filt, self.p_k)
 		# self.estimate_normals()
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
@@ -45,14 +46,12 @@ class RegionGrower(object):
 		self.region_counts = [0]
 		self.overwrite_regions = False
 
-		
-
-	def find_neighbours(self):
-		self.kdt_ma = KDTree(self.ma_coords)
-		self.neighbours_dist, self.neighbours_idx = self.kdt_ma.query(
-			self.ma_coords, 
-			self.p_k 
-		)
+	# def find_neighbours(self):
+	# 	self.kdt_ma = KDTree(self.ma_coords)
+	# 	self.neighbours_dist, self.neighbours_idx = self.kdt_ma.query(
+	# 		self.ma_coords, 
+	# 		self.p_k 
+	# 	)
 
 
 	def estimate_normals(self):

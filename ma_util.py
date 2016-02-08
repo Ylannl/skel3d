@@ -1,5 +1,6 @@
 # from pointio import io_npy
 import numpy as np
+from pykdtree.kdtree import KDTree
 
 class MAHelper(object):
 
@@ -41,3 +42,7 @@ class MAHelper(object):
         self.D['ma_theta'] = np.concatenate([self.D['ma_theta_in'], self.D['ma_theta_out']])
         self.D['ma_radii'] = np.concatenate([self.D['ma_radii_in'], self.D['ma_radii_out']])
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
+
+    def get_neighbours_ma(self, filt, k=15):
+        self.kdt_ma = KDTree(self.D['ma_coords'][filt])
+        return self.kdt_ma.query(self.D['ma_coords'][filt], k)
