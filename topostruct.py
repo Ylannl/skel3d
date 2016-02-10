@@ -1,14 +1,22 @@
 import math
+from time import time
 import numpy as np
 from pointio import io_npy
 from ma_util import MAHelper
 from povi import App
 
 # INFILE = 'data/scan_npy'
-INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 
 datadict = io_npy.read_npy(INFILE)
 ma = MAHelper(datadict, origin=False)
+
+def timeit(func):
+	t0 = time()
+	r = func()
+	print("Executed function %s took %f s" % (func.__name__, time()-t0))
+	return r
 
 def assign_seg_point():
 	"""find for each coord the set of segments it is linked to"""
@@ -31,7 +39,7 @@ def assign_seg_point():
 	import ipdb; ipdb.set_trace()
 
 
-def ref_count():
+def count_refs():
 	"""count the number of times each coord is used as feature point for a medial ball"""
 
 	pdict = {}
@@ -47,9 +55,11 @@ def ref_count():
 				pdict[idx] = 1
 	del pdict[-1]
 
-	datadict['ref_count'] = np.array(pdict.values(), dtype=np.int32)
-	io_npy.write_npy(INFILE, datadict, ['ref_count'])
-	import ipdb; ipdb.set_trace()
+	return np.array(pdict.values(), dtype=np.int32)
+
+	# datadict['ref_count'] = np.array(pdict.values(), dtype=np.int32)
+	# io_npy.write_npy(INFILE, datadict, ['ref_count'])
+	# import ipdb; ipdb.set_trace()
 
 def find_flip_relations():
 	"""find for each pair of segments how many times they are connected by a shared feature point
@@ -93,9 +103,9 @@ def find_adjacency_relations():
 
 		neighbours = neighbours_idx[i][1:]
 		n_seg = ma.D['ma_segment'][neighbours]
-		n_seg_ids, n_cnts = np.unique(n_seg, return_counts=True)
-		# import ipdb; ipdb.set_trace()
-		for n_seg_id, n_cnt in zip(n_seg_ids, n_cnts):
+
+		for n_seg_id in n_seg:
+
 			if not (seg_id == n_seg_id) :
 				if seg_id < n_seg_id:
 					pair = seg_id, n_seg_id
@@ -105,9 +115,9 @@ def find_adjacency_relations():
 				if pair[0] == 0: continue
 
 				if pdict.has_key(pair):
-					pdict[pair]+= n_cnt
+					pdict[pair]+= 1
 				else:
-					pdict[pair] = n_cnt
+					pdict[pair] = 1
 
 	# import ipdb; ipdb.set_trace()
 	return pdict
@@ -130,29 +140,28 @@ def compute_segment_centers():
 	
 	return segment_dict
 
-	
 
-if __name__ == '__main__':
-	# ref_count()
-	# find_flip_relations()
 
-	segment_centers_dict = compute_segment_centers()
+def view():
+	ref_count = timeit(count_refs)
+
+	segment_centers_dict = timeit(compute_segment_centers)
 	seg_centers = np.array([v[1] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_cnts = np.array([v[0] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_ids = np.array([k for k in segment_centers_dict.keys()], dtype=np.float32)
 	
-	flip_relations = find_flip_relations()
+	flip_relations = timeit(find_flip_relations)
 	flip_rel_start = np.zeros((len(flip_relations),3), dtype=np.float32)
 	flip_rel_end = np.zeros((len(flip_relations),3), dtype=np.float32)
 	for i, (s, e) in enumerate(flip_relations.keys()):
 		flip_rel_start[i] = segment_centers_dict[s][1]
 		flip_rel_end[i] = segment_centers_dict[e][1]
 
-	adj_relations = find_adjacency_relations()
+	adj_relations = timeit(find_adjacency_relations)
 	adj_rel_start = []#np.zeros((len(adj_relations),3), dtype=np.float32)
 	adj_rel_end = []#np.zeros((len(adj_relations),3), dtype=np.float32)
 	for i, (s, e) in enumerate(adj_relations.keys()):
-		if adj_relations[(s, e)] >50:
+		if adj_relations[(s, e)] >30:
 			adj_rel_start.append(segment_centers_dict[s][1])
 			adj_rel_end.append(segment_centers_dict[e][1])
 	
@@ -215,11 +224,12 @@ if __name__ == '__main__':
 	)
 
 
-	f = ma.D['ref_count'] > 10
+	f = ref_count > 20
 	c.add_data_source(
-		opts = ['splat_point', 'with_intensity'],
+		opts = ['splat_point', 'fixed_color'],
 		points = ma.D['coords'][f],
-		intensity = np.clip(ma.D['ref_count'],0,15).astype(np.float32)[f]
+		# intensity = np.clip(ref_count,0,15).astype(np.float32)[f]
+		color = (1,1,1)
 	)
 
 	f = ma.D['ma_radii'] < max_r
@@ -237,3 +247,10 @@ if __name__ == '__main__':
 	)
 	
 	c.run()
+
+if __name__ == '__main__':
+	# count_refs()
+	# compute_segment_centers()
+	# find_flip_relations()
+	# find_adjacency_relations()
+	view()

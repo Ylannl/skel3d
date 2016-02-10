@@ -12,7 +12,8 @@ class MAHelper(object):
         self.D=datadict
         self.D['coords'] = datadict['coords']-self.mean
         self.D['normals'] = datadict['normals']
-        self.D['ma_segment'] = datadict['ma_segment']
+        if datadict.has_key('ma_segment'):
+            self.D['ma_segment'] = datadict['ma_segment']
         self.m, self.n = self.D['coords'].shape
         self.D['ma_coords_in'] = datadict['ma_coords_in']-self.mean
         self.D['ma_coords_out'] = datadict['ma_coords_out']-self.mean

@@ -7,7 +7,8 @@ from pointio import io_npy
 from ma_util import MAHelper
 
 # INFILE = 'data/scan_npy'
-INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 
 
 class RegionGrower(object):
@@ -24,7 +25,7 @@ class RegionGrower(object):
 		self.p_thetathres_1 = (50.0 / 180.0) * math.pi # during bisect growing
 		self.p_thetathres_2 = (3.0 / 180.0) * math.pi # during theta growing
 		self.p_k = 10
-		self.p_mincount = 50
+		self.p_mincount = 10
 
 		self.mah = MAHelper(datadict)
 		self.filt = self.mah.D['ma_radii'] < 190.
