@@ -140,37 +140,48 @@ def compute_segment_centers():
 	
 	return segment_dict
 
+def find_relations():
+	flip_relations = timeit(find_flip_relations)
+	datadict['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
+	i=0
+	for (s, e), cnt in flip_relations.iteritems():
+		datadict['seg_link_flip'][i] = [s,e,cnt]
+		i+=1
+
+	adj_relations = timeit(find_adjacency_relations)
+	datadict['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
+	i=0
+	for (s, e), cnt in adj_relations.iteritems():
+		datadict['seg_link_adj'][i] = [s,e,cnt]
+		i+=1
+
+	io_npy.write_npy(INFILE, datadict, ['seg_link_flip', 'seg_link_adj'])
 
 
 def view():
-	ref_count = timeit(count_refs)
+	# ref_count = timeit(count_refs)
 
 	segment_centers_dict = timeit(compute_segment_centers)
 	seg_centers = np.array([v[1] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_cnts = np.array([v[0] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_ids = np.array([k for k in segment_centers_dict.keys()], dtype=np.float32)
-	
-	flip_relations = timeit(find_flip_relations)
-	flip_rel_start = np.zeros((len(flip_relations),3), dtype=np.float32)
-	flip_rel_end = np.zeros((len(flip_relations),3), dtype=np.float32)
-	for i, (s, e) in enumerate(flip_relations.keys()):
+
+	flip_rel_start = np.zeros((len(datadict['seg_link_flip']),3), dtype=np.float32)
+	flip_rel_end = np.zeros((len(datadict['seg_link_flip']),3), dtype=np.float32)
+	i=0
+	for s,e in datadict['seg_link_flip'][:,:2]:
 		flip_rel_start[i] = segment_centers_dict[s][1]
 		flip_rel_end[i] = segment_centers_dict[e][1]
+		i+=1
 
-	adj_relations = timeit(find_adjacency_relations)
-	adj_rel_start = []#np.zeros((len(adj_relations),3), dtype=np.float32)
-	adj_rel_end = []#np.zeros((len(adj_relations),3), dtype=np.float32)
-	for i, (s, e) in enumerate(adj_relations.keys()):
-		if adj_relations[(s, e)] >30:
-			adj_rel_start.append(segment_centers_dict[s][1])
-			adj_rel_end.append(segment_centers_dict[e][1])
-	
-	adj_rel_start = np.array(adj_rel_start, dtype=np.float32)
-	adj_rel_end = np.array(adj_rel_end, dtype=np.float32)
-
-	
-
-	# import ipdb; ipdb.set_trace()
+	adj_rel_start = np.zeros((len(datadict['seg_link_adj']),3), dtype=np.float32)
+	adj_rel_end = np.zeros((len(datadict['seg_link_adj']),3), dtype=np.float32)
+	i=0
+	f = datadict['seg_link_adj'][:,2] > 20
+	for s,e in datadict['seg_link_adj'][:,:2][f]:
+		adj_rel_start[i] = segment_centers_dict[s][1]
+		adj_rel_end[i] = segment_centers_dict[e][1]
+		i+=1
 
 	max_r=199
 	c = App()
@@ -223,14 +234,13 @@ def view():
 		color = (0,1,0)
 	)
 
-
-	f = ref_count > 20
-	c.add_data_source(
-		opts = ['splat_point', 'fixed_color'],
-		points = ma.D['coords'][f],
-		# intensity = np.clip(ref_count,0,15).astype(np.float32)[f]
-		color = (1,1,1)
-	)
+	# f = ref_count > 20
+	# c.add_data_source(
+	# 	opts = ['splat_point', 'fixed_color'],
+	# 	points = ma.D['coords'][f],
+	# 	# intensity = np.clip(ref_count,0,15).astype(np.float32)[f]
+	# 	color = (1,1,1)
+	# )
 
 	f = ma.D['ma_radii'] < max_r
 	c.add_data_source_line(
@@ -249,8 +259,5 @@ def view():
 	c.run()
 
 if __name__ == '__main__':
-	# count_refs()
-	# compute_segment_centers()
-	# find_flip_relations()
-	# find_adjacency_relations()
+	find_relations()
 	view()
