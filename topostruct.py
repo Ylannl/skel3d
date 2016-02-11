@@ -8,6 +8,7 @@ from povi import App
 # INFILE = 'data/scan_npy'
 INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
+INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 datadict = io_npy.read_npy(INFILE)
 ma = MAHelper(datadict, origin=True)
@@ -183,7 +184,7 @@ def view():
 		adj_rel_end[i] = segment_centers_dict[e][1]
 		i+=1
 
-	max_r=20.
+	max_r=190.
 	c = App()
 
 	c.add_data_source(

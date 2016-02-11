@@ -8,8 +8,8 @@ from ma_util import MAHelper
 
 # INFILE = 'data/scan_npy'
 # INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
-INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
-
+# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
+INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 class RegionGrower(object):
 
