@@ -6,12 +6,12 @@ from ma_util import MAHelper
 from povi import App
 
 # INFILE = 'data/scan_npy'
-# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
-INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
+INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 
 datadict = io_npy.read_npy(INFILE)
-ma = MAHelper(datadict, origin=False)
-
+ma = MAHelper(datadict, origin=True)
+# import ipdb; ipdb.set_trace()
 def timeit(func):
 	t0 = time()
 	r = func()
@@ -36,7 +36,6 @@ def assign_seg_point():
 
 	datadict['segment_count'] = np.array([ len(s) for s in pdict.values() ], dtype=np.int32)
 	io_npy.write_npy(INFILE, datadict, ['segment_count'])
-	import ipdb; ipdb.set_trace()
 
 
 def count_refs():
@@ -127,12 +126,12 @@ def compute_segment_centers():
 	segment_dict = {}
 	# segment_point_sums = {}
 	for i, segment in enumerate(ma.D['ma_segment']):
-		p = ma.D['ma_coords'][i]
+		# slicing is not copying!
 		if segment_dict.has_key(segment):
 			segment_dict[segment][0] += 1
-			segment_dict[segment][1] += p
+			segment_dict[segment][1] += ma.D['ma_coords'][i]
 		else:
-			segment_dict[segment] = [1, p]
+			segment_dict[segment] = [1, np.copy(ma.D['ma_coords'][i])]
 
 	for key, value in segment_dict.iteritems():
 		segment_dict[key][1] = value[1]/value[0]
@@ -162,6 +161,7 @@ def view():
 	# ref_count = timeit(count_refs)
 
 	segment_centers_dict = timeit(compute_segment_centers)
+
 	seg_centers = np.array([v[1] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_cnts = np.array([v[0] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_ids = np.array([k for k in segment_centers_dict.keys()], dtype=np.float32)
@@ -183,7 +183,7 @@ def view():
 		adj_rel_end[i] = segment_centers_dict[e][1]
 		i+=1
 
-	max_r=199
+	max_r=20.
 	c = App()
 
 	c.add_data_source(
@@ -259,5 +259,5 @@ def view():
 	c.run()
 
 if __name__ == '__main__':
-	find_relations()
+	# find_relations()
 	view()

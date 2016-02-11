@@ -5,18 +5,20 @@ from pykdtree.kdtree import KDTree
 class MAHelper(object):
 
     def __init__(self, datadict, origin=True):
+        
+        self.D=datadict
+        self.D['coords'] = datadict['coords']
+        self.D['ma_coords_in'] = datadict['ma_coords_in']
+        self.D['ma_coords_out'] = datadict['ma_coords_out']
         if origin==True:
             self.mean = np.mean(datadict['coords'], axis=0, dtype=np.float32)
-        else:
-            self.mean = 0
-        self.D=datadict
-        self.D['coords'] = datadict['coords']-self.mean
+            self.D['coords'] -= self.mean
+            self.D['ma_coords_in'] -= self.mean
+            self.D['ma_coords_out'] -= self.mean
         self.D['normals'] = datadict['normals']
         if datadict.has_key('ma_segment'):
             self.D['ma_segment'] = datadict['ma_segment']
         self.m, self.n = self.D['coords'].shape
-        self.D['ma_coords_in'] = datadict['ma_coords_in']-self.mean
-        self.D['ma_coords_out'] = datadict['ma_coords_out']-self.mean
         self.D['ma_qidx_in'] = datadict['ma_qidx_in']
         self.D['ma_qidx_out'] = datadict['ma_qidx_out']
         self.D['ma_radii_in'] = np.linalg.norm(self.D['coords'] - self.D['ma_coords_in'], axis=1)
