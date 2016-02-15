@@ -2,7 +2,6 @@ import math, sys
 import numpy as np
 from time import time
 from pykdtree.kdtree import KDTree
-from sklearn.decomposition import PCA
 from pointio import io_npy
 from ma_util import MAHelper
 
@@ -12,9 +11,9 @@ from ma_util import MAHelper
 INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 class RegionGrower(object):
-	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points."""
+	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points. Note that interior & exterior MAT points are concatenated and not treated separately."""
 
-	def __init__(self, datadict, method = 'bisec'):
+	def __init__(self, mah, method = 'bisec'):
 		# self.kdt_surf = KDTree(sel f.D['coords'])
 		if method == 'bisec':
 			self.valid_candidate = self.valid_candidate_bisec # or 'normal'
@@ -28,7 +27,7 @@ class RegionGrower(object):
 		self.p_k = 10
 		self.p_mincount = 10
 
-		self.mah = MAHelper(datadict)
+		self.mah = mah
 		self.filt = self.mah.D['ma_radii'] < 190.
 
 		self.ma_coords = self.mah.D['ma_coords'][self.filt]
@@ -44,33 +43,24 @@ class RegionGrower(object):
 		self.region_nr = 1
 		self.overwrite_regions = False
 
-	# def find_neighbours(self):
-	# 	self.kdt_ma = KDTree(self.ma_coords)
-	# 	self.neighbours_dist, self.neighbours_idx = self.kdt_ma.query(
-	# 		self.ma_coords, 
-	# 		self.p_k 
-	# 	)
+	# def estimate_normals(self):
+	#	from sklearn.decomposition import PCA
+	# 	def compute_normal(neighbours):
+	# 		pca = PCA(n_components=3)
+	# 		pca.fit(neighbours)
+	# 		plane_normal = pca.components_[-1] # this is a normalized normal
+	# 		# # make all normals point upwards:
+	# 		# if plane_normal[-1] < 0:
+	# 		# 	plane_normal *= -1
+	# 		return plane_normal
 
-
-	def estimate_normals(self):
-		def compute_normal(neighbours):
-			pca = PCA(n_components=3)
-			pca.fit(neighbours)
-			plane_normal = pca.components_[-1] # this is a normalized normal
-			# # make all normals point upwards:
-			# if plane_normal[-1] < 0:
-			# 	plane_normal *= -1
-			return plane_normal
-
-		neighbours = self.ma_coords[self.neighbours_idx]
-		# p = Pool()
-		t1 = time()
-		self.ma_normals = np.empty((self.m,3), dtype=np.float32)
-		for i, neighbourlist in enumerate(neighbours):
-			self.ma_normals[i] = compute_normal(neighbourlist)
-		t2 = time()
-		print "finished normal computation in {} s".format(t2-t1)
-		# p.close()
+	# 	neighbours = self.ma_coords[self.neighbours_idx]
+	# 	t1 = time()
+	# 	self.ma_normals = np.empty((self.m,3), dtype=np.float32)
+	# 	for i, neighbourlist in enumerate(neighbours):
+	# 		self.ma_normals[i] = compute_normal(neighbourlist)
+	# 	t2 = time()
+	# 	print "finished normal computation in {} s".format(t2-t1)
 
 	def apply_region_growing_algorithm(self, seedpoints):
 		"""pop seedpoints and try to grow regions until no more seedpoints are left"""
@@ -150,11 +140,9 @@ class RegionGrower(object):
 			print min(angles/math.pi * 180)
 			# import ipdb; ipdb.set_trace()
 
-def do_bisec_based():
-	D = io_npy.read_npy(INFILE)
-	
+def perform_segmentation_bisec(mah):
 	# find segments based on similiraty in bisector orientation
-	R = RegionGrower(D, method='bisec')
+	R = RegionGrower(mah, method='bisec')
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
@@ -175,10 +163,8 @@ def do_bisec_based():
 	D['ma_segment'] = ma_segment
 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
-def do_normal_based():
-	D = io_npy.read_npy(INFILE)
-	
-	R = RegionGrower(D, method='normal')
+def perform_segmentation_normal(mah):	
+	R = RegionGrower(mah, method='normal')
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
@@ -189,8 +175,90 @@ def do_normal_based():
 	D['ma_segment'] = R.ma_segment
 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
+def find_relations(ma):
+	"""
+	Find topological relations between segments. Output for each relation: 
+		(segment_1, segment_2, count)
+	the higher count the stronger the relation.
+	"""
+
+	def find_flip_relations():
+		"""Find for each pair of segments how many times they are connected by a shared feature point.
+			In a pair of segments (tuple) the lowest segmend_id is always put first
+		"""
+
+		pdict = {}
+		for i in np.arange(ma.m):
+			coord_id = i# % ma.m
+			s_in = ma.D['ma_segment'][i]
+			s_out = ma.D['ma_segment'][i + ma.m]
+
+			if not (s_in == 0 or s_out == 0):
+				if s_in < s_out:
+					pair = s_in, s_out
+				else:
+					pair = s_out, s_in
+
+				if pdict.has_key(pair):
+					pdict[pair]+= 1
+				else:
+					pdict[pair] = 1
+
+		return pdict
+
+
+	def find_adjacency_relations():
+		"""find pairs of adjacent segments
+		"""
+		filt = ma.D['ma_segment'] != -10
+		neighbours_dist, neighbours_idx = ma.get_neighbours_ma(filt)
+		pdict = {}
+
+		for i in np.arange(ma.m*2):
+			seg_id = ma.D['ma_segment'][i]
+
+			neighbours = neighbours_idx[i][1:]
+			n_seg = ma.D['ma_segment'][neighbours]
+
+			for n_seg_id in n_seg:
+
+				if not (seg_id == n_seg_id) :
+					if seg_id < n_seg_id:
+						pair = seg_id, n_seg_id
+					else:
+						pair = n_seg_id, seg_id
+
+					if pair[0] == 0: continue
+
+					if pdict.has_key(pair):
+						pdict[pair]+= 1
+					else:
+						pdict[pair] = 1
+
+		# import ipdb; ipdb.set_trace()
+		return pdict
+
+	flip_relations = find_flip_relations()
+	ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
+	i=0
+	for (s, e), cnt in flip_relations.iteritems():
+		ma.D['seg_link_flip'][i] = [s,e,cnt]
+		i+=1
+
+	adj_relations = find_adjacency_relations()
+	ma.D['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
+	i=0
+	for (s, e), cnt in adj_relations.iteritems():
+		ma.D['seg_link_adj'][i] = [s,e,cnt]
+		i+=1
+
+	io_npy.write_npy(INFILE, ma.D, ['seg_link_flip', 'seg_link_adj'])
+
 if __name__ == '__main__':
 	if len(sys.argv)>1:
 		INFILE = sys.argv[1]
-	# do_normal_based()
-	do_bisec_based()
+	D = io_npy.read_npy(INFILE)
+	mah = MAHelper(D)
+	# perform_segmentation_normal(mah)
+	perform_segmentation_bisec(mah)
+	find_relations(mah)

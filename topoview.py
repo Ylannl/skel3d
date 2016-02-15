@@ -11,7 +11,6 @@ INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 
-# import ipdb; ipdb.set_trace()
 def timeit(func):
 	t0 = time()
 	r = func()
@@ -37,7 +36,6 @@ def assign_seg_point():
 	datadict['segment_count'] = np.array([ len(s) for s in pdict.values() ], dtype=np.int32)
 	io_npy.write_npy(INFILE, datadict, ['segment_count'])
 
-
 def count_refs():
 	"""count the number of times each coord is used as feature point for a medial ball"""
 
@@ -55,70 +53,6 @@ def count_refs():
 	del pdict[-1]
 
 	return np.array(pdict.values(), dtype=np.int32)
-
-	# datadict['ref_count'] = np.array(pdict.values(), dtype=np.int32)
-	# io_npy.write_npy(INFILE, datadict, ['ref_count'])
-	# import ipdb; ipdb.set_trace()
-
-def find_flip_relations():
-	"""Find for each pair of segments how many times they are connected by a shared feature point.
-		In a pair of segments (tuple) the lowest segmend_id is always put first
-	"""
-
-	pdict = {}
-	for i in np.arange(ma.m):
-		coord_id = i# % ma.m
-		s_in = ma.D['ma_segment'][i]
-		s_out = ma.D['ma_segment'][i + ma.m]
-
-		if not (s_in == 0 or s_out == 0):
-			if s_in < s_out:
-				pair = s_in, s_out
-			else:
-				pair = s_out, s_in
-
-			if pdict.has_key(pair):
-				pdict[pair]+= 1
-			else:
-				pdict[pair] = 1
-
-	return pdict
-	
-	# datadict['flip_relations'] = np.array(pdict.values(), dtype=np.int32)
-	# io_npy.write_npy(INFILE, datadict, ['ref_count'])
-	import ipdb; ipdb.set_trace()
-
-
-def find_adjacency_relations():
-	"""find pairs of adjacent segments
-	"""
-	filt = ma.D['ma_segment'] != -10
-	neighbours_dist, neighbours_idx = ma.get_neighbours_ma(filt)
-	pdict = {}
-
-	for i in np.arange(ma.m*2):
-		seg_id = ma.D['ma_segment'][i]
-
-		neighbours = neighbours_idx[i][1:]
-		n_seg = ma.D['ma_segment'][neighbours]
-
-		for n_seg_id in n_seg:
-
-			if not (seg_id == n_seg_id) :
-				if seg_id < n_seg_id:
-					pair = seg_id, n_seg_id
-				else:
-					pair = n_seg_id, seg_id
-
-				if pair[0] == 0: continue
-
-				if pdict.has_key(pair):
-					pdict[pair]+= 1
-				else:
-					pdict[pair] = 1
-
-	# import ipdb; ipdb.set_trace()
-	return pdict
 
 def compute_segment_centers():
 	"""Compute avarage coordinate for each segment"""
@@ -139,28 +73,12 @@ def compute_segment_centers():
 	
 	return segment_dict
 
-def find_relations(ma):
-	flip_relations = timeit(find_flip_relations)
-	ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
-	i=0
-	for (s, e), cnt in flip_relations.iteritems():
-		ma.D['seg_link_flip'][i] = [s,e,cnt]
-		i+=1
-
-	adj_relations = timeit(find_adjacency_relations)
-	ma.D['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
-	i=0
-	for (s, e), cnt in adj_relations.iteritems():
-		ma.D['seg_link_adj'][i] = [s,e,cnt]
-		i+=1
-
-	io_npy.write_npy(INFILE, ma.D, ['seg_link_flip', 'seg_link_adj'])
 
 
 def view(ma):
 	# ref_count = timeit(count_refs)
 	min_link_adj = 20
-
+	max_r=190.
 	segment_centers_dict = timeit(compute_segment_centers)
 
 	seg_centers = np.array([v[1] for v in segment_centers_dict.values()], dtype=np.float32)
@@ -184,7 +102,7 @@ def view(ma):
 		adj_rel_end[i] = segment_centers_dict[e][1]
 		i+=1
 
-	max_r=190.
+	
 	c = App()
 
 	c.add_data_source(
@@ -267,5 +185,4 @@ if __name__ == '__main__':
 	datadict = io_npy.read_npy(INFILE)
 	ma = MAHelper(datadict, origin=True)
 
-	find_relations(ma)
 	view(ma)
