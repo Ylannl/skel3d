@@ -1,4 +1,4 @@
-import math
+import math, sys
 from time import time
 import numpy as np
 from pointio import io_npy
@@ -10,8 +10,7 @@ INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
-datadict = io_npy.read_npy(INFILE)
-ma = MAHelper(datadict, origin=True)
+
 # import ipdb; ipdb.set_trace()
 def timeit(func):
 	t0 = time()
@@ -140,26 +139,27 @@ def compute_segment_centers():
 	
 	return segment_dict
 
-def find_relations():
+def find_relations(ma):
 	flip_relations = timeit(find_flip_relations)
-	datadict['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
+	ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
 	i=0
 	for (s, e), cnt in flip_relations.iteritems():
-		datadict['seg_link_flip'][i] = [s,e,cnt]
+		ma.D['seg_link_flip'][i] = [s,e,cnt]
 		i+=1
 
 	adj_relations = timeit(find_adjacency_relations)
-	datadict['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
+	ma.D['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
 	i=0
 	for (s, e), cnt in adj_relations.iteritems():
-		datadict['seg_link_adj'][i] = [s,e,cnt]
+		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
 
-	io_npy.write_npy(INFILE, datadict, ['seg_link_flip', 'seg_link_adj'])
+	io_npy.write_npy(INFILE, ma.D, ['seg_link_flip', 'seg_link_adj'])
 
 
-def view():
+def view(ma):
 	# ref_count = timeit(count_refs)
+	min_link_adj = 20
 
 	segment_centers_dict = timeit(compute_segment_centers)
 
@@ -167,19 +167,19 @@ def view():
 	seg_cnts = np.array([v[0] for v in segment_centers_dict.values()], dtype=np.float32)
 	seg_ids = np.array([k for k in segment_centers_dict.keys()], dtype=np.float32)
 
-	flip_rel_start = np.zeros((len(datadict['seg_link_flip']),3), dtype=np.float32)
-	flip_rel_end = np.zeros((len(datadict['seg_link_flip']),3), dtype=np.float32)
+	flip_rel_start = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
+	flip_rel_end = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
 	i=0
-	for s,e in datadict['seg_link_flip'][:,:2]:
+	for s,e in ma.D['seg_link_flip'][:,:2]:
 		flip_rel_start[i] = segment_centers_dict[s][1]
 		flip_rel_end[i] = segment_centers_dict[e][1]
 		i+=1
 
-	adj_rel_start = np.zeros((len(datadict['seg_link_adj']),3), dtype=np.float32)
-	adj_rel_end = np.zeros((len(datadict['seg_link_adj']),3), dtype=np.float32)
+	adj_rel_start = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
+	adj_rel_end = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
 	i=0
-	f = datadict['seg_link_adj'][:,2] > 20
-	for s,e in datadict['seg_link_adj'][:,:2][f]:
+	f = ma.D['seg_link_adj'][:,2] > min_link_adj
+	for s,e in ma.D['seg_link_adj'][:,:2][f]:
 		adj_rel_start[i] = segment_centers_dict[s][1]
 		adj_rel_end[i] = segment_centers_dict[e][1]
 		i+=1
@@ -223,17 +223,19 @@ def view():
 		opts = ['splat_point'],
 		points = seg_centers[f]
 	)
-	c.add_data_source_line(
-		coords_start = flip_rel_start,
-		coords_end = flip_rel_end
-	)
+	if len(flip_rel_start)>0:
+		c.add_data_source_line(
+			coords_start = flip_rel_start,
+			coords_end = flip_rel_end
+		)
 
-	f = seg_cnts!=1
-	c.add_data_source_line(
-		coords_start = adj_rel_start,
-		coords_end = adj_rel_end,
-		color = (0,1,0)
-	)
+	if len(adj_rel_start)>0:
+		f = seg_cnts!=1
+		c.add_data_source_line(
+			coords_start = adj_rel_start,
+			coords_end = adj_rel_end,
+			color = (0,1,0)
+		)
 
 	# f = ref_count > 20
 	# c.add_data_source(
@@ -260,5 +262,10 @@ def view():
 	c.run()
 
 if __name__ == '__main__':
-	# find_relations()
-	view()
+	if len(sys.argv)>1:
+		INFILE = sys.argv[1]
+	datadict = io_npy.read_npy(INFILE)
+	ma = MAHelper(datadict, origin=True)
+
+	find_relations(ma)
+	view(ma)

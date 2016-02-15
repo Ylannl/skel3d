@@ -1,4 +1,4 @@
-import math
+import math, sys
 import numpy as np
 from time import time
 from pykdtree.kdtree import KDTree
@@ -194,6 +194,8 @@ def do_normal_based():
 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
 if __name__ == '__main__':
+	if len(sys.argv)>1:
+		INFILE = sys.argv[1]
 	# do_normal_based()
 	do_bisec_based()
 
