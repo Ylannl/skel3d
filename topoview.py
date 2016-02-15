@@ -5,11 +5,10 @@ from pointio import io_npy
 from ma_util import MAHelper
 from povi import App
 
-# INFILE = 'data/scan_npy'
-INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+INFILE = 'data/scan_npy'
+# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
-INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
-
+# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 def timeit(func):
 	t0 = time()
@@ -111,11 +110,18 @@ def view(ma):
 	)
 
 	if ma.D.has_key('ma_segment'):
-		f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']>0)
+		f = np.logical_and(ma.D['ma_radii'][:ma.m] < max_r, ma.D['ma_segment'][:ma.m]>0)
 		c.add_data_source(
 			opts=['splat_point', 'with_intensity'],
-			points=ma.D['ma_coords'][f], 
-			category=ma.D['ma_segment'][f].astype(np.float32),
+			points=ma.D['ma_coords'][:ma.m][f], 
+			category=ma.D['ma_segment'][:ma.m][f].astype(np.float32),
+			colormap='random'
+		)
+		f = np.logical_and(ma.D['ma_radii'][ma.m:] < max_r, ma.D['ma_segment'][ma.m:]>0)
+		c.add_data_source(
+			opts=['splat_point', 'with_intensity'],
+			points=ma.D['ma_coords'][ma.m:][f], 
+			category=ma.D['ma_segment'][ma.m:][f].astype(np.float32),
 			colormap='random'
 		)
 	

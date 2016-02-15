@@ -1,30 +1,29 @@
 import math, sys
 import numpy as np
 from time import time
-from pykdtree.kdtree import KDTree
 from pointio import io_npy
 from ma_util import MAHelper
+import argparse
 
-# INFILE = 'data/scan_npy'
+INFILE = 'data/scan_npy'
 # INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
-INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
+# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 class RegionGrower(object):
 	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points. Note that interior & exterior MAT points are concatenated and not treated separately."""
 
-	def __init__(self, mah, method = 'bisec'):
-		# self.kdt_surf = KDTree(sel f.D['coords'])
+	def __init__(self, mah, bisec_thres=5.0, k=10, method = 'bisec'):
 		if method == 'bisec':
 			self.valid_candidate = self.valid_candidate_bisec # or 'normal'
 		else:
 			self.valid_candidate = self.valid_candidate_normal
 
-		self.p_bisecthres = math.cos((10.0 / 180.0) * math.pi)
+		self.p_bisecthres = math.cos((bisec_thres / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
 		self.p_thetathres_1 = (50.0 / 180.0) * math.pi # during bisect growing
 		self.p_thetathres_2 = (3.0 / 180.0) * math.pi # during theta growing
-		self.p_k = 10
+		self.p_k = k
 		self.p_mincount = 10
 
 		self.mah = mah
@@ -140,9 +139,9 @@ class RegionGrower(object):
 			print min(angles/math.pi * 180)
 			# import ipdb; ipdb.set_trace()
 
-def perform_segmentation_bisec(mah):
+def perform_segmentation_bisec(mah, bisec_thres, k):
 	# find segments based on similiraty in bisector orientation
-	R = RegionGrower(mah, method='bisec')
+	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec')
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
@@ -163,17 +162,17 @@ def perform_segmentation_bisec(mah):
 	D['ma_segment'] = ma_segment
 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
-def perform_segmentation_normal(mah):	
-	R = RegionGrower(mah, method='normal')
-	seedpoints = list( np.random.permutation(R.m) )
-	R.apply_region_growing_algorithm(seedpoints)
-	R.unmark_small_clusters()
-	# import ipdb; ipdb.set_trace()
-	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
+# def perform_segmentation_normal(mah):	
+# 	R = RegionGrower(mah, method='normal')
+# 	seedpoints = list( np.random.permutation(R.m) )
+# 	R.apply_region_growing_algorithm(seedpoints)
+# 	R.unmark_small_clusters()
+# 	# import ipdb; ipdb.set_trace()
+# 	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
 
-	print R.region_counts
-	D['ma_segment'] = R.ma_segment
-	io_npy.write_npy(INFILE, D, ['ma_segment'])
+# 	print R.region_counts
+# 	D['ma_segment'] = R.ma_segment
+# 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
 def find_relations(ma):
 	"""
@@ -255,10 +254,15 @@ def find_relations(ma):
 	io_npy.write_npy(INFILE, ma.D, ['seg_link_flip', 'seg_link_adj'])
 
 if __name__ == '__main__':
-	if len(sys.argv)>1:
-		INFILE = sys.argv[1]
-	D = io_npy.read_npy(INFILE)
+	parser = argparse.ArgumentParser(description='Basic PCA normal approximation')
+	parser.add_argument('infile', help='npy file', default=INFILE)
+	parser.add_argument('-k', help='Number of neighbours to use', default=10, type=int)
+	parser.add_argument('-b', help='Bisec threshold in degrees', default=5.0, type=float)
+	parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
+	args = parser.parse_args()
+
+	D = io_npy.read_npy(args.infile)
 	mah = MAHelper(D)
-	# perform_segmentation_normal(mah)
-	perform_segmentation_bisec(mah)
-	find_relations(mah)
+	perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k)
+	if args.topo:
+		find_relations(mah)
