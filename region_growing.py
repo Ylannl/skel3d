@@ -12,6 +12,7 @@ from ma_util import MAHelper
 INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 class RegionGrower(object):
+	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points."""
 
 	def __init__(self, datadict, method = 'bisec'):
 		# self.kdt_surf = KDTree(sel f.D['coords'])
@@ -29,7 +30,6 @@ class RegionGrower(object):
 
 		self.mah = MAHelper(datadict)
 		self.filt = self.mah.D['ma_radii'] < 190.
-		# import ipdb; ipdb.set_trace()
 
 		self.ma_coords = self.mah.D['ma_coords'][self.filt]
 		# self.mah.D['m']
@@ -37,14 +37,11 @@ class RegionGrower(object):
 		self.ma_bisec = self.mah.D['ma_bisec'][self.filt]
 		self.ma_theta = self.mah.D['ma_theta'][self.filt]
 
-		# elif method == 'normal':
-		# self.find_neighbours()
 		self.neighbours_dist, self.neighbours_idx = self.mah.get_neighbours_ma(self.filt, self.p_k)
 		# self.estimate_normals()
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
 		self.region_nr = 1
-		# self.region_counts = [0]
 		self.overwrite_regions = False
 
 	# def find_neighbours(self):
@@ -76,18 +73,16 @@ class RegionGrower(object):
 		# p.close()
 
 	def apply_region_growing_algorithm(self, seedpoints):
-		#pick seedpoints at random for now
+		"""pop seedpoints and try to grow regions until no more seedpoints are left"""
 		
 		while len(seedpoints) > 0:
 			seed = seedpoints.pop()
 			if self.ma_segment[seed] == 0:
 				self.grow_region(seed)
-				# self.region_counts.append()
 				self.region_nr += 1
-		# print region_counts
-		# print("found %d regions" % region_nr)
 
 	def grow_region(self, initial_seed):
+		"""Use initial_seed to grow a region by testing if its neighbours are valid candidates. Valid candidates are added to the current region/segment and _its_ neighbours are also tested. Stop when we run out of valid candidates."""
 		candidate_stack = [initial_seed]
 		point_count = 1
 		self.ma_segment[initial_seed] = self.region_nr
@@ -105,12 +100,14 @@ class RegionGrower(object):
 		return point_count
 
 	def valid_candidate_normal(self, seed, candidate):
+		"""candidate is valid if angle between normals of seed and candidate is below preset threshold"""
 		if math.fabs(np.dot(self.ma_normals[seed], self.ma_normals[candidate])) > self.p_normalthres:
 			return True
 		else:
 			return False
 	
 	def valid_candidate_bisec(self, seed, candidate):
+		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
 		if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres:
 		# if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres and math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_1:
 			return True
@@ -118,12 +115,14 @@ class RegionGrower(object):
 			return False
 
 	def valid_candidate_theta(self, seed, candidate):
+		"""candidate is valid if difference between separation angles of seed and candidate is below preset threshold"""
 		if math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_2:
 			return True
 		else:
 			return False
 
 	def unmark_small_clusters(self):
+		"""find all segments that are too small and set their segment to 0"""
 		# find cluster ids and sizes
 		region_numbers, region_counts = np.unique(self.ma_segment, return_counts=True)
 
@@ -136,6 +135,7 @@ class RegionGrower(object):
 
 
 	def assign_unsegmented_points(self):
+		"""experimental stuff to distribute unsegmented points among segments."""
 		points = np.where(self.ma_segment==0)[0]
 
 		for p in points:
@@ -153,25 +153,21 @@ class RegionGrower(object):
 def do_bisec_based():
 	D = io_npy.read_npy(INFILE)
 	
+	# find segments based on similiraty in bisector orientation
 	R = RegionGrower(D, method='bisec')
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
-	# import ipdb; ipdb.set_trace()
 	R.unmark_small_clusters()
 	print np.unique(R.ma_segment, return_counts=True)
-	# import ipdb; ipdb.set_trace()
 	
-
-	if 1: # do theta 180deg planes
-		seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
-		# R.overwrite_regions = True
-		R.valid_candidate = R.valid_candidate_theta
-		# import ipdb; ipdb.set_trace()
-		R.apply_region_growing_algorithm(seedpoints)
-		# R.region_counts[0] = np.count_nonzero(R.ma_segment == 0)
-		R.unmark_small_clusters()
-		# R.assign_unsegmented_points()
-		print np.unique(R.ma_segment, return_counts=True)
+	# now try to find segments that have a large separation angle (and unstable bisector orientation)
+	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
+	# R.overwrite_regions = True
+	R.valid_candidate = R.valid_candidate_theta
+	R.apply_region_growing_algorithm(seedpoints)
+	R.unmark_small_clusters()
+	# R.assign_unsegmented_points()
+	print np.unique(R.ma_segment, return_counts=True)
 
 	ma_segment = np.zeros(R.mah.m*2, dtype=np.int64)
 	ma_segment[R.filt] = R.ma_segment
@@ -198,6 +194,3 @@ if __name__ == '__main__':
 		INFILE = sys.argv[1]
 	# do_normal_based()
 	do_bisec_based()
-
-#compute k neighbors for each point
-#select seed point

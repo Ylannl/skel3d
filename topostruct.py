@@ -61,9 +61,8 @@ def count_refs():
 	# import ipdb; ipdb.set_trace()
 
 def find_flip_relations():
-	"""find for each pair of segments how many times they are connected by a shared feature point
-
-		in a pair of segments (tuple) the lowest segmend_id is always put first
+	"""Find for each pair of segments how many times they are connected by a shared feature point.
+		In a pair of segments (tuple) the lowest segmend_id is always put first
 	"""
 
 	pdict = {}
@@ -122,6 +121,7 @@ def find_adjacency_relations():
 	return pdict
 
 def compute_segment_centers():
+	"""Compute avarage coordinate for each segment"""
 
 	segment_dict = {}
 	# segment_point_sums = {}
