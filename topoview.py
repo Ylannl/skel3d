@@ -5,8 +5,8 @@ from pointio import io_npy
 from ma_util import MAHelper
 from povi import App
 
-INFILE = 'data/scan_npy'
-# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+# INFILE = 'data/scan_npy'
+INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
@@ -76,7 +76,7 @@ def compute_segment_centers():
 
 def view(ma):
 	# ref_count = timeit(count_refs)
-	min_link_adj = 20
+	min_link_adj = 5
 	max_r=190.
 	segment_centers_dict = timeit(compute_segment_centers)
 
