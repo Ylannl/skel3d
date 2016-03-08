@@ -17,11 +17,21 @@ class Node:
 		self.segment_id = segment_id
 		self.incident_edges = []
 
+	def iterate_neighbours(self):
+		for e in self.incident_edges:
+			yield e, e.get_neighbour_node(self)
+
 class Edge:
 	def __init__(self, start, end, count):
 		self.start = start
 		self.end = end
 		self.count = count
+
+	def get_neighbour_node(self, node):
+		if node == start:
+			return end
+		else:
+			return start
 
 infile = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 datadict = io_npy.read_npy(infile)
@@ -48,3 +58,31 @@ for start_id, end_id, count in seg_link_adj:
 	start.incident_edges.append(edge)
 	end.incident_edges.append(edge)
 	
+# Find connected components
+
+min_count = 20
+
+node_set = set(node_dict.values())
+graph_list = []
+
+while len(node_set) != 0:
+	Q = [node_set.pop()]
+	V = set()
+	E = set()
+	while len(Q) != 0:
+		node = Q.pop()
+		V.add(node)
+
+		for e in node.incident_edges:
+			if e.count > min_count:
+				E.add(e)
+				adjacent_node = e.get_neighbour_node(node)
+				if adjacent_node not in V and adjacent_node not in Q:
+					Q.append(adjacent_node)
+
+	node_set -= set(V)
+	g = Graph()
+	g.edge_list = E
+	g.node_list = V
+	graph_list.append(g)
+
