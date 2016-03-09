@@ -3,14 +3,14 @@ import numpy as np
 
 class Graph:
 	def __init__(self):
-		self.edge_list = set()
-		self.node_list = set()
+		self.edges = set()
+		self.nodes = set()
 
 	def addEdge(self, edge):
-		self.edge_list.add(edge)
+		self.edges.add(edge)
 	
 	def addNode(self, node):
-		self.node_list.add(node)
+		self.nodes.add(node)
 
 class Node:
 	def __init__(self, segment_id):
@@ -28,10 +28,10 @@ class Edge:
 		self.count = count
 
 	def get_neighbour_node(self, node):
-		if node == start:
-			return end
+		if node is self.start:
+			return self.end
 		else:
-			return start
+			return self.start
 
 infile = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 datadict = io_npy.read_npy(infile)
@@ -70,19 +70,21 @@ while len(node_set) != 0:
 	V = set()
 	E = set()
 	while len(Q) != 0:
-		node = Q.pop()
+		node = Q.pop(0)
 		V.add(node)
 
 		for e in node.incident_edges:
-			if e.count > min_count:
+			# import ipdb; ipdb.set_trace()
+			if e.count >= min_count:
 				E.add(e)
 				adjacent_node = e.get_neighbour_node(node)
-				if adjacent_node not in V and adjacent_node not in Q:
+				if (not adjacent_node in V) and (not adjacent_node in Q):
 					Q.append(adjacent_node)
 
 	node_set -= set(V)
 	g = Graph()
-	g.edge_list = E
-	g.node_list = V
+	# import ipdb; ipdb.set_trace()
+	g.edges = set(E)
+	g.nodes = set(V)
 	graph_list.append(g)
 
