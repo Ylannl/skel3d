@@ -164,22 +164,6 @@ def view(ma):
 			color = (0,1,0)
 		)
 
-	for g in graphs:
-		adj_rel_start = []
-		adj_rel_end = []
-
-		if 0<len(g.edges)<1000:
-			for e in g.edges:			
-				adj_rel_start.append(segment_centers_dict[e.start.segment_id][1])
-				adj_rel_end.append(segment_centers_dict[e.end.segment_id][1])
-			# import ipdb; ipdb.set_trace()
-			c.add_data_source_line(
-				coords_start = np.array(adj_rel_start),
-				coords_end = np.array(adj_rel_end),
-				color = tuple(np.random.rand(3))
-			)
-
-
 	# f = ref_count > 20
 	# c.add_data_source(
 	# 	opts = ['splat_point', 'fixed_color'],
@@ -201,6 +185,21 @@ def view(ma):
 	# 	coords_start = ma.D['ma_coords'][f],
 	# 	coords_end = np.concatenate([ma.D['coords'][ma.D['ma_qidx_in']],ma.D['coords'][ma.D['ma_qidx_out']]])[f]
 	# )
+
+	for g in graphs:
+		adj_rel_start = []
+		adj_rel_end = []
+
+		if 0<len(g.edges)<1000:
+			for e in g.edges:			
+				adj_rel_start.append(segment_centers_dict[e.start.segment_id][1])
+				adj_rel_end.append(segment_centers_dict[e.end.segment_id][1])
+			# import ipdb; ipdb.set_trace()
+			c.add_data_source_line(
+				coords_start = np.array(adj_rel_start),
+				coords_end = np.array(adj_rel_end),
+				color = tuple(np.random.rand(3))
+			)
 	
 	c.run()
 
