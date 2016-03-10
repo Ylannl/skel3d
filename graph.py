@@ -33,58 +33,55 @@ class Edge:
 		else:
 			return self.start
 
-infile = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
-datadict = io_npy.read_npy(infile)
 
-ma_segment = datadict['ma_segment']
-# datadict['seg_link_flip']
-seg_link_adj = datadict['seg_link_adj']
+def get_graphs(datadict, min_count=3):
+	ma_segment = datadict['ma_segment']
+	# datadict['seg_link_flip']
+	seg_link_adj = datadict['seg_link_adj']
 
-node_dict = {}
-edge_list = []
-for start_id, end_id, count in seg_link_adj:
+	node_dict = {}
+	edge_list = []
+	for start_id, end_id, count in seg_link_adj:
 
-	if not node_dict.has_key(start_id):
-		node_dict[start_id] = Node(start_id)
-	if not node_dict.has_key(end_id):
-		node_dict[end_id] = Node(end_id)
+		if not node_dict.has_key(start_id):
+			node_dict[start_id] = Node(start_id)
+		if not node_dict.has_key(end_id):
+			node_dict[end_id] = Node(end_id)
 
-	start = node_dict[start_id]
-	end = node_dict[end_id]
+		start = node_dict[start_id]
+		end = node_dict[end_id]
 
-	edge = Edge(start, end, count)
-	edge_list.append(edge)
-	
-	start.incident_edges.append(edge)
-	end.incident_edges.append(edge)
-	
-# Find connected components
+		edge = Edge(start, end, count)
+		edge_list.append(edge)
+		
+		start.incident_edges.append(edge)
+		end.incident_edges.append(edge)
+		
+	# Find connected components
+	node_set = set(node_dict.values())
+	graph_list = []
 
-min_count = 20
+	while len(node_set) != 0:
+		Q = [node_set.pop()]
+		V = set()
+		E = set()
+		while len(Q) != 0:
+			node = Q.pop(0)
+			V.add(node)
 
-node_set = set(node_dict.values())
-graph_list = []
+			for e in node.incident_edges:
+				# import ipdb; ipdb.set_trace()
+				if e.count >= min_count:
+					E.add(e)
+					adjacent_node = e.get_neighbour_node(node)
+					if (not adjacent_node in V) and (not adjacent_node in Q):
+						Q.append(adjacent_node)
 
-while len(node_set) != 0:
-	Q = [node_set.pop()]
-	V = set()
-	E = set()
-	while len(Q) != 0:
-		node = Q.pop(0)
-		V.add(node)
-
-		for e in node.incident_edges:
-			# import ipdb; ipdb.set_trace()
-			if e.count >= min_count:
-				E.add(e)
-				adjacent_node = e.get_neighbour_node(node)
-				if (not adjacent_node in V) and (not adjacent_node in Q):
-					Q.append(adjacent_node)
-
-	node_set -= set(V)
-	g = Graph()
-	# import ipdb; ipdb.set_trace()
-	g.edges = set(E)
-	g.nodes = set(V)
-	graph_list.append(g)
+		node_set -= set(V)
+		g = Graph()
+		# import ipdb; ipdb.set_trace()
+		g.edges = set(E)
+		g.nodes = set(V)
+		graph_list.append(g)
+	return graph_list
 
