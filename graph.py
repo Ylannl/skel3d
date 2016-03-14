@@ -34,7 +34,7 @@ class Edge:
 			return self.start
 
 
-def get_graphs(datadict, min_count=40):
+def get_graphs(datadict, min_count=4):
 	ma_segment = datadict['ma_segment']
 	# datadict['seg_link_flip']
 	seg_link_adj = datadict['seg_link_adj']
