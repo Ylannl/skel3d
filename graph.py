@@ -12,6 +12,9 @@ class Graph:
 	def addNode(self, node):
 		self.nodes.add(node)
 
+	def __str__(self):
+		return str(self.nodes)
+
 class Node:
 	def __init__(self, segment_id):
 		self.segment_id = segment_id
@@ -20,6 +23,9 @@ class Node:
 	def iterate_neighbours(self):
 		for e in self.incident_edges:
 			yield e, e.get_neighbour_node(self)
+
+	def __str__(self):
+		return "node <{}>".format(self.segment_id)
 
 class Edge:
 	def __init__(self, start, end, count):

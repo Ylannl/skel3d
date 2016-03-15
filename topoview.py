@@ -1,4 +1,5 @@
 import math, sys
+# from collections import OrderedDict
 from time import time
 import numpy as np
 from pointio import io_npy
@@ -17,25 +18,36 @@ class MatApp(App):
     def __init__(self, ma, args=[]):
         super(MatApp, self).__init__(args)
         self.ma = ma
-        self.dialog = ToolsDialog(self)
-
         self.graph_programs = []
 
     def run(self):
-        self.topo_find_components()
+        self.draw_graphs()
+        self.dialog = ToolsDialog(self)
         self.dialog.show()
         super(MatApp, self).run()
 
-    def topo_find_components(self, min_count=5):
+    def filter_component_all(self, toggle):
+        for gp in self.graph_programs:
+            gp.is_visible = True
+        self.viewerWindow.render()
+        if toggle==True:
+            self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
 
+    def filter_component(self, index):
+        for gp in self.graph_programs:
+            gp.is_visible = False
+        self.graph_programs[index].is_visible = True
+        self.viewerWindow.render()
+
+    def draw_graphs(self, min_count=5):
         for gp in self.graph_programs:
             gp.delete()
             self.data_programs.pop(gp.program)
         self.graph_programs = []
 
-        graphs = get_graphs(self.ma.D, min_count)
+        self.graphs = get_graphs(self.ma.D, min_count)
 
-        for g in graphs:
+        for g in self.graphs:
             adj_rel_start = []
             adj_rel_end = []
 
@@ -60,7 +72,12 @@ class ToolsDialog(QToolBox):
         self.ui = uic.loadUi('tools.ui', self)
         self.app = app
 
-        self.ui.slider_tcount.valueChanged.connect(self.app.topo_find_components)
+        # populate comboBox_component
+        self.ui.comboBox_component.insertItems(0, ["graph {}".format(i) for i,g in enumerate(self.app.graph_programs)])
+
+        # self.ui.slider_tcount.valueChanged.connect(self.app.topo_find_components)
+        self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
+        self.ui.comboBox_component.activated.connect(self.app.filter_component)
         # import ipdb; ipdb.set_trace()        
 
     def slot_tcount(self, value):
