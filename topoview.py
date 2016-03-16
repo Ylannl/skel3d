@@ -29,6 +29,10 @@ class MatApp(App):
     def filter_component_all(self, toggle):
         for gp in self.graph_programs:
             gp.is_visible = True
+        key = self.viewerWindow.data_programs.keys()[1]
+        self.viewerWindow.data_programs[key].updateAttributes()
+        key = self.viewerWindow.data_programs.keys()[0]
+        self.viewerWindow.data_programs[key].updateAttributes()
         self.viewerWindow.render()
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
@@ -43,8 +47,12 @@ class MatApp(App):
         segment_ids = [n.segment_id for n in g.nodes]
         f = np.in1d(self.ma.D['ma_segment'], segment_ids)
         if f.sum() <1:return
+        # update mat points
         key = self.viewerWindow.data_programs.keys()[1]
         self.viewerWindow.data_programs[key].updateAttributes(filter=f)
+        # update coords
+        key = self.viewerWindow.data_programs.keys()[0]
+        self.viewerWindow.data_programs[key].updateAttributes(filter=np.logical_or(f[:self.ma.m], f[self.ma.m:]))
         self.viewerWindow.render()
 
     def update_radius(self, value):
