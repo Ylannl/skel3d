@@ -39,6 +39,17 @@ class MatApp(App):
         self.graph_programs[index].is_visible = True
         self.viewerWindow.render()
 
+        g = self.graph_programs[self.dialog.ui.comboBox_component.currentIndex()].graph
+        segment_ids = [n.segment_id for n in g.nodes]
+        f = np.in1d(self.ma.D['ma_segment'], segment_ids)
+        if f.sum() <1:return
+        key = self.viewerWindow.data_programs.keys()[1]
+        self.viewerWindow.data_programs[key].updateAttributes(filter=f)
+        self.viewerWindow.render()
+
+    def update_radius(self, value):
+        return
+
     def draw_graphs(self, min_count=5):
         for gp in self.graph_programs:
             gp.delete()
@@ -63,6 +74,7 @@ class MatApp(App):
                     color = tuple(np.random.rand(3)),
                     is_visible=True
                 )
+                p.graph = g
                 self.graph_programs.append(p)
 
 
@@ -75,7 +87,7 @@ class ToolsDialog(QToolBox):
         # populate comboBox_component
         self.ui.comboBox_component.insertItems(0, ["graph {}".format(i) for i,g in enumerate(self.app.graph_programs)])
 
-        # self.ui.slider_tcount.valueChanged.connect(self.app.topo_find_components)
+        self.ui.slider_tcount.valueChanged.connect(self.app.update_radius)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
         # import ipdb; ipdb.set_trace()        
@@ -184,24 +196,33 @@ def view(ma):
 
     c.add_data_source(
         opts=['splat_disk', 'with_normals'],
-        points=ma.D['coords'], normals=ma.D['normals']
+        points=ma.D['coords'], normals=ma.D['normals'],
+        name="Surface points", 
     )
 
     if ma.D.has_key('ma_segment'):
-        f = np.logical_and(ma.D['ma_radii'][:ma.m] < max_r, ma.D['ma_segment'][:ma.m]>0)
+        # f = np.logical_and(ma.D['ma_radii'][:ma.m] < max_r, ma.D['ma_segment'][:ma.m]>0)
+        # c.add_data_source(
+        #     opts=['splat_point', 'with_intensity'],
+        #     points=ma.D['ma_coords'][:ma.m][f], 
+        #     category=ma.D['ma_segment'][:ma.m][f].astype(np.float32),
+        #     colormap='random'
+        # )
+        # f = np.logical_and(ma.D['ma_radii'][ma.m:] < max_r, ma.D['ma_segment'][ma.m:]>0)
+        # c.add_data_source(
+        #     opts=['splat_point', 'with_intensity'],
+        #     points=ma.D['ma_coords'][ma.m:][f], 
+        #     category=ma.D['ma_segment'][ma.m:][f].astype(np.float32),
+        #     colormap='random'
+        # )
+        # f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']>0)
         c.add_data_source(
             opts=['splat_point', 'with_intensity'],
-            points=ma.D['ma_coords'][:ma.m][f], 
-            category=ma.D['ma_segment'][:ma.m][f].astype(np.float32),
+            points=ma.D['ma_coords'], 
+            category=ma.D['ma_segment'].astype(np.float32),
             colormap='random'
         )
-        f = np.logical_and(ma.D['ma_radii'][ma.m:] < max_r, ma.D['ma_segment'][ma.m:]>0)
-        c.add_data_source(
-            opts=['splat_point', 'with_intensity'],
-            points=ma.D['ma_coords'][ma.m:][f], 
-            category=ma.D['ma_segment'][ma.m:][f].astype(np.float32),
-            colormap='random'
-        )
+
     
         f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']==0)
         c.add_data_source(
