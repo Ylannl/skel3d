@@ -95,7 +95,7 @@ class ToolsDialog(QToolBox):
         # populate comboBox_component
         self.ui.comboBox_component.insertItems(0, ["graph {}".format(i) for i,g in enumerate(self.app.graph_programs)])
 
-        self.ui.slider_tcount.valueChanged.connect(self.app.update_radius)
+        # self.ui.slider_tcount.valueChanged.connect(self.app.update_radius)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
         # import ipdb; ipdb.set_trace()        
@@ -104,8 +104,8 @@ class ToolsDialog(QToolBox):
         print 'tcount', value
 
 # INFILE = 'data/scan_npy'
-INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
-# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
+# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 def timeit(func):

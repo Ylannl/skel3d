@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>246</width>
-    <height>252</height>
+    <width>255</width>
+    <height>277</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -26,9 +26,9 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>0</y>
-     <width>246</width>
-     <height>190</height>
+     <y>-51</y>
+     <width>240</width>
+     <height>266</height>
     </rect>
    </property>
    <attribute name="label">
@@ -41,6 +41,13 @@
        <string>Visible layers</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QListWidget" name="listWidget">
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QCheckBox" name="checkBox">
          <property name="text">
@@ -65,6 +72,38 @@
       </layout>
      </widget>
     </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="title">
+       <string>Filters</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="doubleSpinBox_filterRadius">
+         <property name="maximum">
+          <double>500.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.500000000000000</double>
+         </property>
+         <property name="value">
+          <double>150.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBox_filterRadius">
+         <property name="text">
+          <string>Radius (max)</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="TabTopo">
@@ -72,8 +111,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>246</width>
-     <height>190</height>
+     <width>255</width>
+     <height>215</height>
     </rect>
    </property>
    <attribute name="label">
@@ -85,7 +124,7 @@
       <item>
        <widget class="QLabel" name="label_tcount">
         <property name="text">
-         <string>t_count</string>
+         <string>Link count (min)</string>
         </property>
        </widget>
       </item>
@@ -93,16 +132,6 @@
        <widget class="QSpinBox" name="spinBox_tcount">
         <property name="value">
          <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSlider" name="slider_tcount">
-        <property name="value">
-         <number>5</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
@@ -132,34 +161,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>spinBox_tcount</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>slider_tcount</receiver>
-   <slot>setValue(int)</slot>
+   <sender>checkBox_filterRadius</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_filterRadius</receiver>
+   <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>104</x>
-     <y>127</y>
+     <x>78</x>
+     <y>190</y>
     </hint>
     <hint type="destinationlabel">
-     <x>208</x>
-     <y>127</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>slider_tcount</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>spinBox_tcount</receiver>
-   <slot>setValue(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>208</x>
-     <y>127</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>104</x>
-     <y>127</y>
+     <x>180</x>
+     <y>190</y>
     </hint>
    </hints>
   </connection>
