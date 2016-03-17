@@ -27,8 +27,6 @@ class MatApp(App):
     def run(self):
         self.draw_graphs()
         self.dialog = ToolsDialog(self)
-        for item in self.dialog.ui.listWidget_layers.findItems('graph',Qt.MatchStartsWith):
-            item.setSelected(True)
         self.update_radius(150.)
         self.dialog.show()
         super(MatApp, self).run()
@@ -52,7 +50,6 @@ class MatApp(App):
             gp.is_visible = True
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=np.logical_and(self.segment_filter, self.radius_filter))
         self.viewerWindow.data_programs['Surface points'].updateAttributes()
-        self.viewerWindow.render()
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
 
@@ -69,7 +66,19 @@ class MatApp(App):
         # update mat points
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
         # update coords
-        self.viewerWindow.data_programs['Surface points'].updateAttributes(filter=np.logical_or(f[:self.ma.m], f[self.ma.m:]))
+        # self.ma.D['coords'][ f[self.ma.m:] ]
+        # self.ma.D['coords'][ self.ma.D['ma_qidx_in'][f[self.ma.m:]] ]
+
+        # self.ma.D['coords'][ f[:self.ma.m] ]
+        # self.ma.D['coords'][ self.ma.D['ma_qidx_out'][f[:self.ma.m]] ]
+
+        # import ipdb;ipdb.set_trace()
+        # f_ = np.logical_or(f[self.ma.m:], f[self.ma.m:][self.ma.D['ma_qidx_in']])
+        # f_ = np.logical_or(f_, f[:self.ma.m])
+        # f_ = np.logical_or(f_, f[:self.ma.m][self.ma.D['ma_qidx_out']])
+        f_ = np.logical_or(f[:self.ma.m], f[self.ma.m:])
+        self.viewerWindow.data_programs['Surface points'].updateAttributes(filter=f_)
+        self.viewerWindow.center_view(np.mean([ma.segment_centers_dict[i][1] for i in segment_ids], axis=0))
         self.viewerWindow.render()
 
     def update_radius(self, value):
@@ -96,11 +105,14 @@ class MatApp(App):
                     adj_rel_start.append(ma.segment_centers_dict[e.start.segment_id][1])
                     adj_rel_end.append(ma.segment_centers_dict[e.end.segment_id][1])
                 # import ipdb; ipdb.set_trace()
+                # color = np.random.rand(3)
+                # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)
+                color = np.random.uniform(0.3,1.0,3)
                 p = self.add_data_source_line(
                     name = 'graph {}'.format(i),
                     coords_start = np.array(adj_rel_start),
                     coords_end = np.array(adj_rel_end),
-                    color = tuple(np.random.rand(3)),
+                    color = tuple(color),
                     is_visible=True
                 )
                 i+=1
@@ -312,19 +324,22 @@ def view(ma):
     #   color = (1,1,1)
     # )
 
-    # f = ma.D['ma_radii'] < max_r
-    # c.add_data_source_line(
-    #   coords_start = ma.D['ma_coords'][f],
-    #   coords_end = ma.D['ma_bisec'][f]+ma.D['ma_coords'][f]
-    # )
-    # c.add_data_source_line(
-    #   coords_start = ma.D['ma_coords'][f],
-    #   coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[f]
-    # )
-    # c.add_data_source_line(
-    #   coords_start = ma.D['ma_coords'][f],
-    #   coords_end = np.concatenate([ma.D['coords'][ma.D['ma_qidx_in']],ma.D['coords'][ma.D['ma_qidx_out']]])[f]
-    # )
+    f = ma.D['ma_radii'] < max_r
+    c.add_data_source_line(
+      name = 'Bisectors',
+      coords_start = ma.D['ma_coords'][f],
+      coords_end = ma.D['ma_bisec'][f]+ma.D['ma_coords'][f]
+    )
+    c.add_data_source_line(
+      name = 'Primary spokes',
+      coords_start = ma.D['ma_coords'][f],
+      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[f]
+    )
+    c.add_data_source_line(
+      name = 'Secondary spokes',
+      coords_start = ma.D['ma_coords'][f],
+      coords_end = np.concatenate([ma.D['coords'][ma.D['ma_qidx_in']],ma.D['coords'][ma.D['ma_qidx_out']]])[f]
+    )
 
 
     c.run()
