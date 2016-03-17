@@ -10,7 +10,7 @@ from povi import App
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QToolBox
+from PyQt5.QtWidgets import QWidget, QToolBox
 
 
 class MatApp(App):
@@ -19,6 +19,8 @@ class MatApp(App):
         super(MatApp, self).__init__(args)
         self.ma = ma
         self.graph_programs = []
+        self.segment_filter = ma.D['ma_segment']>0
+        self.radius_filter = self.ma.D['ma_radii'] <= 150.
 
         self.viewerWindow.visibility_toggle_listeners.append(self.set_layer_visibility)
 
@@ -27,6 +29,7 @@ class MatApp(App):
         self.dialog = ToolsDialog(self)
         for item in self.dialog.ui.listWidget_layers.findItems('graph',Qt.MatchStartsWith):
             item.setSelected(True)
+        self.update_radius(150.)
         self.dialog.show()
         super(MatApp, self).run()
 
@@ -47,10 +50,8 @@ class MatApp(App):
     def filter_component_all(self, toggle):
         for gp in self.graph_programs:
             gp.is_visible = True
-        key = self.viewerWindow.data_programs.keys()[1]
-        self.viewerWindow.data_programs[key].updateAttributes()
-        key = self.viewerWindow.data_programs.keys()[0]
-        self.viewerWindow.data_programs[key].updateAttributes()
+        self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=np.logical_and(self.segment_filter, self.radius_filter))
+        self.viewerWindow.data_programs['Surface points'].updateAttributes()
         self.viewerWindow.render()
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
@@ -66,14 +67,15 @@ class MatApp(App):
         f = np.in1d(self.ma.D['ma_segment'], segment_ids)
         if f.sum() <1:return
         # update mat points
-        key = self.viewerWindow.data_programs.keys()[1]
-        self.viewerWindow.data_programs[key].updateAttributes(filter=f)
+        self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
         # update coords
-        key = self.viewerWindow.data_programs.keys()[0]
-        self.viewerWindow.data_programs[key].updateAttributes(filter=np.logical_or(f[:self.ma.m], f[self.ma.m:]))
+        self.viewerWindow.data_programs['Surface points'].updateAttributes(filter=np.logical_or(f[:self.ma.m], f[self.ma.m:]))
         self.viewerWindow.render()
 
     def update_radius(self, value):
+        self.radius_filter = self.ma.D['ma_radii'] <= value
+        self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=np.logical_and(self.segment_filter, self.radius_filter))
+        self.viewerWindow.render()
         return
 
     def draw_graphs(self, min_count=5):
@@ -106,7 +108,7 @@ class MatApp(App):
                 self.graph_programs.append(p)
 
 
-class ToolsDialog(QToolBox):
+class ToolsDialog(QWidget):
     def __init__(self, app, parent=None):
         super(ToolsDialog, self).__init__(parent)
         self.ui = uic.loadUi('tools.ui', self)
@@ -123,7 +125,7 @@ class ToolsDialog(QToolBox):
                 l.append(program_name)
         self.ui.listWidget_layers.addItems(l)
 
-        # self.ui.slider_tcount.valueChanged.connect(self.app.update_radius)
+        self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
         self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
