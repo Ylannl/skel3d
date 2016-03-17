@@ -9,6 +9,7 @@ from graph import *
 from povi import App
 
 from PyQt5 import uic
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QToolBox
 
 
@@ -19,11 +20,29 @@ class MatApp(App):
         self.ma = ma
         self.graph_programs = []
 
+        self.viewerWindow.visibility_toggle_listeners.append(self.set_layer_visibility)
+
     def run(self):
         self.draw_graphs()
         self.dialog = ToolsDialog(self)
+        for item in self.dialog.ui.listWidget_layers.findItems('graph',Qt.MatchStartsWith):
+            item.setSelected(True)
         self.dialog.show()
         super(MatApp, self).run()
+
+    def set_layer_visibility(self, name, is_visible):
+        items = self.dialog.ui.listWidget_layers.findItems(name,Qt.MatchExactly)
+        for item in items:
+            item.setSelected(is_visible)
+
+    def set_layer_selection(self):
+        selected_names = [item.data(0) for item in self.dialog.ui.listWidget_layers.selectedItems()]
+        for name, program in self.viewerWindow.data_programs.iteritems():
+            if name in selected_names:
+                program.is_visible = True
+            elif not name.startswith('graph'):
+                program.is_visible = False
+        self.viewerWindow.render()
 
     def filter_component_all(self, toggle):
         for gp in self.graph_programs:
@@ -98,12 +117,17 @@ class ToolsDialog(QToolBox):
 
         # populate datalayers list
         # print self.app.viewerWindow.data_programs.keys()
-        self.ui.listWidget_layers.addItems(self.app.viewerWindow.data_programs.keys())
+        l=[]
+        for program_name in self.app.viewerWindow.data_programs.keys():
+            if not program_name.startswith('graph'):
+                l.append(program_name)
+        self.ui.listWidget_layers.addItems(l)
 
         # self.ui.slider_tcount.valueChanged.connect(self.app.update_radius)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
-        # import ipdb; ipdb.set_trace()        
+        self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
+        # import ipdb; ipdb.set_trace()
 
     def slot_tcount(self, value):
         print 'tcount', value
