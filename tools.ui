@@ -20,15 +20,15 @@
    <string>Tools</string>
   </property>
   <property name="currentIndex">
-   <number>1</number>
+   <number>0</number>
   </property>
   <widget class="QWidget" name="page_2">
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>-51</y>
-     <width>240</width>
-     <height>266</height>
+     <y>0</y>
+     <width>255</width>
+     <height>215</height>
     </rect>
    </property>
    <attribute name="label">
@@ -42,30 +42,9 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QListWidget" name="listWidget">
+        <widget class="QListWidget" name="listWidget_layers">
          <property name="alternatingRowColors">
           <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox">
-         <property name="text">
-          <string>Surface points</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_2">
-         <property name="text">
-          <string>MAT points</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkBox_3">
-         <property name="text">
-          <string>MAT bisectors</string>
          </property>
         </widget>
        </item>

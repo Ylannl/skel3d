@@ -1,5 +1,4 @@
 import math, sys
-# from collections import OrderedDict
 from time import time
 import numpy as np
 from pointio import io_npy
@@ -66,6 +65,7 @@ class MatApp(App):
 
         self.graphs = get_graphs(self.ma.D, min_count)
 
+        i=0
         for g in self.graphs:
             adj_rel_start = []
             adj_rel_end = []
@@ -76,12 +76,13 @@ class MatApp(App):
                     adj_rel_end.append(ma.segment_centers_dict[e.end.segment_id][1])
                 # import ipdb; ipdb.set_trace()
                 p = self.add_data_source_line(
+                    name = 'graph {}'.format(i),
                     coords_start = np.array(adj_rel_start),
                     coords_end = np.array(adj_rel_end),
-
                     color = tuple(np.random.rand(3)),
                     is_visible=True
                 )
+                i+=1
                 p.graph = g
                 self.graph_programs.append(p)
 
@@ -95,6 +96,10 @@ class ToolsDialog(QToolBox):
         # populate comboBox_component
         self.ui.comboBox_component.insertItems(0, ["graph {}".format(i) for i,g in enumerate(self.app.graph_programs)])
 
+        # populate datalayers list
+        # print self.app.viewerWindow.data_programs.keys()
+        self.ui.listWidget_layers.addItems(self.app.viewerWindow.data_programs.keys())
+
         # self.ui.slider_tcount.valueChanged.connect(self.app.update_radius)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
@@ -104,8 +109,8 @@ class ToolsDialog(QToolBox):
         print 'tcount', value
 
 # INFILE = 'data/scan_npy'
-# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
-INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
+INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 def timeit(func):
@@ -203,9 +208,9 @@ def view(ma):
     c = MatApp(ma)
 
     c.add_data_source(
+        name = 'Surface points',
         opts=['splat_disk', 'with_normals'],
         points=ma.D['coords'], normals=ma.D['normals'],
-        name="Surface points", 
     )
 
     if ma.D.has_key('ma_segment'):
@@ -225,6 +230,7 @@ def view(ma):
         # )
         # f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']>0)
         c.add_data_source(
+            name = 'MAT points',
             opts=['splat_point', 'with_intensity'],
             points=ma.D['ma_coords'], 
             category=ma.D['ma_segment'].astype(np.float32),
@@ -234,6 +240,7 @@ def view(ma):
     
         f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']==0)
         c.add_data_source(
+            name = 'MAT points remainder',
             opts = ['splat_point', 'blend'],
             points=ma.D['ma_coords'][f]
         )
@@ -251,11 +258,13 @@ def view(ma):
 
     f = seg_cnts!=1
     c.add_data_source(
+        name = 'Segment centers',
         opts = ['splat_point'],
         points = seg_centers[f]
     )
     if len(flip_rel_start)>0:
         c.add_data_source_line(
+            name = 'Flip relations',
             coords_start = flip_rel_start,
             coords_end = flip_rel_end
         )
@@ -263,6 +272,7 @@ def view(ma):
     if len(adj_rel_start)>0:
         f = seg_cnts!=1
         c.add_data_source_line(
+            name = 'Adjacency relations',
             coords_start = adj_rel_start,
             coords_end = adj_rel_end,
             color = (0,1,0)
