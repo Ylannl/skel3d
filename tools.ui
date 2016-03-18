@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>250</width>
-    <height>425</height>
+    <width>275</width>
+    <height>475</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>250</width>
-    <height>425</height>
+    <width>275</width>
+    <height>475</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -46,26 +46,22 @@
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="1" column="0">
-       <widget class="QLabel" name="label_tcount">
+       <widget class="QLabel" name="label_linkcount">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Link count (min)</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_radius">
-        <property name="text">
-         <string>Radius (max)</string>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="2">
-       <widget class="QSpinBox" name="spinBox_tcount">
+       <widget class="QSpinBox" name="spinBox_linkcount">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
+        </property>
+        <property name="maximum">
+         <number>1000</number>
         </property>
         <property name="value">
          <number>5</number>
@@ -82,6 +78,20 @@
         </property>
         <property name="value">
          <double>150.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_radius">
+        <property name="text">
+         <string>Radius (max)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QPushButton" name="pushButton_regraph">
+        <property name="text">
+         <string>Components</string>
         </property>
        </widget>
       </item>

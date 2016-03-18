@@ -14,9 +14,6 @@ from PyQt5.QtWidgets import QWidget, QToolBox
 
 # todo:
 # - clipping planes
-# - link count filter
-# - connected component recompute
-# - conncected component recompute
 
 class MatApp(App):
 
@@ -30,11 +27,18 @@ class MatApp(App):
         self.viewerWindow.visibility_toggle_listeners.append(self.set_layer_visibility)
 
     def run(self):
-        self.draw_graphs()
         self.dialog = ToolsDialog(self)
+        self.draw_graphs()
         self.update_radius(150.)
         self.dialog.show()
         super(MatApp, self).run()
+
+    def filter_linkcount(self, value):
+        f = ma.D['seg_link_adj'][:,2] >= value
+        self.viewerWindow.data_programs['Adjacency relations'].updateAttributes(filter=np.repeat(f,2))
+        # f = ma.D['seg_link_flip'][:,2] >= value
+        # self.viewerWindow.data_programs['Flip relations'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.render()
 
     def set_layer_visibility(self, name, is_visible):
         items = self.dialog.ui.listWidget_layers.findItems(name,Qt.MatchExactly)
@@ -97,12 +101,16 @@ class MatApp(App):
         self.viewerWindow.render()
         return
 
-    def draw_graphs(self, min_count=200):
-        for gp in self.graph_programs:
+    def draw_graphs(self):
+        for i, gp in enumerate(self.graph_programs):
             gp.delete()
-            self.data_programs.pop(gp.program)
+            self.data_programs.pop(gp.name)
+        self.dialog.ui.comboBox_component.clear()
+        self.dialog.ui.groupBox_component.setChecked(False)
+        self.filter_component_all(False)
         self.graph_programs = []
 
+        min_count = self.dialog.ui.spinBox_linkcount.value()
         self.graphs = get_graphs(self.ma.D, min_count)
 
         i=0
@@ -128,6 +136,10 @@ class MatApp(App):
                 i+=1
                 p.graph = g
                 self.graph_programs.append(p)
+        self.viewerWindow.render()
+
+        # populate comboBox_component
+        self.dialog.ui.comboBox_component.insertItems(0, [gp.name for gp in self.graph_programs])
 
 
 class ToolsDialog(QWidget):
@@ -136,8 +148,7 @@ class ToolsDialog(QWidget):
         self.ui = uic.loadUi('tools.ui', self)
         self.app = app
 
-        # populate comboBox_component
-        self.ui.comboBox_component.insertItems(0, ["graph {}".format(i) for i,g in enumerate(self.app.graph_programs)])
+        
 
         # populate datalayers list
         # print self.app.viewerWindow.data_programs.keys()
@@ -148,6 +159,8 @@ class ToolsDialog(QWidget):
         self.ui.listWidget_layers.addItems(l)
 
         self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
+        self.ui.spinBox_linkcount.valueChanged.connect(self.app.filter_linkcount)
+        self.ui.pushButton_regraph.clicked.connect(self.app.draw_graphs)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
         self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
@@ -247,8 +260,8 @@ def view(ma):
     adj_rel_start = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
     adj_rel_end = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
     i=0
-    f = ma.D['seg_link_adj'][:,2] > min_link_adj
-    for s,e in ma.D['seg_link_adj'][:,:2][f]:
+    # f = ma.D['seg_link_adj'][:,2] > min_link_adj
+    for s,e in ma.D['seg_link_adj'][:,:2]:
         adj_rel_start[i] = segment_centers_dict[s][1]
         adj_rel_end[i] = segment_centers_dict[e][1]
         i+=1
