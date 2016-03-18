@@ -12,6 +12,11 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QToolBox
 
+# todo:
+# - clipping planes
+# - link count filter
+# - connected component recompute
+# - conncected component recompute
 
 class MatApp(App):
 
