@@ -145,7 +145,7 @@ class RegionGrower(object):
 			print min(angles/math.pi * 180)
 			# import ipdb; ipdb.set_trace()
 
-def perform_segmentation_bisec(mah, bisec_thres, k):
+def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE):
 	# find segments based on similiraty in bisector orientation
 	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec')
 	seedpoints = list( np.random.permutation(R.m) )
@@ -166,7 +166,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k):
 	ma_segment= R.ma_segment
 
 	D['ma_segment'] = ma_segment
-	io_npy.write_npy(INFILE, D, ['ma_segment'])
+	io_npy.write_npy(infile, D, ['ma_segment'])
 
 # def perform_segmentation_normal(mah):	
 # 	R = RegionGrower(mah, method='normal')
@@ -180,7 +180,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k):
 # 	D['ma_segment'] = R.ma_segment
 # 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
-def find_relations(ma):
+def find_relations(ma, infile=INFILE):
 	"""
 	Find topological relations between segments. Output for each relation: 
 		(segment_1, segment_2, count)
@@ -257,7 +257,7 @@ def find_relations(ma):
 		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
 
-	io_npy.write_npy(INFILE, ma.D, ['seg_link_flip', 'seg_link_adj'])
+	io_npy.write_npy(infile, ma.D, ['seg_link_flip', 'seg_link_adj'])
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Basic PCA normal approximation')
@@ -269,6 +269,6 @@ if __name__ == '__main__':
 
 	D = io_npy.read_npy(args.infile)
 	mah = MAHelper(D)
-	perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k)
+	perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile)
 	if args.topo:
-		find_relations(mah)
+		find_relations(mah, infile=args.infile)

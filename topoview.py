@@ -48,6 +48,7 @@ class MatApp(App):
     def filter_component_all(self, toggle):
         for gp in self.graph_programs:
             gp.is_visible = True
+        self.viewerWindow.data_programs['Surface points'].updateAttributes()
         self.update_radius(self.radius_value)
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
@@ -84,13 +85,14 @@ class MatApp(App):
         self.radius_filter = self.ma.D['ma_radii'] <= self.radius_value 
         f=np.logical_and(self.segment_filter, self.radius_filter)
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
+        self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
         f=np.repeat(f,2)
         self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=f)
         self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=f)
         self.viewerWindow.render()
         return
 
-    def draw_graphs(self, min_count=3):
+    def draw_graphs(self, min_count=200):
         for gp in self.graph_programs:
             gp.delete()
             self.data_programs.pop(gp.program)
