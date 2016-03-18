@@ -50,6 +50,9 @@ class MatApp(App):
             gp.is_visible = True
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=np.logical_and(self.segment_filter, self.radius_filter))
         self.viewerWindow.data_programs['Surface points'].updateAttributes()
+        self.viewerWindow.data_programs['Bisectors'].updateAttributes()
+        self.viewerWindow.data_programs['Primary spokes'].updateAttributes()
+        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes()
         self.viewerWindow.render()
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
@@ -83,7 +86,11 @@ class MatApp(App):
 
     def update_radius(self, value):
         self.radius_filter = self.ma.D['ma_radii'] <= value
-        self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=np.logical_and(self.segment_filter, self.radius_filter))
+        f=np.logical_and(self.segment_filter, self.radius_filter)
+        self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
+        f=np.repeat(f,2)
+        self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=f)
+        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=f)
         self.viewerWindow.render()
         return
 
