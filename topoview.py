@@ -50,6 +50,7 @@ class MatApp(App):
             gp.is_visible = True
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=np.logical_and(self.segment_filter, self.radius_filter))
         self.viewerWindow.data_programs['Surface points'].updateAttributes()
+        self.viewerWindow.render()
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
 
@@ -57,28 +58,27 @@ class MatApp(App):
         for gp in self.graph_programs:
             gp.is_visible = False
         self.graph_programs[index].is_visible = True
-        self.viewerWindow.render()
-
+        
         g = self.graph_programs[self.dialog.ui.comboBox_component.currentIndex()].graph
         segment_ids = [n.segment_id for n in g.nodes]
+        self.viewerWindow.center_view(np.mean([ma.segment_centers_dict[i][1] for i in segment_ids], axis=0))
+        self.viewerWindow.render()
+
         f = np.in1d(self.ma.D['ma_segment'], segment_ids)
         if f.sum() <1:return
         # update mat points
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
+        self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=np.repeat(f,2))
         # update coords
-        # self.ma.D['coords'][ f[self.ma.m:] ]
-        # self.ma.D['coords'][ self.ma.D['ma_qidx_in'][f[self.ma.m:]] ]
-
-        # self.ma.D['coords'][ f[:self.ma.m] ]
-        # self.ma.D['coords'][ self.ma.D['ma_qidx_out'][f[:self.ma.m]] ]
-
-        # import ipdb;ipdb.set_trace()
-        # f_ = np.logical_or(f[self.ma.m:], f[self.ma.m:][self.ma.D['ma_qidx_in']])
-        # f_ = np.logical_or(f_, f[:self.ma.m])
-        # f_ = np.logical_or(f_, f[:self.ma.m][self.ma.D['ma_qidx_out']])
-        f_ = np.logical_or(f[:self.ma.m], f[self.ma.m:])
-        self.viewerWindow.data_programs['Surface points'].updateAttributes(filter=f_)
-        self.viewerWindow.center_view(np.mean([ma.segment_centers_dict[i][1] for i in segment_ids], axis=0))
+        # find indices of all surface points related to these mat points
+        f_s1 = np.concatenate([np.arange(self.ma.m), np.arange(self.ma.m)])
+        f_s1 = f_s1[f]
+        f_s2 = self.ma.D['ma_qidx'][f]
+        self.viewerWindow.data_programs['Surface points'].updateAttributes(filter=np.concatenate([f_s1,f_s2]))
+        
+        
         self.viewerWindow.render()
 
     def update_radius(self, value):
@@ -87,7 +87,7 @@ class MatApp(App):
         self.viewerWindow.render()
         return
 
-    def draw_graphs(self, min_count=5):
+    def draw_graphs(self, min_count=3):
         for gp in self.graph_programs:
             gp.delete()
             self.data_programs.pop(gp.program)
@@ -100,7 +100,7 @@ class MatApp(App):
             adj_rel_start = []
             adj_rel_end = []
 
-            if 0<len(g.edges)<1000:
+            if 0<len(g.edges):#<1000:
                 for e in g.edges:           
                     adj_rel_start.append(ma.segment_centers_dict[e.start.segment_id][1])
                     adj_rel_end.append(ma.segment_centers_dict[e.end.segment_id][1])
@@ -324,21 +324,21 @@ def view(ma):
     #   color = (1,1,1)
     # )
 
-    f = ma.D['ma_radii'] < max_r
+    # f = ma.D['ma_radii'] < max_r
     c.add_data_source_line(
       name = 'Bisectors',
-      coords_start = ma.D['ma_coords'][f],
-      coords_end = ma.D['ma_bisec'][f]+ma.D['ma_coords'][f]
+      coords_start = ma.D['ma_coords'],
+      coords_end = ma.D['ma_bisec']+ma.D['ma_coords']
     )
     c.add_data_source_line(
       name = 'Primary spokes',
-      coords_start = ma.D['ma_coords'][f],
-      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[f]
+      coords_start = ma.D['ma_coords'],
+      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])
     )
     c.add_data_source_line(
       name = 'Secondary spokes',
-      coords_start = ma.D['ma_coords'][f],
-      coords_end = np.concatenate([ma.D['coords'][ma.D['ma_qidx_in']],ma.D['coords'][ma.D['ma_qidx_out']]])[f]
+      coords_start = ma.D['ma_coords'],
+      coords_end = np.concatenate([ma.D['coords'][ma.D['ma_qidx_in']],ma.D['coords'][ma.D['ma_qidx_out']]])
     )
 
 

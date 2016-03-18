@@ -5,10 +5,16 @@ from pointio import io_npy
 from ma_util import MAHelper
 import argparse
 
+from pykdtree.kdtree import KDTree
+
 # INFILE = 'data/scan_npy'
 INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
+
+def get_neighbours_ma(data, k=15):
+    kdt_ma = KDTree(data)
+    return kdt_ma.query(data, k)
 
 class RegionGrower(object):
 	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points. Note that interior & exterior MAT points are concatenated and not treated separately."""
@@ -27,15 +33,15 @@ class RegionGrower(object):
 		self.p_mincount = 10
 
 		self.mah = mah
-		self.filt = self.mah.D['ma_radii'] < 190.
+		# self.filt = self.mah.D['ma_radii'] < 190.
 
-		self.ma_coords = self.mah.D['ma_coords'][self.filt]
+		self.ma_coords = self.mah.D['ma_coords']
 		# self.mah.D['m']
-		self.m = self.ma_coords.shape[0]
-		self.ma_bisec = self.mah.D['ma_bisec'][self.filt]
-		self.ma_theta = self.mah.D['ma_theta'][self.filt]
+		self.m = self.mah.m*2
+		self.ma_bisec = self.mah.D['ma_bisec']
+		self.ma_theta = self.mah.D['ma_theta']
 
-		self.neighbours_dist, self.neighbours_idx = self.mah.get_neighbours_ma(self.filt, self.p_k)
+		self.neighbours_dist, self.neighbours_idx = get_neighbours_ma(self.ma_coords, self.p_k)
 		# self.estimate_normals()
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
@@ -157,7 +163,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k):
 	print np.unique(R.ma_segment, return_counts=True)
 
 	ma_segment = np.zeros(R.mah.m*2, dtype=np.int64)
-	ma_segment[R.filt] = R.ma_segment
+	ma_segment= R.ma_segment
 
 	D['ma_segment'] = ma_segment
 	io_npy.write_npy(INFILE, D, ['ma_segment'])
@@ -210,7 +216,7 @@ def find_relations(ma):
 		"""find pairs of adjacent segments
 		"""
 		filt = ma.D['ma_segment'] != -10
-		neighbours_dist, neighbours_idx = ma.get_neighbours_ma(filt)
+		neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords'][filt])
 		pdict = {}
 
 		for i in np.arange(ma.m*2):
