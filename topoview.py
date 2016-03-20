@@ -148,8 +148,6 @@ class ToolsDialog(QWidget):
         self.ui = uic.loadUi('tools.ui', self)
         self.app = app
 
-        
-
         # populate datalayers list
         # print self.app.viewerWindow.data_programs.keys()
         l=[]
