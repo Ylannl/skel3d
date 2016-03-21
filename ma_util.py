@@ -1,5 +1,8 @@
 # from pointio import io_npy
+from numpy import array, zeros, empty, invert, concatenate, nanmax, isnan
 import numpy as np
+from pykdtree.kdtree import KDTree
+from pyflann import FLANN
 
 class MAHelper(object):
 
@@ -44,3 +47,50 @@ class MAHelper(object):
         self.D['ma_theta'] = np.concatenate([self.D['ma_theta_in'], self.D['ma_theta_out']])
         self.D['ma_radii'] = np.concatenate([self.D['ma_radii_in'], self.D['ma_radii_out']])
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
+
+
+    def compute_lfs(self, k=10):
+        # collect all ma_coords that are not NaN
+        ma_coords = concatenate([self.D['ma_coords_in'][invert(self.filtered['in'])], self.D['ma_coords_out'][invert(self.filtered['out'])]])
+        ma_coords = ma_coords[~np.isnan(ma_coords).any(axis=1)]
+
+        kd_tree = KDTree(ma_coords)
+        # we can get *squared* distances for free, so take the square root
+        if k > 1:
+            self.D['lfs'] = np.sqrt(np.median(kd_tree.query(self.D['coords'], k)[0], axis=1))
+        else:
+            self.D['lfs'] = np.sqrt(kd_tree.query(self.D['coords'], k)[0])
+
+    def decimate_lfs(self, m, max_pointspacing=None, scramble = False, sort = False, squared=False):
+
+        if not hasattr(self, 'flann_tree'):
+            self.flann_tree = FLANN()
+            self.flann_tree.build_index(self.D['coords'])#, algorithm='linear'
+        self.D['decimate_lfs'] = zeros(self.m) == True
+
+        order = np.arange(self.m)
+        plfs = zip(order, self.D['coords'], self.D['lfs'])
+
+        if scramble: 
+            from random import shuffle
+            shuffle( plfs )
+        if sort:
+            plfs.sort(key = lambda item: item[2])
+            plfs.reverse()
+
+        for i, p, lfs in plfs:
+            if squared:
+                lfs = lfs**2
+            if max_pointspacing is None:
+                rho = lfs*m
+            else:
+                rho = min(lfs*m, max_pointspacing)
+
+            qts = self.flann_tree.nn_radius(p, rho**2)[0][1:]
+            qts = order[qts]
+            
+            # qts = self.flann_tree.nn_index(p, 6)[0][1:]
+            
+            iqts = invert(self.D['decimate_lfs'][qts])
+            if iqts.any():
+                self.D['decimate_lfs'][i] = True
