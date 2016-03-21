@@ -48,7 +48,13 @@ class MAHelper(object):
         self.D['ma_radii'] = np.concatenate([self.D['ma_radii_in'], self.D['ma_radii_out']])
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
 
+        self.filtered = {}
+        self.reset_filter()
 
+    def reset_filter(self):
+        self.filtered['in'] = zeros(self.m) == True
+        self.filtered['out'] = zeros(self.m) == True
+        
     def compute_lfs(self, k=10):
         # collect all ma_coords that are not NaN
         ma_coords = concatenate([self.D['ma_coords_in'][invert(self.filtered['in'])], self.D['ma_coords_out'][invert(self.filtered['out'])]])
