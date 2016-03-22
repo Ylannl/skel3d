@@ -19,7 +19,7 @@ def get_neighbours_ma(data, k=15):
 class RegionGrower(object):
 	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points. Note that interior & exterior MAT points are concatenated and not treated separately."""
 
-	def __init__(self, mah, bisec_thres=5.0, k=10, method = 'bisec'):
+	def __init__(self, mah, bisec_thres=5.0, k=10, only_interior=False, method = 'bisec'):
 		if method == 'bisec':
 			self.valid_candidate = self.valid_candidate_bisec # or 'normal'
 		else:
@@ -35,11 +35,18 @@ class RegionGrower(object):
 		self.mah = mah
 		# self.filt = self.mah.D['ma_radii'] < 190.
 
-		self.ma_coords = self.mah.D['ma_coords']
-		# self.mah.D['m']
-		self.m = self.mah.m*2
-		self.ma_bisec = self.mah.D['ma_bisec']
-		self.ma_theta = self.mah.D['ma_theta']
+		if only_interior:
+			self.ma_coords = self.mah.D['ma_coords_in']
+			# self.mah.D['m']
+			self.m = self.mah.m
+			self.ma_bisec = self.mah.D['ma_bisec_in']
+			self.ma_theta = self.mah.D['ma_theta_in']
+		else:
+			self.ma_coords = self.mah.D['ma_coords']
+			# self.mah.D['m']
+			self.m = self.mah.m*2
+			self.ma_bisec = self.mah.D['ma_bisec']
+			self.ma_theta = self.mah.D['ma_theta']
 
 		self.neighbours_dist, self.neighbours_idx = get_neighbours_ma(self.ma_coords, self.p_k)
 		# self.estimate_normals()
@@ -145,9 +152,9 @@ class RegionGrower(object):
 			print min(angles/math.pi * 180)
 			# import ipdb; ipdb.set_trace()
 
-def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE):
+def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	# find segments based on similiraty in bisector orientation
-	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec')
+	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec', **args)
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
@@ -180,7 +187,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE):
 # 	D['ma_segment'] = R.ma_segment
 # 	io_npy.write_npy(INFILE, D, ['ma_segment'])
 
-def find_relations(ma, infile=INFILE):
+def find_relations(ma, infile=INFILE, only_interior=False):
 	"""
 	Find topological relations between segments. Output for each relation: 
 		(segment_1, segment_2, count)
@@ -215,11 +222,15 @@ def find_relations(ma, infile=INFILE):
 	def find_adjacency_relations():
 		"""find pairs of adjacent segments
 		"""
-		filt = ma.D['ma_segment'] != -10
-		neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords'][filt])
+		if only_interior:
+			neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords_in'])
+			m=ma.m
+		else:
+			neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords'])
+			m=ma.m*2
 		pdict = {}
 
-		for i in np.arange(ma.m*2):
+		for i in np.arange(m):
 			seg_id = ma.D['ma_segment'][i]
 
 			neighbours = neighbours_idx[i][1:]
@@ -243,12 +254,15 @@ def find_relations(ma, infile=INFILE):
 		# import ipdb; ipdb.set_trace()
 		return pdict
 
-	flip_relations = find_flip_relations()
-	ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
-	i=0
-	for (s, e), cnt in flip_relations.iteritems():
-		ma.D['seg_link_flip'][i] = [s,e,cnt]
-		i+=1
+
+	if not only_interior:
+		flip_relations = find_flip_relations()
+		ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
+		i=0
+		for (s, e), cnt in flip_relations.iteritems():
+			ma.D['seg_link_flip'][i] = [s,e,cnt]
+			i+=1
+		io_npy.write_npy(infile, ma.D, ['seg_link_flip'])
 
 	adj_relations = find_adjacency_relations()
 	ma.D['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
@@ -256,8 +270,7 @@ def find_relations(ma, infile=INFILE):
 	for (s, e), cnt in adj_relations.iteritems():
 		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
-
-	io_npy.write_npy(infile, ma.D, ['seg_link_flip', 'seg_link_adj'])
+	io_npy.write_npy(infile, ma.D, ['seg_link_adj'])
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Basic PCA normal approximation')
@@ -265,10 +278,11 @@ if __name__ == '__main__':
 	parser.add_argument('-k', help='Number of neighbours to use', default=10, type=int)
 	parser.add_argument('-b', help='Bisec threshold in degrees', default=5.0, type=float)
 	parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
+	parser.add_argument('--interior', help='Only use interior MAT', dest='interior', action='store_true')
 	args = parser.parse_args()
 
 	D = io_npy.read_npy(args.infile)
 	mah = MAHelper(D)
-	perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile)
+	perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile, only_interior=args.interior)
 	if args.topo:
-		find_relations(mah, infile=args.infile)
+		find_relations(mah, infile=args.infile, only_interior=args.interior)

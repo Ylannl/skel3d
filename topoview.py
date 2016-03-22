@@ -367,7 +367,8 @@ def view(ma):
 
 if __name__ == '__main__':
     if len(sys.argv)>1:
-        INFILE = sys.argv[1]
+        INFILE = sys.argv[-1]
+    # import ipdb;ipdb.set_trace()
     datadict = io_npy.read_npy(INFILE)
     ma = MAHelper(datadict, origin=True)
 

@@ -55,9 +55,12 @@ class MAHelper(object):
         self.filtered['in'] = zeros(self.m) == True
         self.filtered['out'] = zeros(self.m) == True
         
-    def compute_lfs(self, k=10):
+    def compute_lfs(self, k=10, only_interior=False):
         # collect all ma_coords that are not NaN
-        ma_coords = concatenate([self.D['ma_coords_in'][invert(self.filtered['in'])], self.D['ma_coords_out'][invert(self.filtered['out'])]])
+        if only_interior:
+            ma_coords = self.D['ma_coords_in'][invert(self.filtered['in'])]
+        else:
+            ma_coords = concatenate([self.D['ma_coords_in'][invert(self.filtered['in'])], self.D['ma_coords_out'][invert(self.filtered['out'])]])
         ma_coords = ma_coords[~np.isnan(ma_coords).any(axis=1)]
 
         kd_tree = KDTree(ma_coords)
