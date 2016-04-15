@@ -168,8 +168,8 @@ class ToolsDialog(QWidget):
         print 'tcount', value
 
 # INFILE = 'data/scan_npy'
-INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
-# INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
+# INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
+INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
 def timeit(func):
