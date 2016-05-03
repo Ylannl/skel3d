@@ -29,19 +29,20 @@ int main(int argc, const char * argv[])
 {
     try {
         
-        TCLAP::CmdLine cmd("Triangulate points, generate obj", ' ', "none", false);
+        TCLAP::CmdLine cmd("Compute distances between a full point cloud and a triangulation of a simplified point cloud", ' ', "none", false);
         
         // TCLAP::ValueArg<int> sArg("s","smooth","Number of times to smooth",true,2,"int", cmd);
         // TCLAP::SwitchArg uSwitch("u","unsafe","Smooth without attempting to respect bathymetric safety constraint", cmd, false);
         
         
-        TCLAP::UnlabeledValueArg<std::string> inputArg( "input", "path to .xyz file", true, "", "input file", cmd);
-        TCLAP::UnlabeledValueArg<std::string> outputArg( "ouput", "path to output", true, "", "output file", cmd);
+        TCLAP::UnlabeledValueArg<std::string> inputCoordsArg( "coords", "path to npy file with coords", true, "", "coords input", cmd);
+        TCLAP::UnlabeledValueArg<std::string> inputMaskArg( "mask", "path to npy file with mask", true, "", "mask input", cmd);
+        TCLAP::UnlabeledValueArg<std::string> outputErrorArg( "output", "path to npy output file ", true, "", "error output", cmd);
         cmd.parse(argc,argv);
 
-        std::string input_coords_path = inputArg.getValue()+"/coords.npy";
-        std::string input_mask_path = inputArg.getValue()+"/decimate_lfs.npy";
-        std::string output_error_path = inputArg.getValue()+"/decimate_error.npy";
+        std::string input_coords_path = inputCoordsArg.getValue();
+        std::string input_mask_path = inputMaskArg.getValue();
+        std::string output_error_path = outputErrorArg.getValue();
 
         cnpy::NpyArray coords_npy = cnpy::npy_load( input_coords_path.c_str() );
         float* coords_carray = reinterpret_cast<float*>(coords_npy.data);
@@ -74,7 +75,7 @@ int main(int argc, const char * argv[])
           cnpy::npy_save(output_error_path.c_str(), out, shape, 2, "w");
         }
 
-        cp.dumpOBJ(outputArg.getValue().c_str());
+        // cp.dumpOBJ(outputArg.getValue().c_str());
         delete[] coords_filterd; coords_filterd = NULL;
         delete[] out; out = NULL;
         coords_npy.destruct();
