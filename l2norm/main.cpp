@@ -31,13 +31,14 @@ int main(int argc, const char * argv[])
         
         TCLAP::CmdLine cmd("Compute distances between a full point cloud and a triangulation of a simplified point cloud", ' ', "none", false);
         
-        // TCLAP::ValueArg<int> sArg("s","smooth","Number of times to smooth",true,2,"int", cmd);
+        TCLAP::ValueArg<std::string> objArg("o","obj","output triangulation to .obj",false,"tri.obj","string", cmd);
         // TCLAP::SwitchArg uSwitch("u","unsafe","Smooth without attempting to respect bathymetric safety constraint", cmd, false);
         
         
         TCLAP::UnlabeledValueArg<std::string> inputCoordsArg( "coords", "path to npy file with coords", true, "", "coords input", cmd);
-        TCLAP::UnlabeledValueArg<std::string> inputMaskArg( "mask", "path to npy file with mask", true, "", "mask input", cmd);
+        TCLAP::UnlabeledValueArg<std::string> inputMaskArg( "simpcoords", "path to npy simplified coords", true, "", "simp coords input", cmd);
         TCLAP::UnlabeledValueArg<std::string> outputErrorArg( "output", "path to npy output file ", true, "", "error output", cmd);
+        TCLAP::SwitchArg maskSwitch("m","mask","simplfified coords as binary mask", cmd, false);
         cmd.parse(argc,argv);
 
         std::string input_coords_path = inputCoordsArg.getValue();
@@ -46,26 +47,33 @@ int main(int argc, const char * argv[])
 
         cnpy::NpyArray coords_npy = cnpy::npy_load( input_coords_path.c_str() );
         float* coords_carray = reinterpret_cast<float*>(coords_npy.data);
-
-        cnpy::NpyArray mask_npy = cnpy::npy_load( input_mask_path.c_str() );
-        bool* mask_carray = reinterpret_cast<bool*>(mask_npy.data);
-
         int m = coords_npy.shape[0];
-
+        
+        float *coords_filtered;
         int count=0;
-        for (int i=0; i<m; i++) if (mask_carray[i]) count++;
+        if (maskSwitch.getValue()) {   
+            cnpy::NpyArray mask_npy = cnpy::npy_load( input_mask_path.c_str() );
+            bool* mask_carray = reinterpret_cast<bool*>(mask_npy.data);
 
-        float *coords_filterd = new float[count*3];
+            for (int i=0; i<m; i++) if (mask_carray[i]) count++;
 
-        int cntr = 0;
-        for (int i=0; i<m; i++)
-            if (mask_carray[i]){
-                for (int j=0; j<3; j++)
-                    coords_filterd[3*cntr+j] = coords_carray[i*3+j];
-                cntr++;
-            }
+            coords_filtered = new float[count*3];
 
-        CgalProcessor cp(coords_filterd, count);
+            int cntr = 0;
+            for (int i=0; i<m; i++)
+                if (mask_carray[i]){
+                    for (int j=0; j<3; j++)
+                        coords_filtered[3*cntr+j] = coords_carray[i*3+j];
+                    cntr++;
+                }
+            mask_npy.destruct();
+        } else {
+            cnpy::NpyArray coords_filtered_npy = cnpy::npy_load( input_coords_path.c_str() );
+            coords_filtered = reinterpret_cast<float*>(coords_filtered_npy.data);
+            count = coords_npy.shape[0];
+        }
+        
+        CgalProcessor cp(coords_filtered, count);
 
         float *out = new float[m*3];
         cp.metricL2potri(coords_carray, m, out);
@@ -75,11 +83,12 @@ int main(int argc, const char * argv[])
           cnpy::npy_save(output_error_path.c_str(), out, shape, 2, "w");
         }
 
-        // cp.dumpOBJ(outputArg.getValue().c_str());
-        delete[] coords_filterd; coords_filterd = NULL;
+        if (objArg.isSet())
+            cp.dumpOBJ(objArg.getValue().c_str());
+            
+        delete[] coords_filtered; coords_filtered = NULL;
         delete[] out; out = NULL;
         coords_npy.destruct();
-        mask_npy.destruct();
         
     } catch (TCLAP::ArgException &e)  // catch any exceptions
 	{ std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }

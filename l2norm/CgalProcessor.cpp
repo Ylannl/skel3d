@@ -64,7 +64,7 @@ CgalProcessor::CgalProcessor(float *pts, int N){
     minx = maxx = pts[0];
     miny = maxy = pts[1];
     minz = maxz = pts[2];
-    std::cout << "point-distance: " << std::endl;
+
     for(int i=0; i<N; i++){
         x = pts[i*3+0];
         y = pts[i*3+1];
