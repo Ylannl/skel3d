@@ -68,12 +68,15 @@ int main(int argc, const char * argv[])
                 }
             mask_npy.destruct();
         } else {
-            cnpy::NpyArray coords_filtered_npy = cnpy::npy_load( input_coords_path.c_str() );
+            cnpy::NpyArray coords_filtered_npy = cnpy::npy_load( input_mask_path.c_str() );
             coords_filtered = reinterpret_cast<float*>(coords_filtered_npy.data);
-            count = coords_npy.shape[0];
+            count = coords_filtered_npy.shape[0];
         }
         
         CgalProcessor cp(coords_filtered, count);
+        
+        if (objArg.isSet())
+            cp.dumpOBJ(objArg.getValue().c_str());
 
         float *out = new float[m*3];
         cp.metricL2potri(coords_carray, m, out);
@@ -83,8 +86,6 @@ int main(int argc, const char * argv[])
           cnpy::npy_save(output_error_path.c_str(), out, shape, 2, "w");
         }
 
-        if (objArg.isSet())
-            cp.dumpOBJ(objArg.getValue().c_str());
             
         delete[] coords_filtered; coords_filtered = NULL;
         delete[] out; out = NULL;
