@@ -805,10 +805,11 @@ void CgalProcessor::metricL2potri(float* pts, int N, float* out)
     
     // double min=1, max=0;
     // for( Dt::Finite_vertices_iterator vit=dt.finite_vertices_begin() ; vit != dt.finite_vertices_end(); ++vit ) {
+    double sum = 0;
     for( int i=0; i<N; i++ ) {
         Point3D p = Point3D(pts[3*i+0], pts[3*i+1], pts[3*i+2]);
         Point3D q = TriTree.closest_point(p);
-        // double d = sqrt(TriTree.squared_distance(p));
+        sum += CGAL::squared_distance(p, q);
         out[3*i+0] = q.x();
         out[3*i+1] = q.y();
         out[3*i+2] = q.z();
@@ -818,6 +819,7 @@ void CgalProcessor::metricL2potri(float* pts, int N, float* out)
     // maxL2error = max;
     // minL2error = min;
     // std::cout << "metricL2: max="<<max<<", min="<<min<<std::endl;
+    std::cout << "RMS error: "<< sqrt(sum/N) << std::endl;
 }
 
 void CgalProcessor::metricSafety(CgalProcessor &otherSurface)
