@@ -98,7 +98,7 @@ class RegionGrower(object):
 					self.ma_segment[neighbour] = self.region_nr
 					candidate_stack.append(neighbour)
 					point_count += 1
-		print "found region nr %d with %d points" % (self.region_nr, point_count)
+		print("found region nr %d with %d points" % (self.region_nr, point_count))
 		return point_count
 
 	def valid_candidate_normal(self, seed, candidate):
@@ -147,9 +147,9 @@ class RegionGrower(object):
 			neighbour_vecs = self.ma_coords[neighbours] - self.ma_coords[p]
 			neighbour_vecs = neighbour_vecs/np.linalg.norm(neighbour_vecs, axis=1)[:,None]
 			angles = np.arccos(np.sum(self.ma_bisec[p]*neighbour_vecs,axis=1))
-			print self.ma_segment[neighbours]
-			print angles/math.pi * 180
-			print min(angles/math.pi * 180)
+			print(self.ma_segment[neighbours])
+			print(angles/math.pi * 180)
+			print(min(angles/math.pi * 180))
 			# import ipdb; ipdb.set_trace()
 
 def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
@@ -158,7 +158,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
-	print np.unique(R.ma_segment, return_counts=True)
+	print(np.unique(R.ma_segment, return_counts=True))
 	
 	# now try to find segments that have a large separation angle (and unstable bisector orientation)
 	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
@@ -167,7 +167,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
 	# R.assign_unsegmented_points()
-	print np.unique(R.ma_segment, return_counts=True)
+	print(np.unique(R.ma_segment, return_counts=True))
 
 	ma_segment = np.zeros(R.mah.m*2, dtype=np.int64)
 	ma_segment= R.ma_segment
@@ -211,7 +211,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 				else:
 					pair = s_out, s_in
 
-				if pdict.has_key(pair):
+				if pair in pdict:
 					pdict[pair]+= 1
 				else:
 					pdict[pair] = 1
@@ -246,7 +246,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 
 					if pair[0] == 0: continue
 
-					if pdict.has_key(pair):
+					if pair in pdict:
 						pdict[pair]+= 1
 					else:
 						pdict[pair] = 1
@@ -259,7 +259,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 		flip_relations = find_flip_relations()
 		ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
 		i=0
-		for (s, e), cnt in flip_relations.iteritems():
+		for (s, e), cnt in flip_relations.items():
 			ma.D['seg_link_flip'][i] = [s,e,cnt]
 			i+=1
 		io_npy.write_npy(infile, ma.D, ['seg_link_flip'])
@@ -267,7 +267,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 	adj_relations = find_adjacency_relations()
 	ma.D['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
 	i=0
-	for (s, e), cnt in adj_relations.iteritems():
+	for (s, e), cnt in adj_relations.items():
 		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
 	io_npy.write_npy(infile, ma.D, ['seg_link_adj'])

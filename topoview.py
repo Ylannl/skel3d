@@ -47,7 +47,7 @@ class MatApp(App):
 
     def set_layer_selection(self):
         selected_names = [item.data(0) for item in self.dialog.ui.listWidget_layers.selectedItems()]
-        for name, program in self.viewerWindow.data_programs.iteritems():
+        for name, program in self.viewerWindow.data_programs.items():
             if name in selected_names:
                 program.is_visible = True
             elif not name.startswith('graph'):
@@ -151,7 +151,7 @@ class ToolsDialog(QWidget):
         # populate datalayers list
         # print self.app.viewerWindow.data_programs.keys()
         l=[]
-        for program_name in self.app.viewerWindow.data_programs.keys():
+        for program_name in list(self.app.viewerWindow.data_programs.keys()):
             if not program_name.startswith('graph'):
                 l.append(program_name)
         self.ui.listWidget_layers.addItems(l)
@@ -165,7 +165,7 @@ class ToolsDialog(QWidget):
         # import ipdb; ipdb.set_trace()
 
     def slot_tcount(self, value):
-        print 'tcount', value
+        print('tcount', value)
 
 # INFILE = 'data/scan_npy'
 INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
@@ -175,7 +175,7 @@ INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 def timeit(func):
     t0 = time()
     r = func()
-    print("Executed function %s took %f s" % (func.__name__, time()-t0))
+    print(("Executed function %s took %f s" % (func.__name__, time()-t0)))
     return r
 
 def assign_seg_point():
@@ -188,13 +188,13 @@ def assign_seg_point():
         fq = ma.D['ma_qidx'][coord_id]
 
         for idx in [fp,fq]:
-            if pdict.has_key(idx):
+            if idx in pdict:
                 pdict[idx].add(segment)
             else:
                 pdict[idx] = set([segment])
     del pdict[-1]
 
-    datadict['segment_count'] = np.array([ len(s) for s in pdict.values() ], dtype=np.int32)
+    datadict['segment_count'] = np.array([ len(s) for s in list(pdict.values()) ], dtype=np.int32)
     io_npy.write_npy(INFILE, datadict, ['segment_count'])
 
 def count_refs():
@@ -207,13 +207,13 @@ def count_refs():
         fq = ma.D['ma_qidx'][coord_id]
 
         for idx in [fp,fq]:
-            if pdict.has_key(idx):
+            if idx in pdict:
                 pdict[idx] += 1
             else:
                 pdict[idx] = 1
     del pdict[-1]
 
-    return np.array(pdict.values(), dtype=np.int32)
+    return np.array(list(pdict.values()), dtype=np.int32)
 
 def compute_segment_centers():
     """Compute avarage coordinate for each segment"""
@@ -222,13 +222,13 @@ def compute_segment_centers():
     # segment_point_sums = {}
     for i, segment in enumerate(ma.D['ma_segment']):
         # slicing is not copying!
-        if segment_dict.has_key(segment):
+        if segment in segment_dict:
             segment_dict[segment][0] += 1
             segment_dict[segment][1] += ma.D['ma_coords'][i]
         else:
             segment_dict[segment] = [1, np.copy(ma.D['ma_coords'][i])]
 
-    for key, value in segment_dict.iteritems():
+    for key, value in segment_dict.items():
         segment_dict[key][1] = value[1]/value[0]
 
     
@@ -243,9 +243,9 @@ def view(ma):
     segment_centers_dict = timeit(compute_segment_centers)
     ma.segment_centers_dict = segment_centers_dict
 
-    seg_centers = np.array([v[1] for v in segment_centers_dict.values()], dtype=np.float32)
-    seg_cnts = np.array([v[0] for v in segment_centers_dict.values()], dtype=np.float32)
-    seg_ids = np.array([k for k in segment_centers_dict.keys()], dtype=np.float32)
+    seg_centers = np.array([v[1] for v in list(segment_centers_dict.values())], dtype=np.float32)
+    seg_cnts = np.array([v[0] for v in list(segment_centers_dict.values())], dtype=np.float32)
+    seg_ids = np.array([k for k in list(segment_centers_dict.keys())], dtype=np.float32)
 
     flip_rel_start = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
     flip_rel_end = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
@@ -272,7 +272,7 @@ def view(ma):
         points=ma.D['coords'], normals=ma.D['normals'],
     )
 
-    if ma.D.has_key('ma_segment'):
+    if 'ma_segment' in ma.D:
         # f = np.logical_and(ma.D['ma_radii'][:ma.m] < max_r, ma.D['ma_segment'][:ma.m]>0)
         # c.add_data_source(
         #     opts=['splat_point', 'with_intensity'],

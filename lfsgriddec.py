@@ -5,11 +5,13 @@ import sys
 infile = '/Volumes/Data/Data/pointcloud/dense_matching_kadaster/60_DSM_Cloud_1594_3826_npy/'
 infile = '/Users/ravi/git/masbcpp/rdam_blokken_npy'
 
-def lfsgriddec(infile, cellsize=0.5, epsilon=0.4, D=2, edge_preserve=True):
+def lfsgriddec(infile, cellsize=0.5, epsilon=0.4, D=2, edge_preserve=False, only_interior=False):
 	#read coords into grid dict, store indices in lists
 	d = io_npy.read_npy(infile)
 	ma = MAHelper(d)
-	ma.compute_lfs(only_interior=True)
+	ma.filtered['in'] = (ma.D['ma_segment'] == 0)[:ma.m]
+	ma.filtered['out'] = (ma.D['ma_segment'] == 0)[ma.m:]
+	ma.compute_lfs(only_interior=only_interior)
 
 	x_max, y_max, z_max = ma.D['coords'].max(axis=0)
 	x_min, y_min, z_min = ma.D['coords'].min(axis=0)
@@ -22,17 +24,17 @@ def lfsgriddec(infile, cellsize=0.5, epsilon=0.4, D=2, edge_preserve=True):
 
 	gridic = {}
 	if D==2:
-		for i in xrange(x_count):
-			for j in xrange(y_count):
+		for i in range(x_count):
+			for j in range(y_count):
 				gridic[(i,j)] = []
 
 		for i,p in enumerate(((ma.D['coords'] - [x_min, y_min, z_min]) / cellsize).astype(int)):
 			x,y,z = p
 			gridic[(x,y)].append(i)
 	elif D==3:
-		for i in xrange(x_count):
-			for j in xrange(y_count):
-				for k in xrange(z_count):
+		for i in range(x_count):
+			for j in range(y_count):
+				for k in range(z_count):
 					gridic[(i,j,k)] = []
 
 		for i,p in enumerate(((ma.D['coords'] - [x_min, y_min, z_min]) / cellsize).astype(int)):
@@ -42,7 +44,7 @@ def lfsgriddec(infile, cellsize=0.5, epsilon=0.4, D=2, edge_preserve=True):
 	#iterate through grid dict and determine thinning factor for each cell, write out thinned points
 	decimation_filter = np.zeros(ma.m).astype(bool)
 	A = cellsize**2
-	for idx in gridic.values():
+	for idx in list(gridic.values()):
 		n = len(idx)
 		if n:
 			lfs_mean = np.mean( ma.D['lfs'][idx] )

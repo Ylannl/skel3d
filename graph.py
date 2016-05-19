@@ -49,9 +49,9 @@ def get_graphs(datadict, min_count=4):
 	edge_list = []
 	for start_id, end_id, count in seg_link_adj:
 
-		if not node_dict.has_key(start_id):
+		if start_id not in node_dict:
 			node_dict[start_id] = Node(start_id)
-		if not node_dict.has_key(end_id):
+		if end_id not in node_dict:
 			node_dict[end_id] = Node(end_id)
 
 		start = node_dict[start_id]

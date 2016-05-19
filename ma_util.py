@@ -2,7 +2,6 @@
 from numpy import array, zeros, empty, invert, concatenate, nanmax, isnan
 import numpy as np
 from pykdtree.kdtree import KDTree
-from pyflann import FLANN
 
 class MAHelper(object):
 
@@ -18,7 +17,7 @@ class MAHelper(object):
             self.D['ma_coords_in'] -= self.mean
             self.D['ma_coords_out'] -= self.mean
         self.D['normals'] = datadict['normals']
-        if datadict.has_key('ma_segment'):
+        if 'ma_segment' in datadict:
             self.D['ma_segment'] = datadict['ma_segment']
         self.m, self.n = self.D['coords'].shape
         self.D['ma_qidx_in'] = datadict['ma_qidx_in']
@@ -70,36 +69,36 @@ class MAHelper(object):
         else:
             self.D['lfs'] = np.sqrt(kd_tree.query(self.D['coords'], k)[0])
 
-    def decimate_lfs(self, m, max_pointspacing=None, scramble = False, sort = False, squared=False):
+    # def decimate_lfs(self, m, max_pointspacing=None, scramble = False, sort = False, squared=False):
 
-        if not hasattr(self, 'flann_tree'):
-            self.flann_tree = FLANN()
-            self.flann_tree.build_index(self.D['coords'])#, algorithm='linear'
-        self.D['decimate_lfs'] = zeros(self.m) == True
+    #     if not hasattr(self, 'flann_tree'):
+    #         self.flann_tree = FLANN()
+    #         self.flann_tree.build_index(self.D['coords'])#, algorithm='linear'
+    #     self.D['decimate_lfs'] = zeros(self.m) == True
 
-        order = np.arange(self.m)
-        plfs = zip(order, self.D['coords'], self.D['lfs'])
+    #     order = np.arange(self.m)
+    #     plfs = list(zip(order, self.D['coords'], self.D['lfs']))
 
-        if scramble: 
-            from random import shuffle
-            shuffle( plfs )
-        if sort:
-            plfs.sort(key = lambda item: item[2])
-            plfs.reverse()
+    #     if scramble: 
+    #         from random import shuffle
+    #         shuffle( plfs )
+    #     if sort:
+    #         plfs.sort(key = lambda item: item[2])
+    #         plfs.reverse()
 
-        for i, p, lfs in plfs:
-            if squared:
-                lfs = lfs**2
-            if max_pointspacing is None:
-                rho = lfs*m
-            else:
-                rho = min(lfs*m, max_pointspacing)
+    #     for i, p, lfs in plfs:
+    #         if squared:
+    #             lfs = lfs**2
+    #         if max_pointspacing is None:
+    #             rho = lfs*m
+    #         else:
+    #             rho = min(lfs*m, max_pointspacing)
 
-            qts = self.flann_tree.nn_radius(p, rho**2)[0][1:]
-            qts = order[qts]
+    #         qts = self.flann_tree.nn_radius(p, rho**2)[0][1:]
+    #         qts = order[qts]
             
-            # qts = self.flann_tree.nn_index(p, 6)[0][1:]
+    #         # qts = self.flann_tree.nn_index(p, 6)[0][1:]
             
-            iqts = invert(self.D['decimate_lfs'][qts])
-            if iqts.any():
-                self.D['decimate_lfs'][i] = True
+    #         iqts = invert(self.D['decimate_lfs'][qts])
+    #         if iqts.any():
+    #             self.D['decimate_lfs'][i] = True
