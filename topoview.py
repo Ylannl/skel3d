@@ -24,13 +24,10 @@ class MatApp(App):
         self.segment_filter = ma.D['ma_segment']>0
         self.radius_value = 150.
 
-        self.viewerWindow.visibility_toggle_listeners.append(self.set_layer_visibility)
-
     def run(self):
         self.dialog = ToolsDialog(self)
         self.draw_graphs()
         self.update_radius(150.)
-        self.dialog.show()
         super(MatApp, self).run()
 
     def filter_linkcount(self, value):
@@ -38,20 +35,6 @@ class MatApp(App):
         self.viewerWindow.data_programs['Adjacency relations'].updateAttributes(filter=np.repeat(f,2))
         # f = ma.D['seg_link_flip'][:,2] >= value
         # self.viewerWindow.data_programs['Flip relations'].updateAttributes(filter=np.repeat(f,2))
-        self.viewerWindow.render()
-
-    def set_layer_visibility(self, name, is_visible):
-        items = self.dialog.ui.listWidget_layers.findItems(name,Qt.MatchExactly)
-        for item in items:
-            item.setSelected(is_visible)
-
-    def set_layer_selection(self):
-        selected_names = [item.data(0) for item in self.dialog.ui.listWidget_layers.selectedItems()]
-        for name, program in self.viewerWindow.data_programs.items():
-            if name in selected_names:
-                program.is_visible = True
-            elif not name.startswith('graph'):
-                program.is_visible = False
         self.viewerWindow.render()
 
     def filter_component_all(self, toggle):
@@ -76,9 +59,9 @@ class MatApp(App):
         if f.sum() <1:return
         # update mat points
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
-        self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
-        self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=np.repeat(f,2))
-        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=np.repeat(f,2))
+        # self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
+        # self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=np.repeat(f,2))
+        # self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=np.repeat(f,2))
         # update coords
         # find indices of all surface points related to these mat points
         f_s1 = np.concatenate([np.arange(self.ma.m), np.arange(self.ma.m)])
@@ -94,10 +77,10 @@ class MatApp(App):
         self.radius_filter = self.ma.D['ma_radii'] <= self.radius_value 
         f=np.logical_and(self.segment_filter, self.radius_filter)
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
-        self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
+        # self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
         f=np.repeat(f,2)
-        self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=f)
-        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=f)
+        # self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=f)
+        # self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=f)
         self.viewerWindow.render()
         return
 
@@ -314,6 +297,23 @@ def view(ma):
             opts = ['splat_point', 'blend'],
             points=ma.D['ma_coords_out'][f]
         )
+        
+    v_up = np.array([0,0,1],dtype=np.float)
+    biup_angle = np.arccos(np.sum(ma.D['ma_bisec']*v_up, axis=1))
+    f_exterior = np.logical_and(biup_angle < math.pi/2, ma.D['ma_theta'] < math.radians(175)) 
+    f_interior = np.logical_and(biup_angle > math.pi/2, ma.D['ma_theta'] < math.radians(175))
+
+    c.add_data_source(
+        name='int',
+        opts = ['splat_point', 'blend'],
+        points=ma.D['ma_coords'][f_interior]
+    )
+    c.add_data_source(
+        name='ext',
+        opts = ['splat_point', 'blend'],
+        points=ma.D['ma_coords'][f_exterior]
+    ) 
+    # import ipdb; ipdb.set_trace()
 
     f = seg_cnts!=1
     c.add_data_source(
@@ -349,7 +349,8 @@ def view(ma):
     c.add_data_source_line(
       name = 'Bisectors',
       coords_start = ma.D['ma_coords'],
-      coords_end = ma.D['ma_bisec']+ma.D['ma_coords']
+      coords_end = ma.D['ma_bisec']+ma.D['ma_coords'],
+      color = (0,1,0)
     )
     c.add_data_source_line(
       name = 'Primary spokes',
