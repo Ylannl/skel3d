@@ -1,7 +1,6 @@
 # from pointio import io_npy
 from numpy import array, zeros, empty, invert, concatenate, nanmax, isnan
 import numpy as np
-from pykdtree.kdtree import KDTree
 
 class MAHelper(object):
 
@@ -55,6 +54,7 @@ class MAHelper(object):
         self.filtered['out'] = zeros(self.m) == True
         
     def compute_lfs(self, k=10, only_interior=False):
+        from pykdtree.kdtree import KDTree
         # collect all ma_coords that are not NaN
         if only_interior:
             ma_coords = self.D['ma_coords_in'][invert(self.filtered['in'])]
