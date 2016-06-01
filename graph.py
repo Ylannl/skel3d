@@ -1,5 +1,6 @@
 from pointio import io_npy
 import numpy as np
+import math
 
 class Graph:
 	def __init__(self):
@@ -19,6 +20,8 @@ class Node:
 	def __init__(self, segment_id):
 		self.segment_id = segment_id
 		self.incident_edges = []
+		
+		self.avg_bisector = None
 
 	def iterate_neighbours(self):
 		for e in self.incident_edges:
@@ -31,6 +34,7 @@ class Edge:
 	def __init__(self, start, end, count):
 		self.start = start
 		self.end = end
+		
 		self.count = count
 
 	def get_neighbour_node(self, node):
@@ -41,10 +45,13 @@ class Edge:
 
 
 def get_graphs(datadict, min_count=4):
+	# build graph and find connected compnents
+
 	ma_segment = datadict['ma_segment']
 	# datadict['seg_link_flip']
 	seg_link_adj = datadict['seg_link_adj']
 
+	# build graph datastructure
 	node_dict = {}
 	edge_list = []
 	for start_id, end_id, count in seg_link_adj:
@@ -63,10 +70,22 @@ def get_graphs(datadict, min_count=4):
 		start.incident_edges.append(edge)
 		end.incident_edges.append(edge)
 		
-	# Find connected components
-	node_set = set(node_dict.values())
-	graph_list = []
+	# Find connected components using standard graph traversal algorithm
+	graph_list = traverse_repeat(node_set=set(node_dict.values()), f_conditional=f_min_count, f_arg=min_count) 
+	
+	return graph_list
 
+def f_min_count(e, arg):
+	min_count = arg
+	return e.count >= min_count
+
+def f_avg_bisector_threshold(e, arg):
+	threshold = arg
+	return math.fabs(e.start.avg_bisector - e.end.avg_bisector) <= threshold
+
+def traverse_repeat(node_set, f_conditional=None, f_arg=None):
+	# find connected components in node_set, grow components based on function that is evaluated for its incident edges
+	graph_list = []
 	while len(node_set) != 0:
 		Q = [node_set.pop()]
 		V = set()
@@ -77,7 +96,7 @@ def get_graphs(datadict, min_count=4):
 
 			for e in node.incident_edges:
 				# import ipdb; ipdb.set_trace()
-				if e.count >= min_count:
+				if f_conditional(e, f_arg):
 					E.add(e)
 					adjacent_node = e.get_neighbour_node(node)
 					if (not adjacent_node in V) and (not adjacent_node in Q):
@@ -91,3 +110,6 @@ def get_graphs(datadict, min_count=4):
 		graph_list.append(g)
 	return graph_list
 
+
+def merge_nodes(datadict, nodes):
+	

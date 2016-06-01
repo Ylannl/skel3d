@@ -59,9 +59,9 @@ class MatApp(App):
         if f.sum() <1:return
         # update mat points
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
-        # self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
-        # self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=np.repeat(f,2))
-        # self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=np.repeat(f,2))
         # update coords
         # find indices of all surface points related to these mat points
         f_s1 = np.concatenate([np.arange(self.ma.m), np.arange(self.ma.m)])
@@ -77,10 +77,10 @@ class MatApp(App):
         self.radius_filter = self.ma.D['ma_radii'] <= self.radius_value 
         f=np.logical_and(self.segment_filter, self.radius_filter)
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
-        # self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
+        self.viewerWindow.data_programs['Bisectors'].updateAttributes(filter=np.repeat(f,2))
         f=np.repeat(f,2)
-        # self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=f)
-        # self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=f)
+        self.viewerWindow.data_programs['Primary spokes'].updateAttributes(filter=f)
+        self.viewerWindow.data_programs['Secondary spokes'].updateAttributes(filter=f)
         self.viewerWindow.render()
         return
 
