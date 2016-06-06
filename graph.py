@@ -3,9 +3,9 @@ import numpy as np
 import math
 
 class Graph:
-	def __init__(self):
-		self.edges = set()
-		self.nodes = set()
+	def __init__(self, edges=set(), nodes=set()):
+		self.edges = edges
+		self.nodes = nodes
 
 	def addEdge(self, edge):
 		self.edges.add(edge)
@@ -42,11 +42,10 @@ class Edge:
 			return self.end
 		else:
 			return self.start
+			
 
-
-def get_graphs(datadict, min_count=4):
-	# build graph and find connected compnents
-
+			
+def build_graph(datadict, bisec_avg_dict=None):
 	ma_segment = datadict['ma_segment']
 	# datadict['seg_link_flip']
 	seg_link_adj = datadict['seg_link_adj']
@@ -57,9 +56,13 @@ def get_graphs(datadict, min_count=4):
 	for start_id, end_id, count in seg_link_adj:
 
 		if start_id not in node_dict:
-			node_dict[start_id] = Node(start_id)
+			n = Node(start_id)
+			node_dict[start_id] = n
+			# n.avg_bisector = bisec_avg_dict[start_id][1]
 		if end_id not in node_dict:
-			node_dict[end_id] = Node(end_id)
+			n = Node(end_id)
+			node_dict[end_id] = n
+			# n.avg_bisector = bisec_avg_dict[end_id][1]
 
 		start = node_dict[start_id]
 		end = node_dict[end_id]
@@ -70,18 +73,33 @@ def get_graphs(datadict, min_count=4):
 		start.incident_edges.append(edge)
 		end.incident_edges.append(edge)
 		
-	# Find connected components using standard graph traversal algorithm
-	graph_list = traverse_repeat(node_set=set(node_dict.values()), f_conditional=f_min_count, f_arg=min_count) 
+	g = Graph(set(edge_list), set(node_dict.values()))
+	# import ipdb; ipdb.set_trace()
 	
+	return g
+
+def get_graphs(datadict, min_count=4, avg_bisector_threshold=math.cos(math.radians(15))):
+	
+	# bisec_avg_dict = compute_segment_aggregate(datadict, key_to_aggregate='ma_bisec')
+	
+	# build graph
+	g = build_graph(datadict)		
+	# Find connected components using standard graph traversal algorithm
+	graph_list = traverse_repeat(g.nodes, f_conditional=f_min_count, f_arg=min_count)
+	
+	# for g in graph_list:
+	# 	traverse_repeat(g.nodes, f_conditional=f_avg_bisector_threshold, f_arg=avg_bisector_threshold) 
+		
 	return graph_list
+	
 
 def f_min_count(e, arg):
 	min_count = arg
 	return e.count >= min_count
 
-def f_avg_bisector_threshold(e, arg):
-	threshold = arg
-	return math.fabs(e.start.avg_bisector - e.end.avg_bisector) <= threshold
+# def f_avg_bisector_threshold(e, arg):
+# 	threshold = arg
+# 	return np.dot(e.start.avg_bisector, e.end.avg_bisector) <= threshold
 
 def traverse_repeat(node_set, f_conditional=None, f_arg=None):
 	# find connected components in node_set, grow components based on function that is evaluated for its incident edges
@@ -112,4 +130,5 @@ def traverse_repeat(node_set, f_conditional=None, f_arg=None):
 
 
 def merge_nodes(datadict, nodes):
+	pass
 	
