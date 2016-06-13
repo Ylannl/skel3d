@@ -5,7 +5,7 @@ from pointio import io_npy
 from ma_util import MAHelper
 from povi import App
 from graph import *
-
+from region_growing import *
 from povi import App
 
 from PyQt5 import uic
@@ -198,32 +198,11 @@ def count_refs():
 
     return np.array(list(pdict.values()), dtype=np.int32)
 
-def compute_segment_centers():
-    """Compute avarage coordinate for each segment"""
-
-    segment_dict = {}
-    # segment_point_sums = {}
-    for i, segment in enumerate(ma.D['ma_segment']):
-        # slicing is not copying!
-        if segment in segment_dict:
-            segment_dict[segment][0] += 1
-            segment_dict[segment][1] += ma.D['ma_coords'][i]
-        else:
-            segment_dict[segment] = [1, np.copy(ma.D['ma_coords'][i])]
-
-    for key, value in segment_dict.items():
-        segment_dict[key][1] = value[1]/value[0]
-
-    
-    return segment_dict
-
-
-
 def view(ma):
     # ref_count = timeit(count_refs)
     min_link_adj = 5
     max_r=190.
-    segment_centers_dict = timeit(compute_segment_centers)
+    segment_centers_dict = compute_segment_aggregate(ma.D, 'ma_coords')
     ma.segment_centers_dict = segment_centers_dict
 
     seg_centers = np.array([v[1] for v in list(segment_centers_dict.values())], dtype=np.float32)
