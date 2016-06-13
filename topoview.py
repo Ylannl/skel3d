@@ -51,7 +51,7 @@ class MatApp(App):
         self.graph_programs[index].is_visible = True
         
         g = self.graph_programs[self.dialog.ui.comboBox_component.currentIndex()].graph
-        segment_ids = [n.segment_id for n in g.nodes]
+        segment_ids = g.vs['segment_id']
         self.viewerWindow.center_view(np.mean([ma.segment_centers_dict[i][1] for i in segment_ids], axis=0))
         self.viewerWindow.render()
 
@@ -101,10 +101,10 @@ class MatApp(App):
             adj_rel_start = []
             adj_rel_end = []
 
-            if 0<len(g.edges):#<1000:
-                for e in g.edges:
-                    adj_rel_start.append(ma.segment_centers_dict[e.start.segment_id][1])
-                    adj_rel_end.append(ma.segment_centers_dict[e.end.segment_id][1])
+            if 0<g.ecount():#<1000:
+                for e in g.es:
+                    adj_rel_start.append(ma.segment_centers_dict[g.vs[e.source]['segment_id']][1])
+                    adj_rel_end.append(ma.segment_centers_dict[g.vs[e.target]['segment_id']][1])
                 # import ipdb; ipdb.set_trace()
                 # color = np.random.rand(3)
                 # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)

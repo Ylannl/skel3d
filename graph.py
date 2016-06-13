@@ -1,115 +1,36 @@
-from pointio import io_npy
-import numpy as np
-import math
+from ma_util import MAHelper
+from pointio import io_npy 
+import igraph
 
-class Graph:
-	def __init__(self):
-		self.edges = set()
-		self.nodes = set()
+def get_graphs(datadict, min_count):
+    """return connected components in adjacency graph with an adjacency count of at least min_count"""
+    ma_segment = datadict['ma_segment']
+    # datadict['seg_link_flip']
+    seg_link_adj = datadict['seg_link_adj']
 
-	def addEdge(self, edge):
-		self.edges.add(edge)
-	
-	def addNode(self, node):
-		self.nodes.add(node)
+    # build graph datastructure
+    g = igraph.Graph(directed=False)
+    # igraph works with vertex ids that are depend on their order in the graph so we need to map the segment_ids
+    vertex_dict = {}
+    vertex_cnt = 0
+    for start_id, end_id, count in seg_link_adj:
 
-	def __str__(self):
-		return str(self.nodes)
-
-class Node:
-	def __init__(self, segment_id):
-		self.segment_id = segment_id
-		self.incident_edges = []
-		
-		self.avg_bisector = None
-
-	def iterate_neighbours(self):
-		for e in self.incident_edges:
-			yield e, e.get_neighbour_node(self)
-
-	def __str__(self):
-		return "node <{}>".format(self.segment_id)
-
-class Edge:
-	def __init__(self, start, end, count):
-		self.start = start
-		self.end = end
-		
-		self.count = count
-
-	def get_neighbour_node(self, node):
-		if node is self.start:
-			return self.end
-		else:
-			return self.start
-
-
-def get_graphs(datadict, min_count=4):
-	# build graph and find connected compnents
-
-	ma_segment = datadict['ma_segment']
-	# datadict['seg_link_flip']
-	seg_link_adj = datadict['seg_link_adj']
-
-	# build graph datastructure
-	node_dict = {}
-	edge_list = []
-	for start_id, end_id, count in seg_link_adj:
-
-		if start_id not in node_dict:
-			node_dict[start_id] = Node(start_id)
-		if end_id not in node_dict:
-			node_dict[end_id] = Node(end_id)
-
-		start = node_dict[start_id]
-		end = node_dict[end_id]
-
-		edge = Edge(start, end, count)
-		edge_list.append(edge)
-		
-		start.incident_edges.append(edge)
-		end.incident_edges.append(edge)
-		
-	# Find connected components using standard graph traversal algorithm
-	graph_list = traverse_repeat(node_set=set(node_dict.values()), f_conditional=f_min_count, f_arg=min_count) 
-	
-	return graph_list
-
-def f_min_count(e, arg):
-	min_count = arg
-	return e.count >= min_count
-
-def f_avg_bisector_threshold(e, arg):
-	threshold = arg
-	return math.fabs(e.start.avg_bisector - e.end.avg_bisector) <= threshold
-
-def traverse_repeat(node_set, f_conditional=None, f_arg=None):
-	# find connected components in node_set, grow components based on function that is evaluated for its incident edges
-	graph_list = []
-	while len(node_set) != 0:
-		Q = [node_set.pop()]
-		V = set()
-		E = set()
-		while len(Q) != 0:
-			node = Q.pop(0)
-			V.add(node)
-
-			for e in node.incident_edges:
-				# import ipdb; ipdb.set_trace()
-				if f_conditional(e, f_arg):
-					E.add(e)
-					adjacent_node = e.get_neighbour_node(node)
-					if (not adjacent_node in V) and (not adjacent_node in Q):
-						Q.append(adjacent_node)
-
-		node_set -= set(V)
-		g = Graph()
-		# import ipdb; ipdb.set_trace()
-		g.edges = set(E)
-		g.nodes = set(V)
-		graph_list.append(g)
-	return graph_list
-
-
-def merge_nodes(datadict, nodes):
-	
+        if start_id not in vertex_dict:
+            vertex_dict[start_id] = vertex_cnt
+            g.add_vertex(segment_id=start_id)
+            vertex_cnt += 1
+        if end_id not in vertex_dict:
+            vertex_dict[end_id] = vertex_cnt
+            g.add_vertex(segment_id=end_id)
+            vertex_cnt += 1
+        if count >= min_count:
+            g.add_edge(vertex_dict[start_id], vertex_dict[end_id], adj_count=count)
+    
+    #g.delete_edges(g.es.select(adj_count_lt=min_count)
+    
+    return g.clusters(igraph.WEAK).subgraphs()
+    
+if __name__ == '__main__':
+    D = io_npy.read_npy("/Users/ravi/git/masbcpp/rdam_blokken_npy")
+    mah = MAHelper(D)
+    g = get_graphs(D, 6)
