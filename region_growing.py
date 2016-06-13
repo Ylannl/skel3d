@@ -291,12 +291,12 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 	io_npy.write_npy(infile, ma.D, ['seg_link_adj'])
 	
 	
-def merge_regions(datadict, bisec_avg_threshold):
-	avg_bisec_dict = compute_segment_aggregate(datadict, 'ma_bisec')
+# def merge_regions(datadict, bisec_avg_threshold):
+# 	avg_bisec_dict = compute_segment_aggregate(datadict, 'ma_bisec')
 	
-	seg_id_map = dict(zip(datadict['ma_segment'], datadict['ma_segment']))
+# 	seg_id_map = dict(zip(datadict['ma_segment'], datadict['ma_segment']))
 		
-	for start, end, cnt = in datadict['seg_link_adj']
+# 	for start, end, cnt = in datadict['seg_link_adj']
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Basic PCA normal approximation')
