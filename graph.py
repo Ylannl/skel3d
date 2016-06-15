@@ -55,9 +55,17 @@ def contract_edges(g, threshold=math.radians(5)):
     g.contract_vertices(tg.clusters(igraph.WEAK).membership, combine_attrs={'segment_id': lambda x: x, 'count':'sum'})
     g.simplify(combine_edges='sum')
 
-# def update_points(g, ma_segment):
-#     for v in g.vs:
-#         v['segment_id']
+def update_points(g, ma_segment):
+    mapd = {0:0}
+    for v in g.vs:
+        for i in v['segment_id']:
+            mapd[i] = v.index
+    
+    for i,v in enumerate(ma_segment):
+        try:
+            ma_segment[i] = mapd[v]
+        except KeyError:
+            pass 
 
 if __name__ == '__main__':
     from region_growing import compute_segment_aggregate
@@ -68,6 +76,7 @@ if __name__ == '__main__':
     bisec_aggregate = compute_segment_aggregate(D, 'ma_bisec')
     assign_from_aggregate_dict(g, bisec_aggregate)
     contract_edges(g)
+    update_points(g, D['ma_segment'])
     import ipdb; ipdb.set_trace()
     # mah = MAHelper(D)
     
