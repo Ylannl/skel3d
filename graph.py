@@ -3,6 +3,7 @@ from pointio import io_npy
 import igraph
 import math
 import numpy as np
+from itertools import chain
 
 def construct_graph(datadict, min_count):
     """return connected components in adjacency graph with an adjacency count of at least min_count"""
@@ -16,15 +17,12 @@ def construct_graph(datadict, min_count):
     vertex_dict = {}
     vertex_cnt = 0
     for start_id, end_id, count in seg_link_adj:
-
-        if start_id not in vertex_dict:
-            vertex_dict[start_id] = vertex_cnt
-            g.add_vertex(segment_id=start_id)
-            vertex_cnt += 1
-        if end_id not in vertex_dict:
-            vertex_dict[end_id] = vertex_cnt
-            g.add_vertex(segment_id=end_id)
-            vertex_cnt += 1
+        
+        for index in [start_id, end_id]:
+            if index not in vertex_dict:
+                vertex_dict[index] = vertex_cnt
+                g.add_vertex(segment_id=index, ma_idx=np.argwhere(ma_segment==index)[:,0].tolist() )
+                vertex_cnt += 1
         if count >= min_count:
             g.add_edge(vertex_dict[start_id], vertex_dict[end_id], adj_count=count)
     
@@ -52,20 +50,12 @@ def contract_edges(g, threshold=math.radians(5)):
     tg = g.copy()
     tg.delete_edges(tg.es.select(avg_bisec_angle_gt=threshold))
     
-    g.contract_vertices(tg.clusters(igraph.WEAK).membership, combine_attrs={'segment_id': lambda x: x, 'count':'sum'})
+    g.contract_vertices(tg.clusters(igraph.WEAK).membership, 
+        combine_attrs={ 'segment_id': lambda x: x, 
+                        'count':'sum', 
+                        'ma_idx': lambda x: [e for e in chain(*x)]
+        })
     g.simplify(combine_edges='sum')
-
-def update_points(g, ma_segment):
-    mapd = {0:0}
-    for v in g.vs:
-        for i in v['segment_id']:
-            mapd[i] = v.index
-    
-    for i,v in enumerate(ma_segment):
-        try:
-            ma_segment[i] = mapd[v]
-        except KeyError:
-            pass 
 
 if __name__ == '__main__':
     from region_growing import compute_segment_aggregate
@@ -76,7 +66,7 @@ if __name__ == '__main__':
     bisec_aggregate = compute_segment_aggregate(D, 'ma_bisec')
     assign_from_aggregate_dict(g, bisec_aggregate)
     contract_edges(g)
-    update_points(g, D['ma_segment'])
+    # update_points(g, D['ma_segment'])
     import ipdb; ipdb.set_trace()
     # mah = MAHelper(D)
     
