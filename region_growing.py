@@ -180,8 +180,8 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	for k,v in ma_segment_dict.items():
 		g.add_vertex(ma_idx=v)
 
-	import ipdb; ipdb.set_trace()
-	g.write_pickle(infile+'/ma_segment.pickle')
+	# import ipdb; ipdb.set_trace()
+	
 	
 	ma_segment = np.zeros(R.mah.m*2, dtype=np.int64)
 	graph2segmentlist(g, ma_segment)
@@ -190,6 +190,8 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	
 	for start_id, end_id, count in mah.D['seg_link_adj']:
 		g.add_edge(start_id, end_id, adj_count=count)
+
+	g.write_pickle(infile+'/ma_segment.pickle')
 
 	D['ma_segment'] = ma_segment
 	io_npy.write_npy(infile, D, ['ma_segment'])
@@ -316,18 +318,18 @@ def compute_segment_aggregate(datadict, key_to_aggregate='ma_coords'):
     return segment_dict
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Basic PCA normal approximation')
+	parser = argparse.ArgumentParser(description='Region growing for MAT sheets')
 	parser.add_argument('infile', help='npy file', default=INFILE)
 	parser.add_argument('-k', help='Number of neighbours to use', default=10, type=int)
 	parser.add_argument('-b', help='Bisec threshold in degrees', default=5.0, type=float)
-	parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
+	# parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
 	parser.add_argument('--interior', help='Only use interior MAT', dest='interior', action='store_true')
 	args = parser.parse_args()
 
 	D = io_npy.read_npy(args.infile)
 	mah = MAHelper(D)
 	g = perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile, only_interior=args.interior)
-	if args.topo:
-		find_relations(mah, infile=args.infile, only_interior=args.interior)
+	# if args.topo:
+		# find_relations(mah, infile=args.infile, only_interior=args.interior)
 		
 

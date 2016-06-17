@@ -5,29 +5,31 @@ import math
 import numpy as np
 from itertools import chain
 
-def construct_graph(datadict, min_count):
-    """return connected components in adjacency graph with an adjacency count of at least min_count"""
-    ma_segment = datadict['ma_segment']
-    # datadict['seg_link_flip']
-    seg_link_adj = datadict['seg_link_adj']
+from region_growing import find_relations
 
-    # build graph datastructure
-    g = igraph.Graph(directed=False)
-    # igraph works with vertex ids that are depend on their order in the graph so we need to map the segment_ids
-    vertex_dict = {}
-    vertex_cnt = 0
-    for start_id, end_id, count in seg_link_adj:
+# def construct_graph(datadict, min_count):
+#     """return connected components in adjacency graph with an adjacency count of at least min_count"""
+#     ma_segment = datadict['ma_segment']
+#     # datadict['seg_link_flip']
+#     seg_link_adj = datadict['seg_link_adj']
+
+#     # build graph datastructure
+#     g = igraph.Graph(directed=False)
+#     # igraph works with vertex ids that are depend on their order in the graph so we need to map the segment_ids
+#     vertex_dict = {}
+#     vertex_cnt = 0
+#     for start_id, end_id, count in seg_link_adj:
         
-        for index in [start_id, end_id]:
-            if index not in vertex_dict:
-                vertex_dict[index] = vertex_cnt
-                g.add_vertex(segment_id=index, ma_idx=np.argwhere(ma_segment==index)[:,0].tolist() )
-                vertex_cnt += 1
-        if count >= min_count:
-            g.add_edge(vertex_dict[start_id], vertex_dict[end_id], adj_count=count)
+#         for index in [start_id, end_id]:
+#             if index not in vertex_dict:
+#                 vertex_dict[index] = vertex_cnt
+#                 g.add_vertex(segment_id=index, ma_idx=np.argwhere(ma_segment==index)[:,0].tolist() )
+#                 vertex_cnt += 1
+#         if count >= min_count:
+#             g.add_edge(vertex_dict[start_id], vertex_dict[end_id], adj_count=count)
     
-    #g.delete_edges(g.es.select(adj_count_lt=min_count)
-    return g
+#     #g.delete_edges(g.es.select(adj_count_lt=min_count)
+#     return g
     
     
 def get_graphs(datadict, min_count):
