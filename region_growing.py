@@ -4,7 +4,7 @@ from time import time
 from pointio import io_npy
 from ma_util import MAHelper
 import argparse
-
+import igraph
 from pykdtree.kdtree import KDTree
 
 # INFILE = 'data/scan_npy'
@@ -52,6 +52,7 @@ class RegionGrower(object):
 		# self.estimate_normals()
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
+		
 		self.region_nr = 1
 		self.overwrite_regions = False
 
@@ -110,11 +111,8 @@ class RegionGrower(object):
 	
 	def valid_candidate_bisec(self, seed, candidate):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
-		if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres:
+		return np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres
 		# if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres and math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_1:
-			return True
-		else:
-			return False
 
 	def valid_candidate_theta(self, seed, candidate):
 		"""candidate is valid if difference between separation angles of seed and candidate is below preset threshold"""
@@ -158,7 +156,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	seedpoints = list( np.random.permutation(R.m) )
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
-	print(np.unique(R.ma_segment, return_counts=True))
+	# print(np.unique(R.ma_segment, return_counts=True))
 	
 	# now try to find segments that have a large separation angle (and unstable bisector orientation)
 	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
@@ -167,13 +165,40 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
 	# R.assign_unsegmented_points()
-	print(np.unique(R.ma_segment, return_counts=True))
+	# print(np.unique(R.ma_segment, return_counts=True))
+	
+	# build graph
+	g = igraph.Graph(directed=False)
+	
+	ma_segment_dict = {}
+	for i, seg_id in enumerate(R.ma_segment):
+		if seg_id in ma_segment_dict:
+			ma_segment_dict[seg_id].append(i)
+		else:
+			ma_segment_dict[seg_id]=[]
+		
+	for k,v in ma_segment_dict.items():
+		g.add_vertex(ma_idx=v)
 
+	import ipdb; ipdb.set_trace()
+	g.write_pickle(infile+'/ma_segment.pickle')
+	
 	ma_segment = np.zeros(R.mah.m*2, dtype=np.int64)
-	ma_segment= R.ma_segment
+	graph2segmentlist(g, ma_segment)
+	
+	find_relations(mah, infile)
+	
+	for start_id, end_id, count in mah.D['seg_link_adj']:
+		g.add_edge(start_id, end_id, adj_count=count)
 
 	D['ma_segment'] = ma_segment
 	io_npy.write_npy(infile, D, ['ma_segment'])
+	
+	return g
+	
+def graph2segmentlist(g, ma_segment):
+	for v in g.vs():
+		ma_segment[ v['ma_idx'] ] = v.index	
 
 # def perform_segmentation_normal(mah):	
 # 	R = RegionGrower(mah, method='normal')
@@ -301,6 +326,8 @@ if __name__ == '__main__':
 
 	D = io_npy.read_npy(args.infile)
 	mah = MAHelper(D)
-	perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile, only_interior=args.interior)
+	g = perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile, only_interior=args.interior)
 	if args.topo:
 		find_relations(mah, infile=args.infile, only_interior=args.interior)
+		
+

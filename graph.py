@@ -57,6 +57,10 @@ def contract_edges(g, threshold=math.radians(5)):
         })
     g.simplify(combine_edges='sum')
 
+def update_points(g, datadict):
+    for v in g.vs:
+        datadict['ma_segment'][v['ma_idx']] = v.index
+
 if __name__ == '__main__':
     from region_growing import compute_segment_aggregate
     
@@ -66,7 +70,7 @@ if __name__ == '__main__':
     bisec_aggregate = compute_segment_aggregate(D, 'ma_bisec')
     assign_from_aggregate_dict(g, bisec_aggregate)
     contract_edges(g)
-    # update_points(g, D['ma_segment'])
+    update_points(g, D)
     import ipdb; ipdb.set_trace()
     # mah = MAHelper(D)
     
