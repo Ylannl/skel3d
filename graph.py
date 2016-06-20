@@ -32,29 +32,25 @@ from region_growing import find_relations
 #     return g
     
     
-def get_graphs(datadict, min_count):
-    g = construct_graph(datadict, min_count)
-    # g.delete_edges(g.es.select(adj_count_lt=min_count)
-    return g.clusters(igraph.WEAK).subgraphs()
+# def get_graphs(datadict, min_count):
+#     g = construct_graph(datadict, min_count)
+#     # g.delete_edges(g.es.select(adj_count_lt=min_count)
+#     return g.clusters(igraph.WEAK).subgraphs()
     
-def assign_from_aggregate_dict(g, dic):
-    # segment_ids = g.vs['segment_id']
-    for v in g.vs:
-        v['count'], v['bisec_avg'] = dic[v['segment_id']]
+
         
 def contract_edges(g, threshold=math.radians(5)):
-    
     for e in g.es:
         s = g.vs[e.source]
         t = g.vs[e.target]
-        e['avg_bisec_angle'] = np.arccos(np.dot(s['bisec_avg'], t['bisec_avg']))
+        e['delta_ma_bisec'] = np.arccos(np.dot(s['ma_bisec_mean'], t['ma_bisec_mean']))
         
     tg = g.copy()
-    tg.delete_edges(tg.es.select(avg_bisec_angle_gt=threshold))
+    tg.delete_edges(tg.es.select(delta_ma_bisec_gt=threshold))
     
     g.contract_vertices(tg.clusters(igraph.WEAK).membership, 
-        combine_attrs={ 'segment_id': lambda x: x, 
-                        'count':'sum', 
+        combine_attrs={ 'ma_bisec_mean': lambda x: np.mean(x, axis=0), 
+                        'ma_coords_mean': lambda x: np.mean(x, axis=0), 
                         'ma_idx': lambda x: [e for e in chain(*x)]
         })
     g.simplify(combine_edges='sum')
@@ -64,15 +60,9 @@ def update_points(g, datadict):
         datadict['ma_segment'][v['ma_idx']] = v.index
 
 if __name__ == '__main__':
-    from region_growing import compute_segment_aggregate
-    
     D = io_npy.read_npy("/Users/ravi/git/masbcpp/rdam_blokken_npy")
-    g = construct_graph(D, 6)
-    
-    bisec_aggregate = compute_segment_aggregate(D, 'ma_bisec')
-    assign_from_aggregate_dict(g, bisec_aggregate)
+    g = D['ma_segment_graph']
     contract_edges(g)
-    update_points(g, D)
     import ipdb; ipdb.set_trace()
     # mah = MAHelper(D)
     
