@@ -51,11 +51,10 @@ class MatApp(App):
         self.graph_programs[index].is_visible = True
         
         g = self.graph_programs[self.dialog.ui.comboBox_component.currentIndex()].graph
-        segment_ids = g.vs['segment_id']
-        self.viewerWindow.center_view(np.mean([ma.segment_centers_dict[i][1] for i in segment_ids], axis=0))
+        self.viewerWindow.center_view(np.mean(g.vs['ma_coords_mean'], axis=0))
         self.viewerWindow.render()
 
-        f = np.in1d(self.ma.D['ma_segment'], segment_ids)
+        f = np.concatenate(g.vs['ma_idx'])
         if f.sum() <1:return
         # update mat points
         self.viewerWindow.data_programs['MAT points'].updateAttributes(filter=f)
@@ -94,7 +93,8 @@ class MatApp(App):
         self.graph_programs = []
 
         min_count = self.dialog.ui.spinBox_linkcount.value()
-        self.graphs = get_graphs(self.ma.D, min_count)
+        g = self.ma.D['ma_segment_graph']
+        self.graphs = g.subgraph_edges(g.es.select(adj_count_gt=min_count)).clusters().subgraphs()
 
         i=0
         for g in self.graphs:
@@ -103,8 +103,8 @@ class MatApp(App):
 
             if 0<g.ecount():#<1000:
                 for e in g.es:
-                    adj_rel_start.append(ma.segment_centers_dict[g.vs[e.source]['segment_id']][1])
-                    adj_rel_end.append(ma.segment_centers_dict[g.vs[e.target]['segment_id']][1])
+                    adj_rel_start.append(g.vs[e.source]['ma_coords_mean'])
+                    adj_rel_end.append(g.vs[e.target]['ma_coords_mean'])
                 # import ipdb; ipdb.set_trace()
                 # color = np.random.rand(3)
                 # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)
@@ -202,19 +202,19 @@ def view(ma):
     # ref_count = timeit(count_refs)
     min_link_adj = 5
     max_r=190.
-    segment_centers_dict = compute_segment_aggregate(ma.D, 'ma_coords')
-    ma.segment_centers_dict = segment_centers_dict
+    ma.g = ma.D['ma_segment_graph']
+    # ma.segment_centers_dict = segment_centers_dict
 
-    seg_centers = np.array([v[1] for v in list(segment_centers_dict.values())], dtype=np.float32)
-    seg_cnts = np.array([v[0] for v in list(segment_centers_dict.values())], dtype=np.float32)
-    seg_ids = np.array([k for k in list(segment_centers_dict.keys())], dtype=np.float32)
+    # seg_centers = np.array([v[1] for v in list(segment_centers_dict.values())], dtype=np.float32)
+    # seg_cnts = np.array([v[0] for v in list(segment_centers_dict.values())], dtype=np.float32)
+    # seg_ids = np.array([k for k in list(segment_centers_dict.keys())], dtype=np.float32)
 
     flip_rel_start = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
     flip_rel_end = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
     i=0
     for s,e in ma.D['seg_link_flip'][:,:2]:
-        flip_rel_start[i] = segment_centers_dict[s][1]
-        flip_rel_end[i] = segment_centers_dict[e][1]
+        flip_rel_start[i] = ma.g.vs[s]['ma_coords_mean']
+        flip_rel_end[i] = ma.g.vs[e]['ma_coords_mean']
         i+=1
 
     adj_rel_start = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
@@ -222,8 +222,8 @@ def view(ma):
     i=0
     # f = ma.D['seg_link_adj'][:,2] > min_link_adj
     for s,e in ma.D['seg_link_adj'][:,:2]:
-        adj_rel_start[i] = segment_centers_dict[s][1]
-        adj_rel_end[i] = segment_centers_dict[e][1]
+        adj_rel_start[i] = ma.g.vs[s]['ma_coords_mean']
+        adj_rel_end[i] = ma.g.vs[e]['ma_coords_mean']
         i+=1
     
     c = MatApp(ma)
@@ -294,12 +294,12 @@ def view(ma):
     ) 
     # import ipdb; ipdb.set_trace()
 
-    f = seg_cnts!=1
-    c.add_data_source(
-        name = 'Segment centers',
-        opts = ['splat_point'],
-        points = seg_centers[f]
-    )
+    # f = seg_cnts!=1
+    # c.add_data_source(
+    #     name = 'Segment centers',
+    #     opts = ['splat_point'],
+    #     points = seg_centers[f]
+    # )
     if len(flip_rel_start)>0:
         c.add_data_source_line(
             name = 'Flip relations',
@@ -308,7 +308,7 @@ def view(ma):
         )
 
     if len(adj_rel_start)>0:
-        f = seg_cnts!=1
+        # f = seg_cnts!=1
         c.add_data_source_line(
             name = 'Adjacency relations',
             coords_start = adj_rel_start,

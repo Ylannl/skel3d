@@ -188,6 +188,8 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	for start_id, end_id, count in mah.D['seg_link_adj']:
 		g.add_edge(start_id, end_id, adj_count=count)
 
+	compute_segment_aggregate(g, mah.D, 'ma_coords')
+	compute_segment_aggregate(g, mah.D, 'ma_bisec')
 	mah.D['ma_segment_graph'] = g
 	io_npy.write_npy(infile, mah.D, ['ma_segment', 'ma_segment_graph'])
 	
@@ -295,23 +297,10 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 		i+=1
 	io_npy.write_npy(infile, ma.D, ['seg_link_adj'])
 
-def compute_segment_aggregate(datadict, key_to_aggregate='ma_coords'):
-    """Compute avarage coordinate for each segment"""
-
-    segment_dict = {}
-    # segment_point_sums = {}
-    for i, segment in enumerate(datadict['ma_segment']):
-        # slicing is not copying!
-        if segment in segment_dict:
-            segment_dict[segment][0] += 1
-            segment_dict[segment][1] += datadict[key_to_aggregate][i]
-        else:
-            segment_dict[segment] = [1, np.copy(datadict[key_to_aggregate][i])]
-
-    for key, value in segment_dict.items():
-        segment_dict[key][1] = value[1]/value[0]
-
-    return segment_dict
+def compute_segment_aggregate(g, datadict, key='ma_coords'):
+	"""Compute eg. avarage coordinate for each segment"""
+	for v in g.vs:
+		v[key+'_mean'] = datadict[key][v['ma_idx']].mean(axis=0)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Region growing for MAT sheets')
