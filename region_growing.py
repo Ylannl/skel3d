@@ -176,25 +176,20 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 			ma_segment_dict[seg_id].append(i)
 		else:
 			ma_segment_dict[seg_id]=[]
-		
+	
 	for k,v in ma_segment_dict.items():
 		g.add_vertex(ma_idx=v)
-
-	# import ipdb; ipdb.set_trace()
 	
-	
-	ma_segment = np.zeros(R.mah.m*2, dtype=np.int64)
-	graph2segmentlist(g, ma_segment)
+	mah.D['ma_segment'] = np.zeros(R.mah.m*2, dtype=np.int64)
+	graph2segmentlist(g, mah.D['ma_segment'])
 	
 	find_relations(mah, infile)
 	
 	for start_id, end_id, count in mah.D['seg_link_adj']:
 		g.add_edge(start_id, end_id, adj_count=count)
 
-	g.write_pickle(infile+'/ma_segment.pickle')
-
-	D['ma_segment'] = ma_segment
-	io_npy.write_npy(infile, D, ['ma_segment'])
+	mah.D['ma_segment_graph'] = g
+	io_npy.write_npy(infile, mah.D, ['ma_segment', 'ma_segment_graph'])
 	
 	return g
 	
@@ -271,6 +266,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 					else:
 						pair = n_seg_id, seg_id
 
+					# don't add edges to unsegmented points (stored in segment 0)
 					if pair[0] == 0: continue
 
 					if pair in pdict:
@@ -331,5 +327,3 @@ if __name__ == '__main__':
 	g = perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile, only_interior=args.interior)
 	# if args.topo:
 		# find_relations(mah, infile=args.infile, only_interior=args.interior)
-		
-
