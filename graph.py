@@ -39,7 +39,7 @@ from region_growing import find_relations
     
 
         
-def contract_edges(g, threshold=math.radians(5)):
+def contract_edges(g, threshold=math.radians(10)):
     for e in g.es:
         s = g.vs[e.source]
         t = g.vs[e.target]
@@ -55,9 +55,9 @@ def contract_edges(g, threshold=math.radians(5)):
         })
     g.simplify(combine_edges='sum')
 
-def update_points(g, datadict):
-    for v in g.vs:
-        datadict['ma_segment'][v['ma_idx']] = v.index
+# def update_points(g, datadict):
+#     for v in g.vs:
+#         datadict['ma_segment'][v['ma_idx']] = v.index
 
 if __name__ == '__main__':
     D = io_npy.read_npy("/Users/ravi/git/masbcpp/rdam_blokken_npy")

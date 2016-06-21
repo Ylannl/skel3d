@@ -94,6 +94,7 @@ class MatApp(App):
 
         min_count = self.dialog.ui.spinBox_linkcount.value()
         g = self.ma.D['ma_segment_graph']
+        contract_edges(g)
         self.graphs = g.subgraph_edges(g.es.select(adj_count_gt=min_count)).clusters().subgraphs()
 
         i=0
