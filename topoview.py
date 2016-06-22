@@ -93,8 +93,9 @@ class MatApp(App):
         self.graph_programs = []
 
         min_count = self.dialog.ui.spinBox_linkcount.value()
-        g = self.ma.D['ma_segment_graph']
-        contract_edges(g)
+        contract_thres = self.dialog.ui.doubleSpinBox_contractthres.value()
+        g = self.ma.D['ma_segment_graph'].copy()
+        contract_edges(g, contract_thres)
         self.graphs = g.subgraph_edges(g.es.select(adj_count_gt=min_count)).clusters().subgraphs()
 
         i=0
@@ -140,8 +141,9 @@ class ToolsDialog(QWidget):
                 l.append(program_name)
         self.ui.listWidget_layers.addItems(l)
 
-        self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
+        # self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
         self.ui.spinBox_linkcount.valueChanged.connect(self.app.filter_linkcount)
+        # self.ui.doubleSpinBox_contractthres.valueChanged.connect(self.app.doubleSpinBox_contractthres)
         self.ui.pushButton_regraph.clicked.connect(self.app.draw_graphs)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)

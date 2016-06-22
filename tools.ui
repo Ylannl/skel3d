@@ -69,22 +69,22 @@
        </widget>
       </item>
       <item row="0" column="2">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_filterRadius">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_contractthres">
         <property name="maximum">
-         <double>1000.000000000000000</double>
+         <double>180.000000000000000</double>
         </property>
         <property name="singleStep">
          <double>0.500000000000000</double>
         </property>
         <property name="value">
-         <double>150.000000000000000</double>
+         <double>10.000000000000000</double>
         </property>
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_radius">
+       <widget class="QLabel" name="label_contractthres">
         <property name="text">
-         <string>Radius (max)</string>
+         <string>Contract angle</string>
         </property>
        </widget>
       </item>

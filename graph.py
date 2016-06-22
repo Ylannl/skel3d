@@ -39,7 +39,8 @@ from region_growing import find_relations
     
 
         
-def contract_edges(g, threshold=math.radians(10)):
+def contract_edges(g, threshold=10):
+    threshold = math.radians(threshold)
     for e in g.es:
         s = g.vs[e.source]
         t = g.vs[e.target]
