@@ -190,6 +190,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 
 	compute_segment_aggregate(g, mah.D, 'ma_coords')
 	compute_segment_aggregate(g, mah.D, 'ma_bisec')
+	compute_segment_aggregate(g, mah.D, 'ma_theta')
 	mah.D['ma_segment_graph'] = g
 	io_npy.write_npy(infile, mah.D, ['ma_segment', 'ma_segment_graph'])
 	

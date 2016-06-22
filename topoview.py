@@ -95,6 +95,7 @@ class MatApp(App):
         min_count = self.dialog.ui.spinBox_linkcount.value()
         contract_thres = self.dialog.ui.doubleSpinBox_contractthres.value()
         g = self.ma.D['ma_segment_graph'].copy()
+        g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(30)))
         contract_edges(g, contract_thres)
         self.graphs = g.subgraph_edges(g.es.select(adj_count_gt=min_count)).clusters().subgraphs()
 
@@ -354,5 +355,9 @@ if __name__ == '__main__':
     # import ipdb;ipdb.set_trace()
     datadict = io_npy.read_npy(INFILE)
     ma = MAHelper(datadict, origin=True)
+
+    g = ma.D['ma_segment_graph']
+    for v in g.vs:
+        v['up_angle'] = np.sign(v['ma_bisec_mean'])[2] * np.arccos(np.dot(v['ma_bisec_mean'], [0,0,1] ))
 
     view(ma)
