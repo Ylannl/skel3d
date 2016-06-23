@@ -36,8 +36,14 @@ from region_growing import find_relations
 #     g = construct_graph(datadict, min_count)
 #     # g.delete_edges(g.es.select(adj_count_lt=min_count)
 #     return g.clusters(igraph.WEAK).subgraphs()
-    
+def get_graph_library():
+    graph_library = {}
+    g = igraph.Graph()
+    g.add_vertices(4)
+    g.add_edges([(0,1), (1,2), (2,3), (3,0), (0,2)])
+    graph_library['flatcube_top'] = g
 
+    return graph_library
         
 def contract_edges(g, threshold=10):
     threshold = math.radians(threshold)
