@@ -6,6 +6,7 @@ from ma_util import MAHelper
 from povi import App
 from graph import *
 from region_growing import *
+from geometry import *
 from povi import App
 
 from PyQt5 import uic
@@ -105,6 +106,8 @@ class MatApp(App):
         #     self.graphs.append(g.subgraph(mapping))
         
         self.graphs = g.clusters().subgraphs()
+        
+
 
         i=0
         for g in self.graphs:
