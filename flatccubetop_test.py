@@ -16,7 +16,7 @@ def view(ma):
     max_r=190.
     # ma.g = ma.D['ma_segment_graph']
     
-    
+    c = App()
 
     min_count = 5
     contract_thres = 15
@@ -26,28 +26,38 @@ def view(ma):
     contract_edges(g, contract_thres)
     
     graphlib = get_graph_library()
-    this_mapping = g.get_subisomorphisms_vf2(graphlib['flatcube_top'])[30]
-    
-    coords, normals = gf_flatcube_top(g, this_mapping, ma)
+    for that_id in [30,20,88]:
+        this_mapping = g.get_subisomorphisms_vf2(graphlib['flatcube_top'])[that_id]
+        
+        coords, normals, pointsets = gf_flatcube_top(g, this_mapping, ma)
 
-    c = App()
-    c.add_data_source_triangle(
-        name = 'roof surface',
-        coords = coords[0:6],
-        normals = normals[0:6],
-        color = (1.0,0.1,0.1)
-    )
-    c.add_data_source_triangle(
-        name = 'wall surface',
-        coords = coords[6:],
-        normals = normals[6:],
-        color = (0.88,1.0,1.0)
-    )
+        for i,pts in enumerate(pointsets):
+            c.add_data_source(
+                name = 'Surface points'+' vid '+ ' - ' +str(i),
+                opts=['splat_disk', 'with_normals'],
+                points=ma.D['coords'][list(pts)], 
+                normals=ma.D['normals'][list(pts)],
+            )
+        
+        c.add_data_source_triangle(
+            name = 'roof surface '+str(that_id),
+            coords = coords[0:6],
+            normals = normals[0:6],
+            color = (1.0,0.1,0.1),
+            visible = True
+        )
+        c.add_data_source_triangle(
+            name = 'wall surface '+str(that_id),
+            coords = coords[6:],
+            normals = normals[6:],
+            color = (0.88,1.0,1.0),
+            visible = True
+        )
 
     ma_idx = g.vs[this_mapping]['ma_idx']
     ma_idx = ma_idx[0] + ma_idx[1] +ma_idx[2] +ma_idx[3]
     s_idx = np.mod(ma_idx, ma.m)
-    # import ipdb; ipdb.set_trace()
+    
     # normals = np.array(normals, dtype=np.float32)
 
     # normals_0 = normals[labels==0]
@@ -89,6 +99,13 @@ def view(ma):
     )
 
     c.add_data_source(
+        name = 'Surface points all',
+        opts=['splat_disk', 'with_normals'],
+        points=ma.D['coords'], 
+        normals=ma.D['normals'],
+    )
+
+    c.add_data_source(
         name = 'Surface points f1',
         opts=['splat_disk', 'with_normals'],
         points=ma.D['coords'][s_idx], 
@@ -109,6 +126,15 @@ def view(ma):
         opts=['splat_point', 'with_intensity'],
         points=ma.D['ma_coords'][ma_idx], 
         category=ma.D['ma_segment'][ma_idx].astype(np.float32),
+        colormap='random'
+    )
+
+    f =ma.D['ma_segment'] != 0
+    c.add_data_source(
+        name = 'MAT points all',
+        opts=['splat_point', 'with_intensity'],
+        points=ma.D['ma_coords'][f], 
+        category=ma.D['ma_segment'][f].astype(np.float32),
         colormap='random'
     )
         

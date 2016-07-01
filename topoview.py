@@ -100,12 +100,12 @@ class MatApp(App):
         g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
         contract_edges(g, contract_thres)
         
-        # self.graphs = []
-        # graphlib = get_graph_library()
-        # for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
-        #     self.graphs.append(g.subgraph(mapping))
+        self.graphs = []
+        graphlib = get_graph_library()
+        for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
+            self.graphs.append(g.subgraph(mapping))
         
-        self.graphs = g.clusters().subgraphs()
+        # self.graphs = g.clusters().subgraphs()
         
 
 

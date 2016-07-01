@@ -117,8 +117,8 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
             f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
             if np.inner(f2,n2) > 0:
                 n2*=-1
-            normals_1.append(n1)
-            normals_2.append(n2)
+            normals_1.append(f1/np.linalg.norm(f1))
+            normals_2.append(f2/np.linalg.norm(f2))
 
         idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
 
@@ -129,7 +129,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
         coord_idx.extend(idx)
         
         # print labels
-        pointsets[vid] = km.cluster_centers_, (pts_0, pts_1)
+        pointsets[vid] = [x/np.linalg.norm(x) for x in km.cluster_centers_], (pts_0, pts_1)
         # return ma_idx, normals, labels
             
     # return pointsets
@@ -141,19 +141,29 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
         b = b/np.linalg.norm(b)
         return np.arccos(np.inner(a, b))
 
-    c0,c2 = pointsets[v0][0], pointsets[v2][0]
+    # print [len( x[1][0] | x[1][1] ) for x in pointsets.values()]
     
-    if angle(c0[0], c2[0]) < math.radians(5):
+    c0,c2 = pointsets[v0][0], pointsets[v2][0]
+    angle_thres = 20
+    print "c0[0], c2[0]",
+    print math.degrees(angle(c0[0], c2[0]))
+    print "c0[0], c2[1]",
+    print math.degrees(angle(c0[0], c2[1]))
+    print "c0[1], c2[0]",
+    print math.degrees(angle(c0[1], c2[0]))
+    print "c0[1], c2[1]",
+    print math.degrees(angle(c0[1], c2[1]))
+    if angle(c0[0], c2[0]) < math.radians(angle_thres):
         up = c0[0]
         plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][0]  
         plane_0_pts = pointsets[v0][1][1]
         plane_2_pts = pointsets[v2][1][1]
-    elif angle(c0[0], c2[1]) < math.radians(5):
+    elif angle(c0[0], c2[1]) < math.radians(angle_thres):
         up = c0[0]
         plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][1]  
         plane_0_pts = pointsets[v0][1][1]
         plane_2_pts = pointsets[v2][1][0]
-    elif angle(c0[1], c2[0]) < math.radians(5):
+    elif angle(c0[1], c2[0]) < math.radians(angle_thres):
         up = c0[1]
         plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][0]  
         plane_0_pts = pointsets[v0][1][0]
@@ -164,15 +174,15 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
         plane_0_pts = pointsets[v0][1][0]
         plane_2_pts = pointsets[v2][1][0]
 
-    if angle(up, pointsets[v1][0][0]) < math.radians(5):
+    if angle(up, pointsets[v1][0][0]) < math.radians(angle_thres):
         plane_top_pts |= pointsets[v1][1][0]
         plane_1_pts = pointsets[v1][1][1]
     else:
-        plane_top_pts |= pointsets[v1][1][0]
-        plane_1_pts = pointsets[v1][1][1]
+        plane_top_pts |= pointsets[v1][1][1]
+        plane_1_pts = pointsets[v1][1][0]
         
 
-    if angle(up, pointsets[v3][0][0]) < math.radians(5):
+    if angle(up, pointsets[v3][0][0]) < math.radians(angle_thres):
         plane_top_pts |= pointsets[v3][1][0]
         plane_3_pts = pointsets[v3][1][1]
     else:
@@ -217,10 +227,10 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     q2_[2] = ground_level
     q3_ = q3.copy()
     q3_[2] = ground_level
-    print q0
-    print q1
-    print q2
-    print q3
+    # print q0
+    # print q1
+    # print q2
+    # print q3
 
     # coords = np.empty((6,3), dtype=np.float32)
     normals = np.empty((30,3), dtype=np.float32)
@@ -236,4 +246,4 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     normals[18:24] = plane_2.n
     normals[24:30] = plane_3.n
 
-    return coords, normals
+    return coords, normals, (plane_top_pts, plane_0_pts, plane_1_pts, plane_2_pts, plane_3_pts)
