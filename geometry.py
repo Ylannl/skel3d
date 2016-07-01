@@ -77,15 +77,15 @@ def derive_tetra(plane1, plane2, point_indices, ma):
 
 #     return graph_library
 
-def gf_flatcube_top(master_graph, mapping, ma):
+def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     """compute cube geometry for matched graph based on the mapping with library graph
-         v1
+         v0
         /|\
        / | \
-     v2  |  v3
+     v1  |  v3
        \ | /
         \|/
-         v0
+         v2
         each vertex is a sheet
         each sheet contributes to the top plane
         each sheet has one other side plane
@@ -96,39 +96,144 @@ def gf_flatcube_top(master_graph, mapping, ma):
     
     # for each sheet find two sets of surface points, each corresponding to a distict plane. Use cross-product of spoke vectors with avg bisector of sheet to decide
     pointsets = {}
+    coord_idx = []
     for vid in mapping:
         # obtain set of surface points (regardless of what is in/out)
         bisec_mean = g.vs[vid]['ma_bisec_mean']
         ma_idx = g.vs[vid]['ma_idx']
+        s_idx = np.mod(ma_idx, ma.m)
 
         # collect normals and flip outward if necessary
-        normals = []
-        for ma_id, s_id in zip(ma_idx, np.mod(ma_idx, ma.m)):
+        normals_1 = []
+        normals_2 = []
+        for ma_id, s_id in zip(ma_idx, s_idx):
             c = ma.D['ma_coords'][ma_id]
             # b = ma.D['ma_bisec'][ma_id]
             n1 = ma.D['normals'][s_id]
-            # f1 = c-ma.D['coords'][s_id]
-            # if np.inner(f1,n1) < 0:
-                # n1*=-1
+            f1 = c-ma.D['coords'][s_id]
+            if np.inner(f1,n1) > 0:
+                n1*=-1
             n2 = ma.D['normals'][ma.D['ma_qidx'][ma_id]]
-            # f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
-            # if np.inner(f2,n2) < 0:
-                # n2*=-1
-            normals.extend([n1,n2])
+            f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
+            if np.inner(f2,n2) > 0:
+                n2*=-1
+            normals_1.append(n1)
+            normals_2.append(n2)
+
+        idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
 
         km = KMeans(n_clusters = 2)
-        labels = km.fit_predict(normals)
-        # import ipdb; ipdb.set_trace()
+        labels = km.fit_predict(normals_1+normals_2)
+        pts_0 = set(idx[labels==0])
+        pts_1 = set(idx[labels==1])
+        coord_idx.extend(idx)
+        
         # print labels
-        pointsets[vid] = km.cluster_centers_, labels
+        pointsets[vid] = km.cluster_centers_, (pts_0, pts_1)
         # return ma_idx, normals, labels
             
-
+    # return pointsets
     # aggregate points for common planes based on graph topology
 
     ## top Plane
-    pointsets[v0]
+    def angle(a, b):
+        a = a/np.linalg.norm(a)
+        b = b/np.linalg.norm(b)
+        return np.arccos(np.inner(a, b))
+
+    c0,c2 = pointsets[v0][0], pointsets[v2][0]
+    
+    if angle(c0[0], c2[0]) < math.radians(5):
+        up = c0[0]
+        plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][0]  
+        plane_0_pts = pointsets[v0][1][1]
+        plane_2_pts = pointsets[v2][1][1]
+    elif angle(c0[0], c2[1]) < math.radians(5):
+        up = c0[0]
+        plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][1]  
+        plane_0_pts = pointsets[v0][1][1]
+        plane_2_pts = pointsets[v2][1][0]
+    elif angle(c0[1], c2[0]) < math.radians(5):
+        up = c0[1]
+        plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][0]  
+        plane_0_pts = pointsets[v0][1][0]
+        plane_2_pts = pointsets[v2][1][1]
+    else:
+        up = c0[1]
+        plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][1]  
+        plane_0_pts = pointsets[v0][1][0]
+        plane_2_pts = pointsets[v2][1][0]
+
+    if angle(up, pointsets[v1][0][0]) < math.radians(5):
+        plane_top_pts |= pointsets[v1][1][0]
+        plane_1_pts = pointsets[v1][1][1]
+    else:
+        plane_top_pts |= pointsets[v1][1][0]
+        plane_1_pts = pointsets[v1][1][1]
+        
+
+    if angle(up, pointsets[v3][0][0]) < math.radians(5):
+        plane_top_pts |= pointsets[v3][1][0]
+        plane_3_pts = pointsets[v3][1][1]
+    else:
+        plane_top_pts |= pointsets[v3][1][1]
+        plane_3_pts = pointsets[v3][1][0] 
 
     # compute for each aggregate set of surface points a Plane
+    plane_top = Plane( [Point( ma.D['coords'][pi]) for pi in plane_top_pts] )
+    plane_0 = Plane( [Point( ma.D['coords'][pi]) for pi in plane_0_pts] )
+    plane_1 = Plane( [Point( ma.D['coords'][pi]) for pi in plane_1_pts] )
+    plane_2 = Plane( [Point( ma.D['coords'][pi]) for pi in plane_2_pts] )
+    plane_3 = Plane( [Point( ma.D['coords'][pi]) for pi in plane_3_pts] )
 
-    # intersect planes using graph topology, compute the vertices of the roof plane, extrude down to z=0 
+    # intersect planes using graph topology, compute the vertices of the roof plane, extrude down to z=0
+    line_0 = plane_top.intersection(plane_0)
+    line_1 = plane_top.intersection(plane_1)
+    line_2 = plane_top.intersection(plane_2)
+    line_3 = plane_top.intersection(plane_3)
+
+    line_01 = plane_0.intersection(plane_1)
+    line_12 = plane_1.intersection(plane_2)
+    line_23 = plane_2.intersection(plane_3)
+    line_30 = plane_3.intersection(plane_0)
+    
+
+    def line_intersect(l1,l2):
+        # assuming there is an intersection and the lines are not parallel
+        l2m = (l1.t[0] * (l2.r[1]-l1.r[1]) + l1.t[1]*l1.r[0] - l2.r[0]*l1.t[1]) / (l2.t[0]*l1.t[1] - l1.t[0]*l2.t[1])
+        return l2.r + l2m*l2.t
+
+    q0 = line_intersect(line_0, line_01)
+    q1 = line_intersect(line_1, line_12)
+    q2 = line_intersect(line_2, line_23)
+    q3 = line_intersect(line_3, line_30)
+
+    ground_level = ma.D['coords'][coord_idx][:,2].min()
+    q0_ = q0.copy()
+    q0_[2] = ground_level
+    q1_ = q1.copy()
+    q1_[2] = ground_level
+    q2_ = q2.copy()
+    q2_[2] = ground_level
+    q3_ = q3.copy()
+    q3_[2] = ground_level
+    print q0
+    print q1
+    print q2
+    print q3
+
+    # coords = np.empty((6,3), dtype=np.float32)
+    normals = np.empty((30,3), dtype=np.float32)
+
+    coords = np.array([     q0,q1,q2, q0,q2,q3, 
+                            q0,q0_,q1_, q0,q1_,q1, 
+                            q1,q1_,q2, q2,q1_,q2_,
+                            q2,q2_,q3_, q3,q2,q3_,
+                            q0,q3,q3_, q0,q3_,q0_ ], dtype=np.float32)
+    normals[0:6] = plane_top.n
+    normals[6:12] = plane_0.n
+    normals[12:18] = plane_1.n
+    normals[18:24] = plane_2.n
+    normals[24:30] = plane_3.n
+
+    return coords, normals
