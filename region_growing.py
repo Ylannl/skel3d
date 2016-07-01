@@ -12,6 +12,26 @@ INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/ringdijk_opmeer_npy"
 # INFILE = "/Volumes/Data/Data/pointcloud/AHN2_matahn_samples/denhaag_a12_npy"
 
+# Print iterations progress
+def printProgress (iteration, total, prefix = '', suffix = '', decimals = 2, barLength = 100):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : number of decimals in percent complete (Int) 
+        barLength   - Optional  : character length of bar (Int) 
+    """
+    filledLength    = int(round(barLength * iteration / float(total)))
+    percents        = round(100.00 * (iteration / float(total)), decimals)
+    bar             = '#' * filledLength + '-' * (barLength - filledLength)
+    sys.stdout.write('%s [%s] %s%s %s\r' % (prefix, bar, percents, '%', suffix)),
+    sys.stdout.flush()
+    if iteration == total:
+        print("\n")
+
 def get_neighbours_ma(data, k=15):
     kdt_ma = KDTree(data)
     return kdt_ma.query(data, k)
@@ -19,7 +39,7 @@ def get_neighbours_ma(data, k=15):
 class RegionGrower(object):
 	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points. Note that interior & exterior MAT points are concatenated and not treated separately."""
 
-	def __init__(self, mah, bisec_thres=5.0, k=10, only_interior=False, method = 'bisec'):
+	def __init__(self, mah, bisec_thres=10.0, k=10, only_interior=False, method = 'bisec'):
 		if method == 'bisec':
 			self.valid_candidate = self.valid_candidate_bisec # or 'normal'
 		else:
@@ -28,7 +48,7 @@ class RegionGrower(object):
 		self.p_bisecthres = math.cos((bisec_thres / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
 		self.p_thetathres_1 = (50.0 / 180.0) * math.pi # during bisect growing
-		self.p_thetathres_2 = (3.0 / 180.0) * math.pi # during theta growing
+		self.p_thetathres_2 = (10.0 / 180.0) * math.pi # during theta growing
 		self.p_k = k
 		self.p_mincount = 10
 
@@ -78,11 +98,15 @@ class RegionGrower(object):
 	def apply_region_growing_algorithm(self, seedpoints):
 		"""pop seedpoints and try to grow regions until no more seedpoints are left"""
 		
+		totalcount = len(seedpoints)
+		pointcount = 0 
 		while len(seedpoints) > 0:
 			seed = seedpoints.pop()
 			if self.ma_segment[seed] == 0:
-				self.grow_region(seed)
+				pointcount += self.grow_region(seed)
+				printProgress(pointcount, totalcount, prefix='Points segmented:', suffix='[{}/{}]'.format(pointcount,totalcount), barLength=40)
 				self.region_nr += 1
+		print('')
 
 	def grow_region(self, initial_seed):
 		"""Use initial_seed to grow a region by testing if its neighbours are valid candidates. Valid candidates are added to the current region/segment and _its_ neighbours are also tested. Stop when we run out of valid candidates."""
@@ -99,7 +123,7 @@ class RegionGrower(object):
 					self.ma_segment[neighbour] = self.region_nr
 					candidate_stack.append(neighbour)
 					point_count += 1
-		print("found region nr %d with %d points" % (self.region_nr, point_count))
+		# print("found region nr %d with %d points" % (self.region_nr, point_count))
 		return point_count
 
 	def valid_candidate_normal(self, seed, candidate):
@@ -154,6 +178,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	# find segments based on similiraty in bisector orientation
 	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec', **args)
 	seedpoints = list( np.random.permutation(R.m) )
+	print("Initiated bisector-based region growing")
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
 	# print(np.unique(R.ma_segment, return_counts=True))
@@ -162,12 +187,14 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
 	# R.overwrite_regions = True
 	R.valid_candidate = R.valid_candidate_theta
+	print("Initiated theta-based region growing")
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
 	# R.assign_unsegmented_points()
 	# print(np.unique(R.ma_segment, return_counts=True))
 	
 	# build graph
+	print("Constructing graph...")
 	g = igraph.Graph(directed=False)
 	
 	ma_segment_dict = {}
@@ -307,7 +334,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Region growing for MAT sheets')
 	parser.add_argument('infile', help='npy file', default=INFILE)
 	parser.add_argument('-k', help='Number of neighbours to use', default=10, type=int)
-	parser.add_argument('-b', help='Bisec threshold in degrees', default=5.0, type=float)
+	parser.add_argument('-b', help='Bisec threshold in degrees', default=10.0, type=float)
 	# parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
 	parser.add_argument('--interior', help='Only use interior MAT', dest='interior', action='store_true')
 	args = parser.parse_args()

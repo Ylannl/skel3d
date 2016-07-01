@@ -263,7 +263,7 @@ def view(ma):
         #     category=ma.D['ma_segment'][ma.m:][f].astype(np.float32),
         #     colormap='random'
         # )
-        # f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']>0)
+        f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']>0)
         c.add_data_source(
             name = 'MAT points',
             opts=['splat_point', 'with_intensity'],

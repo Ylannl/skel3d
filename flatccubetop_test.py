@@ -10,7 +10,7 @@ from geometry import *
 from povi import App
 from itertools import chain
 
-def view(ma):
+def view(ma, vids=[30,20,88]):
     # ref_count = timeit(count_refs)
     min_link_adj = 5
     max_r=190.
@@ -19,14 +19,14 @@ def view(ma):
     c = App()
 
     min_count = 5
-    contract_thres = 15
+    contract_thres = 20
     g = ma.D['ma_segment_graph'].copy()
     g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
     g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
     contract_edges(g, contract_thres)
     
     graphlib = get_graph_library()
-    for that_id in [30,20,88]:
+    for that_id in vids:
         this_mapping = g.get_subisomorphisms_vf2(graphlib['flatcube_top'])[that_id]
         
         coords, normals, pointsets = gf_flatcube_top(g, this_mapping, ma)
@@ -164,8 +164,10 @@ def view(ma):
     c.run()
 
 if __name__ == '__main__':
+    vids = [30,20,88]
     if len(sys.argv)>1:
-        INFILE = sys.argv[-1]
+        vids = [int(sys.argv[-1])]
+        # INFILE = sys.argv[-1]
     # import ipdb;ipdb.set_trace()
     datadict = io_npy.read_npy(INFILE)
     ma = MAHelper(datadict, origin=True)
@@ -174,4 +176,4 @@ if __name__ == '__main__':
     for v in g.vs:
         v['up_angle'] = np.sign(v['ma_bisec_mean'])[2] * np.arccos(np.dot(v['ma_bisec_mean'], [0,0,1] ))
 
-    view(ma)
+    view(ma, vids)
