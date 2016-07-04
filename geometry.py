@@ -77,6 +77,16 @@ def derive_tetra(plane1, plane2, point_indices, ma):
 
 #     return graph_library
 
+def line_intersect(l1,l2):
+    # assuming there is an intersection and the lines are not parallel
+    l2m = (l1.t[0] * (l2.r[1]-l1.r[1]) + l1.t[1]*l1.r[0] - l2.r[0]*l1.t[1]) / (l2.t[0]*l1.t[1] - l1.t[0]*l2.t[1])
+    return l2.r + l2m*l2.t
+
+def angle(a, b):
+    a = a/np.linalg.norm(a)
+    b = b/np.linalg.norm(b)
+    return np.arccos(np.inner(a, b))
+
 def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     """compute cube geometry for matched graph based on the mapping with library graph
          v0
@@ -109,14 +119,14 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
         for ma_id, s_id in zip(ma_idx, s_idx):
             c = ma.D['ma_coords'][ma_id]
             # b = ma.D['ma_bisec'][ma_id]
-            n1 = ma.D['normals'][s_id]
+            # n1 = ma.D['normals'][s_id]
             f1 = c-ma.D['coords'][s_id]
-            if np.inner(f1,n1) > 0:
-                n1*=-1
-            n2 = ma.D['normals'][ma.D['ma_qidx'][ma_id]]
+            # if np.inner(f1,n1) > 0:
+            #     n1*=-1
+            # n2 = ma.D['normals'][ma.D['ma_qidx'][ma_id]]
             f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
-            if np.inner(f2,n2) > 0:
-                n2*=-1
+            # if np.inner(f2,n2) > 0:
+            #     n2*=-1
             normals_1.append(f1/np.linalg.norm(f1))
             normals_2.append(f2/np.linalg.norm(f2))
 
@@ -136,10 +146,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     # aggregate points for common planes based on graph topology
 
     ## top Plane
-    def angle(a, b):
-        a = a/np.linalg.norm(a)
-        b = b/np.linalg.norm(b)
-        return np.arccos(np.inner(a, b))
+
 
     # print [len( x[1][0] | x[1][1] ) for x in pointsets.values()]
     
@@ -206,12 +213,6 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     line_12 = plane_1.intersection(plane_2)
     line_23 = plane_2.intersection(plane_3)
     line_30 = plane_3.intersection(plane_0)
-    
-
-    def line_intersect(l1,l2):
-        # assuming there is an intersection and the lines are not parallel
-        l2m = (l1.t[0] * (l2.r[1]-l1.r[1]) + l1.t[1]*l1.r[0] - l2.r[0]*l1.t[1]) / (l2.t[0]*l1.t[1] - l1.t[0]*l2.t[1])
-        return l2.r + l2m*l2.t
 
     q0 = line_intersect(line_0, line_01)
     q1 = line_intersect(line_1, line_12)
@@ -247,3 +248,57 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     normals[24:30] = plane_3.n
 
     return coords, normals, (plane_top_pts, plane_0_pts, plane_1_pts, plane_2_pts, plane_3_pts)
+
+def polyhedral_reconstruct(mapping, master_graph, ma):
+    """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
+
+    # for each sheet
+        #find two well defined spoke-vec directions using KMeans
+        #if success then continue this iteration
+        #gradually build plane graph... exploit sheet adjacencies
+
+    # from plane graph
+    # for each plane in plane graph estimate the plane from related surface points
+    # compute line instersections for each adj rel in plane graph
+
+    g = master_graph
+    v0, v1, v2, v3 = mapping
+    
+    # for each sheet find two sets of surface points, each corresponding to a distict plane. Use cross-product of spoke vectors with avg bisector of sheet to decide
+    pointsets = {}
+    coord_idx = []
+    for vid in mapping:
+        # obtain set of surface points (regardless of what is in/out)
+        bisec_mean = g.vs[vid]['ma_bisec_mean']
+        ma_idx = g.vs[vid]['ma_idx']
+        s_idx = np.mod(ma_idx, ma.m)
+
+        # collect normals and flip outward if necessary
+        normals_1 = []
+        normals_2 = []
+        for ma_id, s_id in zip(ma_idx, s_idx):
+            c = ma.D['ma_coords'][ma_id]
+            # b = ma.D['ma_bisec'][ma_id]
+            # n1 = ma.D['normals'][s_id]
+            f1 = c-ma.D['coords'][s_id]
+            # if np.inner(f1,n1) > 0:
+            #     n1*=-1
+            # n2 = ma.D['normals'][ma.D['ma_qidx'][ma_id]]
+            f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
+            # if np.inner(f2,n2) > 0:
+            #     n2*=-1
+            normals_1.append(f1/np.linalg.norm(f1))
+            normals_2.append(f2/np.linalg.norm(f2))
+
+        idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
+
+        km = KMeans(n_clusters = 2)
+        labels = km.fit_predict(normals_1+normals_2)
+        pts_0 = set(idx[labels==0])
+        pts_1 = set(idx[labels==1])
+        coord_idx.extend(idx)
+        
+        # print labels
+        pointsets[vid] = [x/np.linalg.norm(x) for x in km.cluster_centers_], (pts_0, pts_1)
+        # return ma_idx, normals, labels
+           

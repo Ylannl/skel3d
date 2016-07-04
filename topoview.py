@@ -96,16 +96,16 @@ class MatApp(App):
         min_count = self.dialog.ui.spinBox_linkcount.value()
         contract_thres = self.dialog.ui.doubleSpinBox_contractthres.value()
         g = self.ma.D['ma_segment_graph'].copy()
-        g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
+        # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
         g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
         contract_edges(g, contract_thres)
         
-        self.graphs = []
-        graphlib = get_graph_library()
-        for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
-            self.graphs.append(g.subgraph(mapping))
+        # self.graphs = []
+        # graphlib = get_graph_library()
+        # for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
+        #     self.graphs.append(g.subgraph(mapping))
         
-        # self.graphs = g.clusters().subgraphs()
+        self.graphs = g.clusters().subgraphs()
         
 
 
@@ -216,7 +216,6 @@ def view(ma):
     # ref_count = timeit(count_refs)
     min_link_adj = 5
     max_r=190.
-    ma.g = ma.D['ma_segment_graph']
     # ma.segment_centers_dict = segment_centers_dict
 
     # seg_centers = np.array([v[1] for v in list(segment_centers_dict.values())], dtype=np.float32)
