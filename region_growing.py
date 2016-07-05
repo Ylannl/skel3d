@@ -97,22 +97,23 @@ class RegionGrower(object):
 
 	def apply_region_growing_algorithm(self, seedpoints):
 		"""pop seedpoints and try to grow regions until no more seedpoints are left"""
-		
 		totalcount = len(seedpoints)
-		pointcount = 0 
+		pointcount = 0
+		seedpoints = set(seedpoints)
+		printProgress(0, totalcount, prefix='Segmentation progress:', barLength=42)
 		while len(seedpoints) > 0:
 			seed = seedpoints.pop()
 			if self.ma_segment[seed] == 0:
-				pointcount += self.grow_region(seed)
-				printProgress(pointcount, totalcount, prefix='Points segmented:', suffix='[{}/{}]'.format(pointcount,totalcount), barLength=40)
+				seedpoints -= self.grow_region(seed)
+				printProgress(totalcount-len(seedpoints), totalcount, prefix='Segmentation progress:', barLength=42)
 				self.region_nr += 1
-		print('')
 
 	def grow_region(self, initial_seed):
 		"""Use initial_seed to grow a region by testing if its neighbours are valid candidates. Valid candidates are added to the current region/segment and _its_ neighbours are also tested. Stop when we run out of valid candidates."""
 		candidate_stack = [initial_seed]
 		point_count = 1
 		self.ma_segment[initial_seed] = self.region_nr
+		neighbours_in_region = set() 
 		while len(candidate_stack) > 0:
 			seed = candidate_stack.pop()
 			for neighbour in self.neighbours_idx[seed][1:]:
@@ -122,9 +123,10 @@ class RegionGrower(object):
 				if self.valid_candidate(seed, neighbour):
 					self.ma_segment[neighbour] = self.region_nr
 					candidate_stack.append(neighbour)
+					neighbours_in_region.add(neighbour)
 					point_count += 1
 		# print("found region nr %d with %d points" % (self.region_nr, point_count))
-		return point_count
+		return neighbours_in_region
 
 	def valid_candidate_normal(self, seed, candidate):
 		"""candidate is valid if angle between normals of seed and candidate is below preset threshold"""
@@ -176,9 +178,10 @@ class RegionGrower(object):
 
 def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	# find segments based on similiraty in bisector orientation
+	print("Initiating region grower...")
 	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec', **args)
 	seedpoints = list( np.random.permutation(R.m) )
-	print("Initiated bisector-based region growing")
+	print("\nPerforming bisector-based region growing...")
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
 	# print(np.unique(R.ma_segment, return_counts=True))
@@ -187,7 +190,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
 	# R.overwrite_regions = True
 	R.valid_candidate = R.valid_candidate_theta
-	print("Initiated theta-based region growing")
+	print("Performing theta-based region growing...")
 	R.apply_region_growing_algorithm(seedpoints)
 	R.unmark_small_clusters()
 	# R.assign_unsegmented_points()
