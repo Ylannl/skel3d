@@ -249,7 +249,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 
     return coords, normals, (plane_top_pts, plane_0_pts, plane_1_pts, plane_2_pts, plane_3_pts)
 
-def polyhedral_reconstruct(mapping, master_graph, ma):
+def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
     """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
 
     # for each sheet
@@ -261,44 +261,42 @@ def polyhedral_reconstruct(mapping, master_graph, ma):
     # for each plane in plane graph estimate the plane from related surface points
     # compute line instersections for each adj rel in plane graph
 
-    g = master_graph
-    v0, v1, v2, v3 = mapping
+    g = g.subgraph(mapping)
     
-    # for each sheet find two sets of surface points, each corresponding to a distict plane. Use cross-product of spoke vectors with avg bisector of sheet to decide
-    pointsets = {}
-    coord_idx = []
-    for vid in mapping:
+    # for each sheet find two sets of surface points, each corresponding to a distict plane. Store results in sheet-vertex
+    for v in g.vs:
         # obtain set of surface points (regardless of what is in/out)
-        bisec_mean = g.vs[vid]['ma_bisec_mean']
-        ma_idx = g.vs[vid]['ma_idx']
+
+        ma_idx = v['ma_idx']
         s_idx = np.mod(ma_idx, ma.m)
 
-        # collect normals and flip outward if necessary
-        normals_1 = []
-        normals_2 = []
-        for ma_id, s_id in zip(ma_idx, s_idx):
-            c = ma.D['ma_coords'][ma_id]
-            # b = ma.D['ma_bisec'][ma_id]
-            # n1 = ma.D['normals'][s_id]
-            f1 = c-ma.D['coords'][s_id]
-            # if np.inner(f1,n1) > 0:
-            #     n1*=-1
-            # n2 = ma.D['normals'][ma.D['ma_qidx'][ma_id]]
-            f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
-            # if np.inner(f2,n2) > 0:
-            #     n2*=-1
-            normals_1.append(f1/np.linalg.norm(f1))
-            normals_2.append(f2/np.linalg.norm(f2))
+        # collect spokes
+        f1 = c-ma.D['coords'][s_id]
+        f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
+        spokes = np.concatenate(f1/np.linalg.norm(f1), f2/np.linalg.norm(f2))
 
         idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
 
         km = KMeans(n_clusters = 2)
-        labels = km.fit_predict(normals_1+normals_2)
-        pts_0 = set(idx[labels==0])
-        pts_1 = set(idx[labels==1])
-        coord_idx.extend(idx)
+        v['spoke_cluster_labels'] = km.fit_predict(spokes)
+        v['spoke_cluster_centers'] = km.cluster_centers_
         
+
+    for e in g.es:
+        source, target = (g.vs[v] for v in e.tuple)
+        
+        # compute all angles between spokesets of source and target sheet
+        angles = []
+        for sn in (0,1):
+            for tn in (0,1):
+                angles.append( (sn,tn), angle(source['spoke_cluster_center'][sn], target['spoke_cluster_center'][tn]) )
+        # sort on angle
+        angles.sort(key=lambda e: e[1])
+        # make sure we find a good plane correspondence
+        assert(angle[0] < math.radians(5))
+        # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label
+        e['spoke_label_links'] = { source.index: angles[0][0], target.index: angles[0][1] }
         # print labels
-        pointsets[vid] = [x/np.linalg.norm(x) for x in km.cluster_centers_], (pts_0, pts_1)
+
         # return ma_idx, normals, labels
            
