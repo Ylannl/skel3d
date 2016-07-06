@@ -10,7 +10,7 @@ def ransac_plane_fit(point_array, point_indices, threshold=0.05, n_planes=2, max
 
     idx = list(point_indices)
 
-    # we are searching for n_planes solutions, but we may only find a lower number of planes    
+    # we are searching for n_planes solutions, but we may only find a lower number of planes
     solutions = []
     for i in range(n_planes):
         if len(idx) < 3:
@@ -21,7 +21,7 @@ def ransac_plane_fit(point_array, point_indices, threshold=0.05, n_planes=2, max
             random.shuffle(idx)
             seeds = idx[:3]
             # import ipdb; ipdb.set_trace()
-            try: 
+            try:
                 candidate_plane = Plane( [Point( point_array[pi]) for pi in seeds] )
             except ValueError:
                 continue
@@ -40,7 +40,7 @@ def ransac_plane_fit(point_array, point_indices, threshold=0.05, n_planes=2, max
 
         idx = list(set(idx) - set(inliers))
         solutions.append(plane)
-    
+
     return solutions
 
 def derive_tetra(plane1, plane2, point_indices, ma):
@@ -103,7 +103,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     g_flatcube_top = get_graph_library()['flatcube_top']
     g = master_graph
     v0, v1, v2, v3 = mapping
-    
+
     # for each sheet find two sets of surface points, each corresponding to a distict plane. Use cross-product of spoke vectors with avg bisector of sheet to decide
     pointsets = {}
     coord_idx = []
@@ -137,11 +137,11 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
         pts_0 = set(idx[labels==0])
         pts_1 = set(idx[labels==1])
         coord_idx.extend(idx)
-        
+
         # print labels
         pointsets[vid] = [x/np.linalg.norm(x) for x in km.cluster_centers_], (pts_0, pts_1)
         # return ma_idx, normals, labels
-            
+
     # return pointsets
     # aggregate points for common planes based on graph topology
 
@@ -149,7 +149,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 
 
     # print [len( x[1][0] | x[1][1] ) for x in pointsets.values()]
-    
+
     c0,c2 = pointsets[v0][0], pointsets[v2][0]
     angle_thres = 20
     print "c0[0], c2[0]",
@@ -162,22 +162,22 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     print math.degrees(angle(c0[1], c2[1]))
     if angle(c0[0], c2[0]) < math.radians(angle_thres):
         up = c0[0]
-        plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][0]  
+        plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][0]
         plane_0_pts = pointsets[v0][1][1]
         plane_2_pts = pointsets[v2][1][1]
     elif angle(c0[0], c2[1]) < math.radians(angle_thres):
         up = c0[0]
-        plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][1]  
+        plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][1]
         plane_0_pts = pointsets[v0][1][1]
         plane_2_pts = pointsets[v2][1][0]
     elif angle(c0[1], c2[0]) < math.radians(angle_thres):
         up = c0[1]
-        plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][0]  
+        plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][0]
         plane_0_pts = pointsets[v0][1][0]
         plane_2_pts = pointsets[v2][1][1]
     else:
         up = c0[1]
-        plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][1]  
+        plane_top_pts = pointsets[v0][1][1] | pointsets[v2][1][1]
         plane_0_pts = pointsets[v0][1][0]
         plane_2_pts = pointsets[v2][1][0]
 
@@ -187,14 +187,14 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     else:
         plane_top_pts |= pointsets[v1][1][1]
         plane_1_pts = pointsets[v1][1][0]
-        
+
 
     if angle(up, pointsets[v3][0][0]) < math.radians(angle_thres):
         plane_top_pts |= pointsets[v3][1][0]
         plane_3_pts = pointsets[v3][1][1]
     else:
         plane_top_pts |= pointsets[v3][1][1]
-        plane_3_pts = pointsets[v3][1][0] 
+        plane_3_pts = pointsets[v3][1][0]
 
     # compute for each aggregate set of surface points a Plane
     plane_top = Plane( [Point( ma.D['coords'][pi]) for pi in plane_top_pts] )
@@ -236,8 +236,8 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     # coords = np.empty((6,3), dtype=np.float32)
     normals = np.empty((30,3), dtype=np.float32)
 
-    coords = np.array([     q0,q1,q2, q0,q2,q3, 
-                            q0,q0_,q1_, q0,q1_,q1, 
+    coords = np.array([     q0,q1,q2, q0,q2,q3,
+                            q0,q0_,q1_, q0,q1_,q1,
                             q1,q1_,q2, q2,q1_,q2_,
                             q2,q2_,q3_, q3,q2,q3_,
                             q0,q3,q3_, q0,q3_,q0_ ], dtype=np.float32)
@@ -262,8 +262,8 @@ def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
     # compute line instersections for each adj rel in plane graph
 
     g = g.subgraph(mapping)
-    
-    # for each sheet find two sets of surface points, each corresponding to a distict plane. Store results in sheet-vertex
+
+    # for each sheet find two sets of surface points, each corresponding to a distict plane. Store results in sheet
     for v in g.vs:
         # obtain set of surface points (regardless of what is in/out)
 
@@ -280,11 +280,12 @@ def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
         km = KMeans(n_clusters = 2)
         v['spoke_cluster_labels'] = km.fit_predict(spokes)
         v['spoke_cluster_centers'] = km.cluster_centers_
-        
 
+
+    # label each edge with corresponding spoke sets from incident vertices (ie. an edge can be linked to exactly one plane)
     for e in g.es:
         source, target = (g.vs[v] for v in e.tuple)
-        
+
         # compute all angles between spokesets of source and target sheet
         angles = []
         for sn in (0,1):
@@ -298,5 +299,54 @@ def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
         e['spoke_label_links'] = { source.index: angles[0][0], target.index: angles[0][1] }
         # print labels
 
-        # return ma_idx, normals, labels
-           
+    # Find groups of edges that are linked to the same plane
+    planes = []
+    E = set([e for e in g.es])
+    while len(E) > 0:
+        # P: set used to stash and explore neighbors
+        e = E.pop()
+        P = set([e])
+
+        # set used to store visited edges (should be part of same plane)
+        V = set()
+
+        while len(P) > 0:
+            e = P.pop()
+            V.add(e)
+            # collect adjacent edges both at source and target vertex
+            adjacent_eids = []
+            for neighbor in g.vs[e.source].neighbors():
+                adjacent_eids.append(g.get_eid(e.source,neighbor.index), e.source)
+            for neighbor in g.vs[e.target].neighbors():
+                adjacent_eids.append(g.get_eid(e.target,neighbor.index), e.target)
+
+            # find adjacent edges that share plane relation and are not already visited
+            for eid_adj, v_inc in adjacent_eids:
+                if not eid_adj in V:
+                    #check if eid_adj is of the same plane as e
+                    if g.es[eid_adj]['spoke_label_links'][v_inc] == g.es[e]['spoke_label_links'][v_inc]:
+                        P.add(eid_adj)  
+                    
+
+        # store visited edges as a new plane
+        planes.append(list(V))
+        # remove visited edges from E
+        E -= V
+
+    # fit each plane through its supporting points
+    plane_point_sets = []
+    for plane in planes:
+        plane_point_set = []
+        for eid in plane:
+            e = g.es[eid]
+            for v in e.tuple:
+                mask = g.vs[v]['spoke_cluster_labels']==e['spoke_label_links'][v.index]
+                ma_idx = v['ma_idx']
+                s_idx = np.concatenate([np.mod(ma_idx, ma.m), ma.D['ma_qidx'][ma_idx]])
+                plane_point_set += s_idx[mask].tolist()
+        plane_point_sets.append(plane_point_set)
+
+    return plane_point_sets
+
+
+    # compute lines of intersection between adjacent planes
