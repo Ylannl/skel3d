@@ -25,7 +25,7 @@ def printProgress (iteration, total, prefix = '', suffix = '', decimals = 2, bar
         barLength   - Optional  : character length of bar (Int) 
     """
     filledLength    = int(round(barLength * iteration / float(total)))
-    percents        = round(100.00 * (iteration / float(total)), decimals)
+    percents        = '{:>6.2f}'.format(round(100.00 * (iteration / float(total)), decimals))
     bar             = '#' * filledLength + '-' * (barLength - filledLength)
     sys.stdout.write('%s [%s] %s%s %s\r' % (prefix, bar, percents, '%', suffix)),
     sys.stdout.flush()
@@ -100,13 +100,12 @@ class RegionGrower(object):
 		totalcount = len(seedpoints)
 		pointcount = 0
 		seedpoints = set(seedpoints)
-		printProgress(0, totalcount, prefix='Segmentation progress:', barLength=42)
+		printProgress(0, totalcount, prefix='Segmentation progress from {} seeds:'.format(totalcount), barLength=42)
 		while len(seedpoints) > 0:
 			seed = seedpoints.pop()
-			if self.ma_segment[seed] == 0:
-				seedpoints -= self.grow_region(seed)
-				printProgress(totalcount-len(seedpoints), totalcount, prefix='Segmentation progress:', barLength=42)
-				self.region_nr += 1
+			seedpoints -= self.grow_region(seed)
+			printProgress(totalcount-len(seedpoints), totalcount, prefix='Segmentation progress from {} seeds:'.format(totalcount), suffix='({} regions)'.format(self.region_nr), barLength=42)
+			self.region_nr += 1	
 
 	def grow_region(self, initial_seed):
 		"""Use initial_seed to grow a region by testing if its neighbours are valid candidates. Valid candidates are added to the current region/segment and _its_ neighbours are also tested. Stop when we run out of valid candidates."""
