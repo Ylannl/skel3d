@@ -10,16 +10,15 @@ from geometry import *
 from povi import App
 from itertools import chain
 
-def view(ma, vids=[30,20,88]):
+def view(ma, vids=[16,80,133]):
     # ref_count = timeit(count_refs)
-    min_link_adj = 5
     max_r=190.
     # ma.g = ma.D['ma_segment_graph']
     
     c = App()
 
-    min_count = 5
-    contract_thres = 20
+    min_count = 15
+    contract_thres = 15
     g = ma.D['ma_segment_graph'].copy()
     g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
     g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
@@ -28,6 +27,15 @@ def view(ma, vids=[30,20,88]):
     graphlib = get_graph_library()
     for that_id in vids:
         this_mapping = g.get_subisomorphisms_vf2(graphlib['flatcube_top'])[that_id]
+
+        pointsets = polyhedral_reconstruct(g, this_mapping, ma)
+        for i,pts in enumerate(pointsets):
+            c.add_data_source(
+                name = 'Surface points _'+' vid '+ ' - ' +str(i),
+                opts=['splat_disk', 'with_normals'],
+                points=ma.D['coords'][list(pts)], 
+                normals=ma.D['normals'][list(pts)],
+            )
         
         coords, normals, pointsets = gf_flatcube_top(g, this_mapping, ma)
 
@@ -164,7 +172,7 @@ def view(ma, vids=[30,20,88]):
     c.run()
 
 if __name__ == '__main__':
-    vids = [30,20,88]
+    vids = [77]
     if len(sys.argv)>1:
         vids = [int(sys.argv[-1])]
         # INFILE = sys.argv[-1]

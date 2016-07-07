@@ -249,7 +249,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 
     return coords, normals, (plane_top_pts, plane_0_pts, plane_1_pts, plane_2_pts, plane_3_pts)
 
-def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
+def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
     """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
 
     # for each sheet
@@ -261,7 +261,7 @@ def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
     # for each plane in plane graph estimate the plane from related surface points
     # compute line instersections for each adj rel in plane graph
 
-    g = g.subgraph(mapping)
+    g = master_graph.subgraph(mapping)
 
     # for each sheet find two sets of surface points, each corresponding to a distict plane. Store results in sheet
     for v in g.vs:
@@ -271,77 +271,112 @@ def polyhedral_reconstruct(mapping, master_graph, ma, angle_thres=5):
         s_idx = np.mod(ma_idx, ma.m)
 
         # collect spokes
-        f1 = c-ma.D['coords'][s_id]
-        f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_id]]
-        spokes = np.concatenate(f1/np.linalg.norm(f1), f2/np.linalg.norm(f2))
+        c = ma.D['ma_coords'][ma_idx]
+        f1 = c-ma.D['coords'][s_idx]
+        f2 = c-ma.D['coords'][ma.D['ma_qidx'][ma_idx]]
+        
+        f1_norm = np.linalg.norm(f1, axis=1)[:,None]
+        f2_norm = np.linalg.norm(f2, axis=1)[:,None]
+        # import ipdb;ipdb.set_trace()
+        spokes = np.concatenate([f1/f1_norm, f2/f2_norm])
 
         idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
 
         km = KMeans(n_clusters = 2)
         v['spoke_cluster_labels'] = km.fit_predict(spokes)
         v['spoke_cluster_centers'] = km.cluster_centers_
+        v['spoke_cluster_planeids'] = [], []
 
 
     # label each edge with corresponding spoke sets from incident vertices (ie. an edge can be linked to exactly one plane)
-    for e in g.es:
+    for e in list(g.es):
         source, target = (g.vs[v] for v in e.tuple)
 
-        # compute all angles between spokesets of source and target sheet
-        angles = []
+        # compute all angles between spokesets of source and target sheet, also find minimum angle and corresponding label pair
+        angles = {}
+        angle_min = 10 #radians
+        label_pair_min = None
         for sn in (0,1):
             for tn in (0,1):
-                angles.append( (sn,tn), angle(source['spoke_cluster_center'][sn], target['spoke_cluster_center'][tn]) )
-        # sort on angle
-        angles.sort(key=lambda e: e[1])
+                a = angle(source['spoke_cluster_centers'][sn], target['spoke_cluster_centers'][tn])
+                angles[(sn,tn)] = a
+                if a < angle_min: 
+                    angle_min = a
+                    label_pair_min = (sn,tn)
+
         # make sure we find a good plane correspondence
-        assert(angle[0] < math.radians(5))
-        # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label
-        e['spoke_label_links'] = { source.index: angles[0][0], target.index: angles[0][1] }
+        assert(angle_min < math.radians(5))
+
+        # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label 
+        e['spoke_set_map'] = {}
+        e['spoke_set_map']['match'] = { source.index: label_pair_min[0], target.index: label_pair_min[1] }
+        other_pair = int(not label_pair_min[0]), int(not label_pair_min[1]) # ie not the matching pair of clusterlabels
+        if angles[other_pair] > math.radians(175):
+            e['spoke_set_map']['parallel'] = { source.index: other_pair[0], target.index: other_pair[1] }
+            e['spoke_set_map']['intersect'] = None
+        else:
+            e['spoke_set_map']['parallel'] = None
+            e['spoke_set_map']['intersect'] = { source.index: other_pair[0], target.index: other_pair[1] }
+
+        # import ipdb;ipdb.set_trace()
         # print labels
 
+    # introduce virtual vertices and edges
+
     # Find groups of edges that are linked to the same plane
-    planes = []
-    E = set([e for e in g.es])
+    planes = {}
+    plane_id = 0
+    E = set([e.index for e in g.es])
     while len(E) > 0:
+        
         # P: set used to stash and explore neighbors
-        e = E.pop()
-        P = set([e])
+        eid = E.pop()
+        P = set([eid])
 
         # set used to store visited edges (should be part of same plane)
         V = set()
 
         while len(P) > 0:
-            e = P.pop()
-            V.add(e)
+            eid = P.pop()
+            e = g.es[eid]
+            V.add(eid)
+
+            # record plane_id in source and target vertices of e
+            for vid, label in e['spoke_set_map']['match'].items():
+                g.vs[vid]['spoke_cluster_planeids'][label].append(plane_id)
+
             # collect adjacent edges both at source and target vertex
             adjacent_eids = []
             for neighbor in g.vs[e.source].neighbors():
-                adjacent_eids.append(g.get_eid(e.source,neighbor.index), e.source)
+                adjacent_eids.append((g.get_eid(e.source,neighbor.index), e.source))
             for neighbor in g.vs[e.target].neighbors():
-                adjacent_eids.append(g.get_eid(e.target,neighbor.index), e.target)
+                adjacent_eids.append((g.get_eid(e.target,neighbor.index), e.target))
 
             # find adjacent edges that share plane relation and are not already visited
             for eid_adj, v_inc in adjacent_eids:
                 if not eid_adj in V:
                     #check if eid_adj is of the same plane as e
-                    if g.es[eid_adj]['spoke_label_links'][v_inc] == g.es[e]['spoke_label_links'][v_inc]:
-                        P.add(eid_adj)  
-                    
+                    adj_cluster_id = g.es[eid_adj]['spoke_set_map']['match'][v_inc]
+                    this_cluster_id = g.es[eid]['spoke_set_map']['match'][v_inc]
+                    if adj_cluster_id == this_cluster_id:
+                        P.add(eid_adj)
 
         # store visited edges as a new plane
-        planes.append(list(V))
+        planes[plane_id] = list(V)
+        plane_id+=1
         # remove visited edges from E
         E -= V
 
+    import ipdb;ipdb.set_trace()
     # fit each plane through its supporting points
     plane_point_sets = []
-    for plane in planes:
+    for plane_id, edges in planes.items():
         plane_point_set = []
-        for eid in plane:
+        for eid in edges:
             e = g.es[eid]
             for v in e.tuple:
-                mask = g.vs[v]['spoke_cluster_labels']==e['spoke_label_links'][v.index]
-                ma_idx = v['ma_idx']
+                mask = g.vs[v]['spoke_cluster_labels']==e['spoke_set_map']['match'][v]
+                ma_idx = g.vs[v]['ma_idx']
                 s_idx = np.concatenate([np.mod(ma_idx, ma.m), ma.D['ma_qidx'][ma_idx]])
                 plane_point_set += s_idx[mask].tolist()
         plane_point_sets.append(plane_point_set)
