@@ -252,6 +252,8 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
     """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
 
+    def inverse_spokeset_pair(s1, s2):
+        return int(not s1), int(not s2)
     # for each sheet
         #find two well defined spoke-vec directions using KMeans
         #if success then continue this iteration
@@ -308,20 +310,20 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         assert(angle_min < math.radians(5))
 
         # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label 
-        e['spoke_set_map'] = {}
-        e['spoke_set_map']['match'] = { source.index: label_pair_min[0], target.index: label_pair_min[1] }
-        other_pair = int(not label_pair_min[0]), int(not label_pair_min[1]) # ie not the matching pair of clusterlabels
-        if angles[other_pair] > math.radians(175):
-            e['spoke_set_map']['parallel'] = { source.index: other_pair[0], target.index: other_pair[1] }
-            e['spoke_set_map']['intersect'] = None
+        e['spoke_cluster_map'] = {}
+        e['spoke_cluster_map']['match'] = { source.index: label_pair_min[0], target.index: label_pair_min[1] }
+        other_pair = inverse_spokeset_pair(label_pair_min[0], label_pair_min[1]) # ie not the matching pair of clusterlabels
+
+        if angles[other_pair] > math.radians(165): # what threshold is reasonable here? 175 degrees seems to be too high
+            e['spoke_cluster_map']['parallel'] = { source.index: other_pair[0], target.index: other_pair[1] }
+            e['spoke_cluster_map']['intersect'] = None
         else:
-            e['spoke_set_map']['parallel'] = None
-            e['spoke_set_map']['intersect'] = { source.index: other_pair[0], target.index: other_pair[1] }
+            e['spoke_cluster_map']['parallel'] = None
+            e['spoke_cluster_map']['intersect'] = { source.index: other_pair[0], target.index: other_pair[1] }
 
         # import ipdb;ipdb.set_trace()
         # print labels
 
-    # introduce virtual vertices and edges
 
     # Find groups of edges that are linked to the same plane
     planes = {}
@@ -342,7 +344,7 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
             V.add(eid)
 
             # record plane_id in source and target vertices of e
-            for vid, label in e['spoke_set_map']['match'].items():
+            for vid, label in e['spoke_cluster_map']['match'].items():
                 g.vs[vid]['spoke_cluster_planeids'][label].append(plane_id)
 
             # collect adjacent edges both at source and target vertex
@@ -356,8 +358,8 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
             for eid_adj, v_inc in adjacent_eids:
                 if not eid_adj in V:
                     #check if eid_adj is of the same plane as e
-                    adj_cluster_id = g.es[eid_adj]['spoke_set_map']['match'][v_inc]
-                    this_cluster_id = g.es[eid]['spoke_set_map']['match'][v_inc]
+                    adj_cluster_id = g.es[eid_adj]['spoke_cluster_map']['match'][v_inc]
+                    this_cluster_id = g.es[eid]['spoke_cluster_map']['match'][v_inc]
                     if adj_cluster_id == this_cluster_id:
                         P.add(eid_adj)
 
@@ -367,6 +369,94 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         # remove visited edges from E
         E -= V
 
+    def get_surface_points(vertex, ma):
+        ma_idx = vertex['ma_idx']
+        return np.concatenate([np.mod(ma_idx, ma.m), ma.D['ma_qidx'][ma_idx]])
+
+    # introduce virtual vertices and edges for missing planes
+    # we assume that all present edges are properly connected and labeled now
+    # set all current vertices as not virtual:
+    g.vs['is_virtual'] = False
+    for e in g.es:
+        # if there is an edge now there must be a match in the spoke_cluster_map, so we take that for granted
+        if not e['spoke_cluster_map']['intersect'] is None:
+            # check if the intersecting spoke sets of source target sheets both reference two planes 
+            # if not we should introduce virtual vertex + 2 virtual edges and create a new plane/update references on an existing plane_id
+            (source_vid, source_spokecluster), (target_vid, target_spokecluster) = e['spoke_cluster_map']['intersect'].items()
+            source_v = g.vs[source_vid]
+            target_v = g.vs[target_vid]
+            # source_spokecluster, target_spokecluster = inverse_spokeset_pair(source_spokeclusterm, target_spokecluster)
+
+            source_plane_list = source_v['spoke_cluster_planeids'][source_spokecluster]
+            target_plane_list = target_v['spoke_cluster_planeids'][target_spokecluster]
+
+            if len(source_plane_list) == 2 or len(target_plane_list) == 2:
+                continue # no problem here, go to the next edge
+
+            source_s_idx = get_surface_points(source_v, ma)[source_v['spoke_cluster_labels']==source_spokecluster]
+            target_s_idx = get_surface_points(target_v, ma)[target_v['spoke_cluster_labels']==target_spokecluster]
+            s_idx = np.concatenate([source_s_idx, target_s_idx])#.tolist()
+            labels = np.empty(len(s_idx), dtype=int)
+            labels[:len(source_s_idx)] = 0
+            labels[len(source_s_idx):] = 1
+
+            source_eid = g.ecount()
+            target_eid = source_eid+1
+
+            print len(source_plane_list), len(target_plane_list)
+            if len(source_plane_list) == 0 and len(target_plane_list) == 0:
+                source_plane = plane_id
+                target_plane = plane_id+1
+                plane_id += 2
+
+                # create two new planes
+                planes[source_plane] = [source_eid]
+                planes[target_plane] = [target_eid]
+                source_plane_list.append(source_plane)
+                target_plane_list.append(target_plane)
+                # add references from source_v/target_v
+            elif len(source_plane_list) == 1 and len(target_plane_list) == 0:
+                source_plane = source_plane_list[0]
+                target_plane = plane_id
+                plane_id += 1
+                planes[source_plane].append(source_eid)
+                planes[target_plane] = [target_eid]
+                target_plane_list.append(target_plane)
+            elif len(source_plane_list) == 0 and len(target_plane_list) == 1:
+                target_plane = target_plane_list[0]
+                source_plane = plane_id
+                plane_id += 1
+                planes[source_plane] = [source_eid]
+                planes[target_plane].append(target_eid)
+                source_plane_list.append(source_plane)
+            else: # both are length 1
+                source_plane = source_plane_list[0]
+                target_plane = target_plane_list[0]
+                planes[source_plane].append(source_eid)
+                planes[target_plane].append(target_eid)
+                
+            virtual_vid = g.vcount()
+            g.add_vertex(
+                is_virtual = True,
+                ma_idx = s_idx, # NOTE: for virtual vertices we actually store surfacepoint ids here! 
+                spoke_cluster_planeids = ([source_plane],[target_plane]),
+                # spoke_cluster_centers=, # not really needed now 
+                spoke_cluster_labels=labels
+            )
+
+            # here we should also add the intersections...? maybe not required
+            
+            g.add_edge(virtual_vid, source_vid, spoke_cluster_map={
+                'match':{virtual_vid:0, source_vid:source_spokecluster},
+                'intersect':None
+            })
+            
+            g.add_edge(virtual_vid, target_vid, spoke_cluster_map={
+                'match':{virtual_vid:1, target_vid:target_spokecluster},
+                'intersect':None
+            })
+
+
     import ipdb;ipdb.set_trace()
     # fit each plane through its supporting points
     plane_point_sets = []
@@ -374,11 +464,14 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         plane_point_set = []
         for eid in edges:
             e = g.es[eid]
-            for v in e.tuple:
-                mask = g.vs[v]['spoke_cluster_labels']==e['spoke_set_map']['match'][v]
-                ma_idx = g.vs[v]['ma_idx']
-                s_idx = np.concatenate([np.mod(ma_idx, ma.m), ma.D['ma_qidx'][ma_idx]])
-                plane_point_set += s_idx[mask].tolist()
+            for vid in e.tuple:
+                v = g.vs[vid]
+                mask = v['spoke_cluster_labels']==e['spoke_cluster_map']['match'][vid]
+                if v['is_virtual']:
+                    plane_point_set += v['ma_idx'][mask].tolist()
+                else:
+                    s_idx = get_surface_points(v, ma)
+                    plane_point_set += s_idx[mask].tolist()
         plane_point_sets.append(plane_point_set)
 
     return plane_point_sets
