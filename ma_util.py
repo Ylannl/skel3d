@@ -46,7 +46,8 @@ class MAHelper(object):
         self.D['ma_radii'] = np.concatenate([self.D['ma_radii_in'], self.D['ma_radii_out']])
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
 
-        self.g = datadict['ma_segment_graph']
+        if 'ma_segment_graph' in datadict:
+            self.g = datadict['ma_segment_graph']
 
         self.filtered = {}
         self.reset_filter()
