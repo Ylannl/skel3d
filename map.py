@@ -12,9 +12,9 @@ class Map(object):
         for i in xrange(n):
             self.add_node()
 
-    def add_node(self, **kwargs):
-        hn1 = HalfNode(**kwargs)
-        hn2 = HalfNode(**kwargs)
+    def add_node(self, kwargs1={}, kwargs2={}):
+        hn1 = HalfNode(**kwargs1)
+        hn2 = HalfNode(**kwargs2)
         hn1.twin = hn2
         hn2.twin = hn1
         self.ns.extend([hn1, hn2])
@@ -30,10 +30,12 @@ class Map(object):
         s.edges.setdefault(kind,[]).append(e)
         t.edges.setdefault(kind,[]).append(e)
         self.es.append(e)
+        return e
         
-    def add_face(self, hn_idx):
-        f = Face(self.ns[hn_idx])
+    def add_face(self, halfnode, **kwargs):
+        f = Face(halfnode, **kwargs)
         self.fs.append(f)
+        return f
 
 def other(this, pair):
     """assume pair is an indexable iterable of lenth 2 and this is an element in pair, this function will return the other element"""
@@ -41,27 +43,29 @@ def other(this, pair):
 
 class HalfNode(object):
 
-    def __init__(self, **kwargs):
+    def __init__(self, face=None, **kwargs):
         self.twin = None
         self.edges = {} # 
-        if 'face' in kwargs:
-            self.face = kwargs['face']
-        else:
-            self.face = None
-        if 'pointset' in kwargs:
-            self.pointset = kwargs['pointset']
-        else:
-            self.pointset = None
+        self.face = face
+        self.attributes = {}
+        self.attributes.update(kwargs)
 
-    def cycle(self, kind):
-        yield self
-        follow_edge = self.edges[kind][0]
+    def __getitem__(self, key):
+        return self.attributes[key]
+    
+    def __setitem__(self, key, value):
+        self.attribute[key] = value
+
+    def cycle(self, kind, direction=0): # direction = [0,1] eg start with first or second edge from this node
+        if not kind in self.edges.keys(): return
+        follow_edge = self.edges[kind][direction]
         next = other(self, follow_edge.nodes)
         while next!=self:
             yield next
-            if len(next.edges[kind])==1: yield None
+            if len(next.edges[kind])==1: return
             follow_edge = other(follow_edge, next.edges[kind])
             next = other(next, follow_edge.nodes)
+        yield self
 
     # def __repr__(self):
     #     return "HalfNode edges:{}".format(self.edges)
@@ -72,14 +76,24 @@ class Edge(object):
         self.nodes = [source, target]
         self.kind = kind # 'intersect' 'parallel' 'match'
 
+    # def twin(self):
+    #     return self.nodes[0]
+
     # def __repr__(self):
     #     return "Edge [{}] nodes:{}".format(self.kind, self.nodes)
 
 class Face(object):
 
-    def __init__(halfnode):
+    def __init__(self, halfnode, **kwargs):
         self.halfnode = halfnode
+        self.attributes = {}
+        self.attributes.update(kwargs)
 
+    def __getitem__(self, key):
+        return self.attributes[key]
+
+    def __setitem__(self, key, value):
+        self.attributes[key] = value
     # def __repr__(self):
     #     return "Face node:{}".format(self.halfnodes)
 
