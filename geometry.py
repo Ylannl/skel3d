@@ -253,26 +253,14 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
     """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
 
-    def inverse_spokeset_pair(s1, s2):
-        return int(not s1), int(not s2)
-    # for each sheet
-        #find two well defined spoke-vec directions using KMeans
-        #if success then continue this iteration
-        #gradually build plane graph... exploit sheet adjacencies
-
-    # from plane graph
-    # for each plane in plane graph estimate the plane from related surface points
-    # compute line instersections for each adj rel in plane graph
-
     g = master_graph.subgraph(mapping)
 
     # create MAP datastructure
     m = Map()
 
-    # for each sheet find two sets of surface points, each corresponding to a distict plane. Store results in sheet
+    # for each sheet find two sets of surface points, each corresponding to a distinct plane. Store results in sheet
     for v in g.vs:
         # obtain set of surface points (regardless of what is in/out)
-
         ma_idx = v['ma_idx']
         s_idx = np.mod(ma_idx, ma.m)
 
@@ -283,7 +271,6 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         
         f1_norm = np.linalg.norm(f1, axis=1)[:,None]
         f2_norm = np.linalg.norm(f2, axis=1)[:,None]
-        # import ipdb;ipdb.set_trace()
         spokes = np.concatenate([f1/f1_norm, f2/f2_norm])
 
         idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
@@ -291,14 +278,10 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         km = KMeans(n_clusters = 2)
         labels = km.fit_predict(spokes)
 
-        # import ipdb;ipdb.set_trace()
         m.add_node( 
             {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0]}, 
             {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1]}
         )
-        # v['spoke_cluster_labels'] = 
-        # v['spoke_cluster_centers'] = km.cluster_centers_
-        # v['spoke_cluster_planeids'] = [], []
 
 
     # label each edge with corresponding spoke sets from incident vertices (ie. an edge can be linked to exactly one plane)
@@ -324,11 +307,9 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         assert(angle_min < math.radians(5))
 
         # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label
-         
-        # e['spoke_cluster_map'] = {}
-        # e['spoke_cluster_map']['match'] = { source.index: label_pair_min[0], target.index: label_pair_min[1] }
-        other_pair = other(label_pair_min[0], [hs0,hs1]), other(label_pair_min[1], [ht0,ht1])
-        # other_pair = inverse_spokeset_pair(label_pair_min[0], label_pair_min[1]) # ie not the matching pair of clusterlabels
+        s_min, t_min = label_pair_min 
+        other_pair = other(s_min, [hs0,hs1]), other(t_min, [ht0,ht1])
+        s_other, t_other = other_pair
 
         if angles[other_pair] > math.radians(165): # what threshold is reasonable here? 175 degrees seems to be too high
             continue # skip parallel edges for now
@@ -336,11 +317,10 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
         else:
             kind='intersect'
 
-        m.add_edge(label_pair_min[0], label_pair_min[1], kind='match')
-        m.add_edge(other_pair[0], other_pair[1], kind)
+        m.add_edge(s_min, t_min, kind='match')
+        m.add_edge(s_other, t_other, kind)
 
-
-    # Find groups of edges that are linked to the same plane
+    # Find hnodes that are linked to the same plane, using connecting edges of 'match' kind
     planes = {}
     plane_id = 0
     N = set(m.ns)
@@ -356,12 +336,7 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
             n.face = f
             for next in n.cycle(kind='match', direction=1):
                 next.face = f    
-                
-    # import ipdb;ipdb.set_trace()
-    # def get_surface_points(vertex, ma):
-    #     ma_idx = vertex['ma_idx']
-    #     return np.concatenate([np.mod(ma_idx, ma.m), ma.D['ma_qidx'][ma_idx]])
-
+         
     # introduce virtual vertices and edges for missing planes
     # we assume that all present edges are properly connected and labeled now
     # set all current vertices as not virtual:
@@ -471,7 +446,7 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
     #     plane_planes.append( Plane( [Point(x) for x in ma.D['coords'][plane_point_set]] ) )
     #     plane_point_sets.append(plane_point_set)
 
-    # reconstruct line and vertex intersections
+    # reconstruct planes from plane intersections 
     for f in m.fs:
         if f['cycle']:
             p = f['plane']
@@ -494,6 +469,3 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
 
             # import ipdb; ipdb.set_trace()
             return coords, normals
-
-
-    # compute lines of intersection between adjacent planes

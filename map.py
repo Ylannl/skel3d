@@ -38,7 +38,7 @@ class Map(object):
         return f
 
 def other(this, pair):
-    """assume pair is an indexable iterable of lenth 2 and this is an element in pair, this function will return the other element"""
+    """assume pair is an indexable iterable of length 2 and this is an element in pair, this function will return the other element"""
     return pair[not pair.index(this)]
 
 class HalfNode(object):
