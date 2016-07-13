@@ -250,16 +250,24 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 
     return coords, normals, (plane_top_pts, plane_0_pts, plane_1_pts, plane_2_pts, plane_3_pts)
 
-def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
+def polyhedral_reconstruct(g, ma):
     """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
-
-    g = master_graph.subgraph(mapping)
+    p_angle_match = 5
+    p_angle_parallel = 165
+    p_angle_converge = 170
 
     # create MAP datastructure
     m = Map()
 
     # for each sheet find two sets of surface points, each corresponding to a distinct plane. Store results in sheet
-    for v in g.vs:
+    vids_coplanar = [] # list to keep sheets that we ignore because they support parallel planes (separation angle=180deg)
+    vid_map = {}
+    nid_cnt = 0
+    for i,v in enumerate(g.vs):
+        if v['ma_theta_mean'] > math.radians(p_angle_converge):
+            vids_coplanar.append(v.index)
+            continue
+        
         # obtain set of surface points (regardless of what is in/out)
         ma_idx = v['ma_idx']
         s_idx = np.mod(ma_idx, ma.m)
@@ -282,12 +290,18 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
             {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0]}, 
             {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1]}
         )
+        vid_map[i]=nid_cnt
+        nid_cnt += 1
 
-
+    
     # label each edge with corresponding spoke sets from incident vertices (ie. an edge can be linked to exactly one plane)
     for ge in list(g.es):
         # convert source/target idx to halfnode idx in map
         source, target = ge.tuple
+        # skip edges that connect to sheets supporting parallel planes
+        if source in vids_coplanar or target in vids_coplanar:
+            continue
+        source, target = [vid_map[x] for x in ge.tuple]
         hs0, ht0 = source*2+0, target*2+0
         hs1, ht1 = source*2+1, target*2+1
 
@@ -304,14 +318,14 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
                     label_pair_min = (sn,tn)
 
         # make sure we find a good plane correspondence
-        assert(angle_min < math.radians(5))
+        assert(angle_min < math.radians(p_angle_match))
 
         # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label
         s_min, t_min = label_pair_min 
         other_pair = other(s_min, [hs0,hs1]), other(t_min, [ht0,ht1])
         s_other, t_other = other_pair
 
-        if angles[other_pair] > math.radians(165): # what threshold is reasonable here? 175 degrees seems to be too high
+        if angles[other_pair] > math.radians(p_angle_parallel): # what threshold is reasonable here? 175 degrees seems to be too high
             continue # skip parallel edges for now
             kind='parallel'
         else:
@@ -447,6 +461,7 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
     #     plane_point_sets.append(plane_point_set)
 
     # reconstruct planes from plane intersections 
+    planes = []
     for f in m.fs:
         if f['cycle']:
             p = f['plane']
@@ -468,4 +483,5 @@ def polyhedral_reconstruct(master_graph, mapping, ma, angle_thres=5):
                 normals[3*i:3*i+3] = p.n
 
             # import ipdb; ipdb.set_trace()
-            return coords, normals
+            planes.append((coords, normals))
+    return planes

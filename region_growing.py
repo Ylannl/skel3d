@@ -39,23 +39,33 @@ def get_neighbours_ma(data, k=15):
 class RegionGrower(object):
 	"""Segmentation based on region growing. Segment '0' is reserved for unsegmented points. Note that interior & exterior MAT points are concatenated and not treated separately."""
 
-	def __init__(self, mah, bisec_thres=10.0, k=10, only_interior=False, method = 'bisec'):
-		if method == 'bisec':
+	def __init__(self, mah, **kwargs):
+		self.p = {
+			'bisec_thres':10.0,
+			'k':10,
+			'only_interior':False,
+			'method':'bisec',
+			'mincount':10
+		}
+		self.p.update(kwargs)
+		# import ipdb;ipdb.set_trace()
+
+		if self.p['method'] == 'bisec':
 			self.valid_candidate = self.valid_candidate_bisec # or 'normal'
 		else:
 			self.valid_candidate = self.valid_candidate_normal
 
-		self.p_bisecthres = math.cos((bisec_thres / 180.0) * math.pi)
+		self.p_bisecthres = math.cos((self.p['bisec_thres'] / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
 		self.p_thetathres_1 = (50.0 / 180.0) * math.pi # during bisect growing
 		self.p_thetathres_2 = (10.0 / 180.0) * math.pi # during theta growing
-		self.p_k = k
-		self.p_mincount = 10
+		self.p_k = self.p['k']
+		self.p_mincount = self.p['mincount']
 
 		self.mah = mah
 		# self.filt = self.mah.D['ma_radii'] < 190.
 
-		if only_interior:
+		if self.p['only_interior']:
 			self.ma_coords = self.mah.D['ma_coords_in']
 			# self.mah.D['m']
 			self.m = self.mah.m
@@ -100,11 +110,11 @@ class RegionGrower(object):
 		totalcount = len(seedpoints)
 		pointcount = 0
 		seedpoints = set(seedpoints)
-		printProgress(0, totalcount, prefix='Segmentation progress from {} seeds:'.format(totalcount), barLength=42)
+		printProgress(0, totalcount, prefix='Segmentation progress from {} seeds:'.format(totalcount), barLength=20)
 		while len(seedpoints) > 0:
 			seed = seedpoints.pop()
 			seedpoints -= self.grow_region(seed)
-			printProgress(totalcount-len(seedpoints), totalcount, prefix='Segmentation progress from {} seeds:'.format(totalcount), suffix='({} regions)'.format(self.region_nr), barLength=42)
+			printProgress(totalcount-len(seedpoints), totalcount, prefix='Segmentation progress from {} seeds:'.format(totalcount), suffix='({} regions)'.format(self.region_nr), barLength=20)
 			self.region_nr += 1	
 
 	def grow_region(self, initial_seed):
@@ -175,10 +185,10 @@ class RegionGrower(object):
 			print(min(angles/math.pi * 180))
 			# import ipdb; ipdb.set_trace()
 
-def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
+def perform_segmentation_bisec(mah, **kwargs):
 	# find segments based on similiraty in bisector orientation
 	print("Initiating region grower...")
-	R = RegionGrower(mah, bisec_thres=bisec_thres, k=k, method='bisec', **args)
+	R = RegionGrower(mah, **kwargs)
 	seedpoints = list( np.random.permutation(R.m) )
 	print("\nPerforming bisector-based region growing...")
 	R.apply_region_growing_algorithm(seedpoints)
@@ -212,7 +222,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	mah.D['ma_segment'] = np.zeros(R.mah.m*2, dtype=np.int64)
 	graph2segmentlist(g, mah.D['ma_segment'])
 	
-	find_relations(mah, infile)
+	find_relations(mah, kwargs['infile'])
 	
 	for start_id, end_id, count in mah.D['seg_link_adj']:
 		g.add_edge(start_id, end_id, adj_count=count)
@@ -221,7 +231,7 @@ def perform_segmentation_bisec(mah, bisec_thres, k, infile=INFILE, **args):
 	compute_segment_aggregate(g, mah.D, 'ma_bisec')
 	compute_segment_aggregate(g, mah.D, 'ma_theta')
 	mah.D['ma_segment_graph'] = g
-	io_npy.write_npy(infile, mah.D, ['ma_segment', 'ma_segment_graph'])
+	io_npy.write_npy(kwargs['infile'], mah.D, ['ma_segment', 'ma_segment_graph'])
 	
 	return g
 	
@@ -336,13 +346,15 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Region growing for MAT sheets')
 	parser.add_argument('infile', help='npy file', default=INFILE)
 	parser.add_argument('-k', help='Number of neighbours to use', default=10, type=int)
-	parser.add_argument('-b', help='Bisec threshold in degrees', default=10.0, type=float)
+	parser.add_argument('-b', '--bisec_thres', help='Bisec threshold in degrees', default=10.0, type=float)
+	parser.add_argument('-m', '--mincount', help='Minimum number of points in a segment', default=10, type=int)
 	# parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
-	parser.add_argument('--interior', help='Only use interior MAT', dest='interior', action='store_true')
+	parser.add_argument('--only_interior', help='Only use interior MAT', dest='interior', action='store_true')
 	args = parser.parse_args()
 
 	D = io_npy.read_npy(args.infile)
 	mah = MAHelper(D)
-	g = perform_segmentation_bisec(mah, bisec_thres=args.b, k=args.k, infile=args.infile, only_interior=args.interior)
+	# import ipdb; ipdb.set_trace()
+	g = perform_segmentation_bisec(mah, **args.__dict__)
 	# if args.topo:
 		# find_relations(mah, infile=args.infile, only_interior=args.interior)

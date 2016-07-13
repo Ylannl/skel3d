@@ -106,8 +106,6 @@ class MatApp(App):
         #     self.graphs.append(g.subgraph(mapping))
         
         self.graphs = g.clusters().subgraphs()
-        
-
 
         i=0
         for g in self.graphs:

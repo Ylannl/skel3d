@@ -1,0 +1,4 @@
+initial_radius 200
+nan_for_initr 0
+denoise_preserve 20
+denoise_planar 32

@@ -55,6 +55,7 @@ def contract_edges(g, threshold=10):
     tg = g.copy()
     tg.delete_edges(tg.es.select(delta_ma_bisec_gt=threshold))
     
+    # note: some attributes may get lost here!
     g.contract_vertices(tg.clusters(igraph.WEAK).membership, 
         combine_attrs={ 'ma_bisec_mean': lambda x: np.mean(x, axis=0), 
                         'ma_coords_mean': lambda x: np.mean(x, axis=0), 
