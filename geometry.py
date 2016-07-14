@@ -250,8 +250,7 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 
     return coords, normals, (plane_top_pts, plane_0_pts, plane_1_pts, plane_2_pts, plane_3_pts)
 
-def polyhedral_reconstruct(g, ma):
-    """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
+def build_map(g, ma):
     p_angle_match = 5
     p_angle_parallel = 165
     p_angle_converge = 170
@@ -318,7 +317,8 @@ def polyhedral_reconstruct(g, ma):
                     label_pair_min = (sn,tn)
 
         # make sure we find a good plane correspondence
-        assert(angle_min < math.radians(p_angle_match))
+        if not angle_min < math.radians(p_angle_match):
+            continue
 
         # store on this edge a dict with for each vertex_id the corresponding spoke_cluster_label
         s_min, t_min = label_pair_min 
@@ -333,7 +333,13 @@ def polyhedral_reconstruct(g, ma):
 
         m.add_edge(s_min, t_min, kind='match')
         m.add_edge(s_other, t_other, kind)
+    return m
 
+
+def polyhedral_reconstruct(m, ma):
+    """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
+
+    # m = build_map(g, ma)
     # Find hnodes that are linked to the same plane, using connecting edges of 'match' kind
     planes = {}
     plane_id = 0
@@ -345,11 +351,13 @@ def polyhedral_reconstruct(g, ma):
         for next in n.cycle(kind='match', direction=0): # assuming here we only have duplicate edges of intersect kind
             next.face = f
             N.discard(next)
+            # print next, next.edges['match']
         if next != n: # see if there are some in the other direction
             f['cycle'] = False
             n.face = f
             for next in n.cycle(kind='match', direction=1):
-                next.face = f    
+                next.face = f
+    print 'cylc'
          
     # introduce virtual vertices and edges for missing planes
     # we assume that all present edges are properly connected and labeled now
@@ -443,24 +451,13 @@ def polyhedral_reconstruct(g, ma):
         else:
             f['plane'] = Plane( [Point(x) for x in ma.D['coords'][list(f.halfnode['s_idx'])]] )
 
-    # plane_point_sets = []
-    # plane_planes = []
-    # for plane_id, edges in planes.items():
-    #     plane_point_set = []
-    #     for eid in edges:
-    #         e = g.es[eid]
-    #         for vid in e.tuple:
-    #             v = g.vs[vid]
-    #             mask = v['spoke_cluster_labels']==e['spoke_cluster_map']['match'][vid]
-    #             if v['is_virtual']:
-    #                 plane_point_set += v['ma_idx'][mask].tolist()
-    #             else:
-    #                 s_idx = get_surface_points(v, ma)
-    #                 plane_point_set += s_idx[mask].tolist()
-    #     plane_planes.append( Plane( [Point(x) for x in ma.D['coords'][plane_point_set]] ) )
-    #     plane_point_sets.append(plane_point_set)
+    # orient all plane cycles ccw
 
-    # reconstruct planes from plane intersections 
+    # compute line of intersection for each halfnode pair
+
+    # traverse vertex cycles and compute vertices
+
+    # reconstruct planes from vertices
     planes = []
     for f in m.fs:
         if f['cycle']:

@@ -54,15 +54,17 @@ class HalfNode(object):
         return self.attributes[key]
     
     def __setitem__(self, key, value):
-        self.attribute[key] = value
+        self.attributes[key] = value
 
     def cycle(self, kind, direction=0): # direction = [0,1] eg start with first or second edge from this node
+        """Does not care about edge direction during the cycle"""
         if not kind in self.edges.keys(): return
         follow_edge = self.edges[kind][direction]
         next = other(self, follow_edge.nodes)
         while next!=self:
             yield next
-            if len(next.edges[kind])==1: return
+            if len(next.edges[kind])!=1: return # there is no next edge
+            if len(next.edges[kind])>2: return # there are too many edges to choose from
             follow_edge = other(follow_edge, next.edges[kind])
             next = other(next, follow_edge.nodes)
         yield self
@@ -73,8 +75,11 @@ class HalfNode(object):
 class Edge(object):
     
     def __init__(self, source, target, kind):
-        self.nodes = [source, target]
+        self.nodes = (source, target)
         self.kind = kind # 'intersect' 'parallel' 'match'
+
+    def flip(self):
+        self.nodes = self.nodes[1], self.nodes[0] 
 
     # def twin(self):
     #     return self.nodes[0]
