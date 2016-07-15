@@ -63,7 +63,7 @@ class HalfNode(object):
         next = other(self, follow_edge.nodes)
         while next!=self:
             yield next
-            if len(next.edges[kind])!=1: return # there is no next edge
+            if len(next.edges[kind])==1: return # there is no next edge
             if len(next.edges[kind])>2: return # there are too many edges to choose from
             follow_edge = other(follow_edge, next.edges[kind])
             next = other(next, follow_edge.nodes)

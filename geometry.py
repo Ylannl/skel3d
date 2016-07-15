@@ -286,8 +286,8 @@ def build_map(g, ma):
         labels = km.fit_predict(spokes)
 
         m.add_node( 
-            {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0]}, 
-            {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1]}
+            {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0], 'vid':i}, 
+            {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1], 'vid':i}
         )
         vid_map[i]=nid_cnt
         nid_cnt += 1
@@ -341,7 +341,7 @@ def polyhedral_reconstruct(m, ma):
 
     # m = build_map(g, ma)
     # Find hnodes that are linked to the same plane, using connecting edges of 'match' kind
-    planes = {}
+    # planes = {}
     plane_id = 0
     N = set(m.ns)
     while len(N) > 0:
@@ -357,8 +357,7 @@ def polyhedral_reconstruct(m, ma):
             n.face = f
             for next in n.cycle(kind='match', direction=1):
                 next.face = f
-    print 'cylc'
-         
+
     # introduce virtual vertices and edges for missing planes
     # we assume that all present edges are properly connected and labeled now
     # set all current vertices as not virtual:
@@ -440,7 +439,6 @@ def polyhedral_reconstruct(m, ma):
     #             'match':{virtual_vid:1, target_vid:target_spokecluster}
     #         })
 
-
     # fit each plane through its supporting points
     for f in m.fs:
         if f['cycle']:
@@ -458,6 +456,7 @@ def polyhedral_reconstruct(m, ma):
     # traverse vertex cycles and compute vertices
 
     # reconstruct planes from vertices
+    # import ipdb; ipdb.set_trace()
     planes = []
     for f in m.fs:
         if f['cycle']:
@@ -479,6 +478,7 @@ def polyhedral_reconstruct(m, ma):
                 coords[3*i+2] = vertices[i+2]
                 normals[3*i:3*i+3] = p.n
 
-            # import ipdb; ipdb.set_trace()
+            
             planes.append((coords, normals))
+    # print planes
     return planes
