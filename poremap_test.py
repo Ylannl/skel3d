@@ -9,7 +9,7 @@ from region_growing import *
 from geometry import *
 from povi import App
 from itertools import chain
-
+from PyQt5.QtCore import Qt
 from pyqtgraph import PlotWidget
 
 class TestApp(App):
@@ -17,14 +17,55 @@ class TestApp(App):
     def __init__(self, ma, args=[]):
         super(TestApp, self).__init__(args)
         self.ma = ma
-        self.plotWindow = PlotWidget()
-        self.plotWindow.addLegend()
+        
         # self.plotWindow.plot(np.random.normal(size=100), name="Data 1")
     
-    def run(self): 
+    def addGraphWindow(self, g, linked_programs): 
+        self.plotWindow = GraphWindow(g, linked_programs)
+        # self.plotWindow.addLegend()
         self.plotWindow.show()
-        super(TestApp, self).run()
+        # super(TestApp, self).run()
         
+class GraphWindow(PlotWidget):
+    def __init__(self, g, linked_programs, parent=None):
+        self.parent = parent
+        self.linked_programs = linked_programs
+        self.avtive_sheet = 0
+        self.g=g
+        self.iterator = self.sheet_loop()
+        super(GraphWindow, self).__init__(parent)
+    
+    def sheet_loop(self):
+        while True:
+            for v in self.g.vs:
+                yield v
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        repeat = event.isAutoRepeat()
+        # print('keypressevent!')
+        if key == Qt.Key_R:
+            self.clear()
+            v = self.iterator.next()
+            f = v['ma_idx']
+            for p in self.linked_programs:
+                p.updateAttributes(filter=f)
+            # self.parent.viewerWindow.render()
+            
+            # import ipdb/;ipdb.set_trace()
+            i = v.index
+            vals=ma.D['ma_radii'][f]
+            b=v['ma_bisec_mean']
+            v['ma_theta_mean']
+            ## compute standard histogram
+            y,x = np.histogram(vals, bins=50)
+
+            ## Using stepMode=True causes the plot to draw two lines for each sample.
+            ## notice that len(x) == len(y)+1
+            color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+            self.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='radius '+str(i))
+
+
 
 def view(ma, vids):
     # ref_count = timeit(count_refs)
@@ -32,6 +73,7 @@ def view(ma, vids):
     # ma.g = ma.D['ma_segment_graph']
     
     c = TestApp(ma)
+    linked_programs = []
 
     min_count = 15
     contract_thres = 15
@@ -47,16 +89,8 @@ def view(ma, vids):
     for that_id in vids:
         this_g = vertex_clustering.subgraph(that_id)
 
-        for i, ma_idx in enumerate(this_g.vs['ma_idx']):
-            vals=ma.D['ma_radii'][ma_idx]
-            ## compute standard histogram
-            y,x = np.histogram(vals, bins=50)
-
-            ## Using stepMode=True causes the plot to draw two lines for each sample.
-            ## notice that len(x) == len(y)+1
-            color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
-            c.plotWindow.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='radius '+str(i))
-
+        c.addGraphWindow(this_g, linked_programs)
+        
         this_m = build_map(this_g, ma)
 
         adj_rel_start = []
@@ -101,7 +135,7 @@ def view(ma, vids):
                     name = 'roof surface _'+str(that_id)+' '+str(i),
                     coords = coords[0:6],
                     normals = normals[0:6],
-                    color = (1.0,0.1,0.1),
+                    color = (0.88,1.0,1.0),
                     is_visible = True
                 )
         except Exception:
@@ -120,28 +154,6 @@ def view(ma, vids):
     # ma_idx = ma_idx[0] + ma_idx[1] +ma_idx[2] +ma_idx[3]
     s_idx = np.mod(ma_ids, ma.m)
     
-    # normals = np.array(normals, dtype=np.float32)
-
-    # normals_0 = normals[labels==0]
-    # normals_1 = normals[labels==1]
-    # print normals
-    
-    # c.add_data_source_line(
-    #   name = 'normals 0',
-    #   coords_start = np.zeros(normals_0.shape, dtype=np.float32),
-    #   coords_end = normals_0,
-    #   color = (0,1,0)
-    # )
-
-    # c.add_data_source_line(
-    #   name = 'normals 1',
-    #   coords_start = np.zeros(normals_1.shape, dtype=np.float32),
-    #   coords_end = normals_1,
-    #   color = (1,0,0)
-    # )
-    # c.viewerWindow.data_center = (0,0,0)
-    # print c.viewerWindow.data_center, c.viewerWindow.data_width
-
     adj_rel_start = []
     adj_rel_end = []
     # this_g = g.subgraph(this_mapping)
@@ -166,13 +178,14 @@ def view(ma, vids):
         points=ma.D['coords'], 
         normals=ma.D['normals'],
     )
-
+    # linked_programs.append(
     c.add_data_source(
         name = 'Surface points',
         opts=['splat_disk', 'with_normals'],
         points=np.concatenate([ma.D['coords'][s_idx], ma.D['coords'][ma.D['ma_qidx'][ma_ids]]]), 
         normals=np.concatenate([ma.D['normals'][s_idx], ma.D['normals'][ma.D['ma_qidx'][ma_ids]]]),
     )
+    # )
     c.add_data_source_line(
       name = 'Surface normals',
       coords_start = np.concatenate([ma.D['coords'][s_idx], ma.D['coords'][ma.D['ma_qidx'][ma_ids]]]) + np.concatenate([ma.D['normals'][s_idx], ma.D['normals'][ma.D['ma_qidx'][ma_ids]]]),
@@ -181,7 +194,8 @@ def view(ma, vids):
     )
 
     for v in g.vs():
-		ma.D['ma_segment'][ v['ma_idx'] ] = v.index	
+		ma.D['ma_segment'][ v['ma_idx'] ] = v.index
+    # linked_programs.append(
     c.add_data_source(
         name = 'MAT points',
         opts=['splat_point', 'with_intensity'],
@@ -189,6 +203,7 @@ def view(ma, vids):
         category=ma.D['ma_segment'][ma_ids].astype(np.float32),
         colormap='random'
     )
+    # )
 
     f =ma.D['ma_segment'] != 0
     c.add_data_source(
@@ -199,19 +214,6 @@ def view(ma, vids):
         colormap='random'
     )
         
-    
-    # c.add_data_source_line(
-    #   name = 'normals a',
-    #   coords_start = np.concatenate([ma.D['coords'],ma.D['coords']])[ma_ids] + np.concatenate([ma.D['normals'],ma.D['normals']])[ma_ids],
-    #   coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[ma_ids],
-    #   color=(1,1,0)
-    # )
-    # c.add_data_source_line(
-    #   name = 'Secondary spokes',
-    #   coords_start = ma.D['ma_coords'],
-    #   coords_end = np.concatenate([ma.D['coords'][ma.D['ma_qidx_in']],ma.D['coords'][ma.D['ma_qidx_out']]])
-    # )
-
     c.add_data_source_line(
       name = 'Primary spokes',
       coords_start = ma.D['ma_coords'][ma_ids],
@@ -227,7 +229,7 @@ def view(ma, vids):
         name = 'Bisectors',
         coords_start = ma.D['ma_coords'][ma_ids],
         coords_end = ma.D['ma_bisec'][ma_ids]+ma.D['ma_coords'][ma_ids],
-        color=(0,1,0)
+        color=(.2,.2,1)
     )
 
     c.run()
