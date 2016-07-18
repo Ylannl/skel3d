@@ -27,22 +27,6 @@ def view(ma, vids=[16,80,133]):
     graphlib = get_graph_library()
     for that_id in vids:
         this_mapping = g.get_subisomorphisms_vf2(graphlib['flatcube_top'])[that_id]
-
-        coords, normals = polyhedral_reconstruct(g, this_mapping, ma)
-        c.add_data_source_triangle(
-            name = 'roof surface _'+str(that_id),
-            coords = coords[0:6],
-            normals = normals[0:6],
-            color = (1.0,0.1,0.1),
-            visible = True
-        )
-        # for i,pts in enumerate(pointsets):
-        #     c.add_data_source(
-        #         name = 'Surface points _'+' vid '+ ' - ' +str(i),
-        #         opts=['splat_disk', 'with_normals'],
-        #         points=ma.D['coords'][list(pts)], 
-        #         normals=ma.D['normals'][list(pts)],
-        #     )
         
         coords, normals, pointsets = gf_flatcube_top(g, this_mapping, ma)
 

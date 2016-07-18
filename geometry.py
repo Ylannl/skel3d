@@ -263,12 +263,15 @@ def build_map(g, ma):
     vid_map = {}
     nid_cnt = 0
     for i,v in enumerate(g.vs):
+        ma_idx = v['ma_idx']
         if v['ma_theta_mean'] > math.radians(p_angle_converge):
+            vids_coplanar.append(v.index)
+            continue
+        elif ma.D['ma_radii'][ma_idx].min() > 0.5: # ignore sheets that are not fully going into the building edges
             vids_coplanar.append(v.index)
             continue
         
         # obtain set of surface points (regardless of what is in/out)
-        ma_idx = v['ma_idx']
         s_idx = np.mod(ma_idx, ma.m)
 
         # collect spokes
@@ -355,8 +358,9 @@ def polyhedral_reconstruct(m, ma):
         if next != n: # see if there are some in the other direction
             f['cycle'] = False
             n.face = f
-            for next in n.cycle(kind='match', direction=1):
-                next.face = f
+            # note: following statement may crash the function
+            # for next in n.cycle(kind='match', direction=1):
+            #     next.face = f
 
     # introduce virtual vertices and edges for missing planes
     # we assume that all present edges are properly connected and labeled now
@@ -468,6 +472,7 @@ def polyhedral_reconstruct(m, ma):
             vertices.append( line_intersect(lines[-1], lines[0]) )
             for i in range(len(lines)-1):
                 vertices.append(line_intersect(lines[i], lines[i+1]))
+
             
             # fan-like triangulation
             coords = np.empty((3*(len(vertices)-2),3), dtype=np.float32)
@@ -477,6 +482,10 @@ def polyhedral_reconstruct(m, ma):
                 coords[3*i+1] = vertices[i+1]
                 coords[3*i+2] = vertices[i+2]
                 normals[3*i:3*i+3] = p.n
+
+            # if len(vertices) ==5 :
+            #     print vertices
+            #     import ipdb; ipdb.set_trace()
 
             
             planes.append((coords, normals))

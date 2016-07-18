@@ -3,7 +3,7 @@ from time import time
 import numpy as np
 from pointio import io_npy
 from ma_util import MAHelper
-from povi import App
+from povi import App, Layer, LinkedLayer
 from graph import *
 from region_growing import *
 from geometry import *
@@ -20,16 +20,16 @@ class TestApp(App):
         
         # self.plotWindow.plot(np.random.normal(size=100), name="Data 1")
     
-    def addGraphWindow(self, g, linked_programs): 
-        self.plotWindow = GraphWindow(g, linked_programs)
+    def addGraphWindow(self, g): 
+        self.plotWindow = GraphWindow(g, master_app=self)
         # self.plotWindow.addLegend()
         self.plotWindow.show()
         # super(TestApp, self).run()
         
 class GraphWindow(PlotWidget):
-    def __init__(self, g, linked_programs, parent=None):
-        self.parent = parent
-        self.linked_programs = linked_programs
+    def __init__(self, g, master_app, parent=None):
+        self.layer_manager = master_app.layer_manager
+        self.master_app = master_app
         self.avtive_sheet = 0
         self.g=g
         self.iterator = self.sheet_loop()
@@ -45,16 +45,29 @@ class GraphWindow(PlotWidget):
         repeat = event.isAutoRepeat()
         # print('keypressevent!')
         if key == Qt.Key_R:
+            self.layer_manager.layers[-2].mask(None)
+            self.layer_manager.layers[-1].mask(None)
+            self.master_app.viewerWindow.render()
+        if key == Qt.Key_N:
             self.clear()
             v = self.iterator.next()
-            f = v['ma_idx']
-            for p in self.linked_programs:
-                p.updateAttributes(filter=f)
-            # self.parent.viewerWindow.render()
+            
+            ma_idx = v['ma_idx']
+            f = np.zeros(ma.m*2, dtype=bool)
+            f[ma_idx] = True
+            self.layer_manager.layers[-2].mask(f)
+            
+            f = np.zeros(ma.m, dtype=bool)
+            f[np.mod(ma_idx, ma.m)] = True
+            f[self.master_app.ma.D['ma_qidx'][ma_idx]] = True
+            self.layer_manager.layers[-1].mask(f)
+
+            self.master_app.viewerWindow.center_view(np.mean(self.master_app.ma.D['ma_coords'][ma_idx], axis=0))
+            self.master_app.viewerWindow.render()
             
             # import ipdb/;ipdb.set_trace()
             i = v.index
-            vals=ma.D['ma_radii'][f]
+            vals=ma.D['ma_radii'][ma_idx]
             b=v['ma_bisec_mean']
             v['ma_theta_mean']
             ## compute standard histogram
@@ -73,7 +86,6 @@ def view(ma, vids):
     # ma.g = ma.D['ma_segment_graph']
     
     c = TestApp(ma)
-    linked_programs = []
 
     min_count = 15
     contract_thres = 15
@@ -89,7 +101,7 @@ def view(ma, vids):
     for that_id in vids:
         this_g = vertex_clustering.subgraph(that_id)
 
-        c.addGraphWindow(this_g, linked_programs)
+        c.addGraphWindow(this_g)
         
         this_m = build_map(this_g, ma)
 
@@ -109,7 +121,7 @@ def view(ma, vids):
             coords_start = np.array(adj_rel_start),
             coords_end = np.array(adj_rel_end),
             color = (0,1,0),
-            is_visible=False
+            is_visible=True
         )
 
         adj_rel_start = []
@@ -132,14 +144,15 @@ def view(ma, vids):
             planes = polyhedral_reconstruct(this_m, ma)
             for i, (coords, normals) in enumerate(planes):
                 c.add_data_source_triangle(
-                    name = 'roof surface _'+str(that_id)+' '+str(i),
+                    name = 'plane '+str(that_id)+' '+str(i),
                     coords = coords[0:6],
                     normals = normals[0:6],
                     color = (0.88,1.0,1.0),
-                    is_visible = True
+                    is_visible = False
                 )
-        except Exception:
+        except Exception as e:
             print('polyhedral_reconstruct failed')
+            raise
         # for i,pts in enumerate(pointsets):
         #     c.add_data_source(
         #         name = 'Surface points _'+' vid '+ ' - ' +str(i),
@@ -169,68 +182,59 @@ def view(ma, vids):
         coords_start = np.array(adj_rel_start),
         coords_end = np.array(adj_rel_end),
         color = (0.,0.9,0.9),
-        is_visible=True
+        is_visible=False
     )
 
-    c.add_data_source(
-        name = 'Surface points all',
+    layer_ma = c.add_layer(LinkedLayer(name='MAT'))
+    layer_s = c.add_layer(LinkedLayer(name='Surface'))
+
+    layer_s.add_data_source(
+        name = 'Surface points',
         opts=['splat_disk', 'with_normals'],
         points=ma.D['coords'], 
         normals=ma.D['normals'],
     )
-    # linked_programs.append(
-    c.add_data_source(
-        name = 'Surface points',
-        opts=['splat_disk', 'with_normals'],
-        points=np.concatenate([ma.D['coords'][s_idx], ma.D['coords'][ma.D['ma_qidx'][ma_ids]]]), 
-        normals=np.concatenate([ma.D['normals'][s_idx], ma.D['normals'][ma.D['ma_qidx'][ma_ids]]]),
-    )
-    # )
-    c.add_data_source_line(
+    layer_s.add_data_source_line(
       name = 'Surface normals',
-      coords_start = np.concatenate([ma.D['coords'][s_idx], ma.D['coords'][ma.D['ma_qidx'][ma_ids]]]) + np.concatenate([ma.D['normals'][s_idx], ma.D['normals'][ma.D['ma_qidx'][ma_ids]]]),
-      coords_end = np.concatenate([ma.D['coords'][s_idx], ma.D['coords'][ma.D['ma_qidx'][ma_ids]]]),
+      coords_start = ma.D['coords'] + ma.D['normals'],
+      coords_end = ma.D['coords'],
       color = (1,1,0)
     )
+    f = np.zeros(ma.m, dtype=bool)
+    f[s_idx] = True
+    f[ma.D['ma_qidx'][ma_ids]] = True
+    layer_s.mask(f)
+    
 
     for v in g.vs():
 		ma.D['ma_segment'][ v['ma_idx'] ] = v.index
-    # linked_programs.append(
-    c.add_data_source(
+    # f =ma.D['ma_segment'] != 0
+    layer_ma.add_data_source(
         name = 'MAT points',
         opts=['splat_point', 'with_intensity'],
-        points=ma.D['ma_coords'][ma_ids], 
-        category=ma.D['ma_segment'][ma_ids].astype(np.float32),
+        points=ma.D['ma_coords'], 
+        category=ma.D['ma_segment'].astype(np.float32),
         colormap='random'
-    )
-    # )
-
-    f =ma.D['ma_segment'] != 0
-    c.add_data_source(
-        name = 'MAT points all',
-        opts=['splat_point', 'with_intensity'],
-        points=ma.D['ma_coords'][f], 
-        category=ma.D['ma_segment'][f].astype(np.float32),
-        colormap='random'
-    )
-        
-    c.add_data_source_line(
+    )        
+    layer_ma.add_data_source_line(
       name = 'Primary spokes',
-      coords_start = ma.D['ma_coords'][ma_ids],
-      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[ma_ids]
+      coords_start = ma.D['ma_coords'],
+      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])
     )
-    c.add_data_source_line(
+    layer_ma.add_data_source_line(
       name = 'Secondary spokes',
-      coords_start = ma.D['ma_coords'][ma_ids],
-      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[ma.D['ma_qidx']][ma_ids]
+      coords_start = ma.D['ma_coords'],
+      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[ma.D['ma_qidx']]
     )
-
-    c.add_data_source_line(
+    layer_ma.add_data_source_line(
         name = 'Bisectors',
-        coords_start = ma.D['ma_coords'][ma_ids],
-        coords_end = ma.D['ma_bisec'][ma_ids]+ma.D['ma_coords'][ma_ids],
+        coords_start = ma.D['ma_coords'],
+        coords_end = ma.D['ma_bisec']+ma.D['ma_coords'],
         color=(.2,.2,1)
     )
+    f = np.zeros(2*ma.m, dtype=bool)
+    f[ma_ids] = True
+    layer_ma.mask(f)
 
     c.run()
 
