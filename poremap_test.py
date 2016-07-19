@@ -92,7 +92,7 @@ def view(ma, vids):
     g = ma.D['ma_segment_graph'].copy()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
     g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
-    # contract_edges(g, contract_thres)
+    contract_edges(g, contract_thres)
 
     
     graphlib = get_graph_library()
@@ -110,6 +110,7 @@ def view(ma, vids):
         # this_g = g.subgraph(this_mapping)
         for hn in this_m.ns:
             hn['coords_mean'] = np.mean(ma.D['coords'][hn['s_idx']], axis=0)
+        # import ipdb;ipdb.set_trace()
         for e in this_m.es:
             if e.kind == 'match':
                 source, target = e.nodes
@@ -148,7 +149,8 @@ def view(ma, vids):
                     coords = coords[0:6],
                     normals = normals[0:6],
                     color = (0.88,1.0,1.0),
-                    is_visible = False
+                    is_visible = False,
+                    draw_type='line_loop'
                 )
         except Exception as e:
             print('polyhedral_reconstruct failed')
@@ -240,7 +242,8 @@ def view(ma, vids):
 
 if __name__ == '__main__':
     vids = [4]
-    #box: 4,6,8 (3,10 broken in part, 7 very broken)
+    #box: 4,6,8 (3,10 broken in part)
+    #sloped box: 7
     #simple gable: 9
     #exterior: 5
     if len(sys.argv)>1:
@@ -248,6 +251,7 @@ if __name__ == '__main__':
         # INFILE = sys.argv[-1]
     # import ipdb;ipdb.set_trace()
     INFILE = "/Users/ravi/git/mat_util/Random3Dcity/NPY"
+    # INFILE = "/Users/ravi/git/mat_util/test_cases/sloped_gable/NPY"
     datadict = io_npy.read_npy(INFILE)
     ma = MAHelper(datadict, origin=True)
 

@@ -267,9 +267,9 @@ def build_map(g, ma):
         if v['ma_theta_mean'] > math.radians(p_angle_converge):
             vids_coplanar.append(v.index)
             continue
-        elif ma.D['ma_radii'][ma_idx].min() > 0.5: # ignore sheets that are not fully going into the building edges
-            vids_coplanar.append(v.index)
-            continue
+        # elif ma.D['ma_radii'][ma_idx].min() > 0.8: # ignore sheets that are not fully going into the building edges
+        #     vids_coplanar.append(v.index)
+        #     continue
         
         # obtain set of surface points (regardless of what is in/out)
         s_idx = np.mod(ma_idx, ma.m)
@@ -288,9 +288,11 @@ def build_map(g, ma):
         km = KMeans(n_clusters = 2)
         labels = km.fit_predict(spokes)
 
-        m.add_node( 
-            {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0], 'vid':i}, 
-            {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1], 'vid':i}
+        locked = ma.D['ma_radii'][ma_idx].min() > 0.8
+
+        m.add_node(
+            {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0], 'locked':locked, 'vid':i}, 
+            {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1], 'locked':locked, 'vid':i}
         )
         vid_map[i]=nid_cnt
         nid_cnt += 1
@@ -335,7 +337,30 @@ def build_map(g, ma):
             kind='intersect'
 
         m.add_edge(s_min, t_min, kind='match')
-        m.add_edge(s_other, t_other, kind)
+        # m.add_edge(s_other, t_other, kind) # we don't need these it seems
+
+    # remove locked sheets and rewire local topology
+    to_delete = []
+    for hn in m.ns:        
+        if hn['locked']:
+            to_delete.append(hn)
+    for hn in to_delete:
+        m.contract_halfnode(hn)
+
+    # find halfnodes with degree > 2 and try to get rid of some edges
+    # first get rid of dangling edges,
+    #...
+    # then remove edges that split loops
+    for hn in m.ns:
+        if 'match' in hn.edges:
+            if len(hn.edges['match']) > 2:
+                for e, hno in hn.neighbours():
+                    if len(hno.edges['match']) > 2:
+                        m.delete_edge(e)
+
+
+    # orient all plane cycles ccw
+
     return m
 
 
@@ -345,7 +370,7 @@ def polyhedral_reconstruct(m, ma):
     # m = build_map(g, ma)
     # Find hnodes that are linked to the same plane, using connecting edges of 'match' kind
     # planes = {}
-    plane_id = 0
+    # plane_id = 0
     N = set(m.ns)
     while len(N) > 0:
         n = N.pop()
@@ -475,19 +500,20 @@ def polyhedral_reconstruct(m, ma):
 
             
             # fan-like triangulation
-            coords = np.empty((3*(len(vertices)-2),3), dtype=np.float32)
-            normals = np.empty((3*(len(vertices)-2),3), dtype=np.float32)
+            coords = np.empty((3*(len(vertices)-2),3))
+            normals = np.empty((3*(len(vertices)-2),3))
             for i in range(len(vertices)-2):
                 coords[3*i] = vertices[0]
                 coords[3*i+1] = vertices[i+1]
                 coords[3*i+2] = vertices[i+2]
                 normals[3*i:3*i+3] = p.n
 
-            # if len(vertices) ==5 :
-            #     print vertices
-            #     import ipdb; ipdb.set_trace()
+            if len(vertices) ==5 :
+                print vertices
+                import ipdb; ipdb.set_trace()
 
             
             planes.append((coords, normals))
     # print planes
+        # print vertices, coords
     return planes

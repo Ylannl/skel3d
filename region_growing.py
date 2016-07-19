@@ -24,6 +24,7 @@ def printProgress (iteration, total, prefix = '', suffix = '', decimals = 2, bar
         decimals    - Optional  : number of decimals in percent complete (Int) 
         barLength   - Optional  : character length of bar (Int) 
     """
+    if total==0: return
     filledLength    = int(round(barLength * iteration / float(total)))
     percents        = '{:>6.2f}'.format(round(100.00 * (iteration / float(total)), decimals))
     bar             = '#' * filledLength + '-' * (barLength - filledLength)

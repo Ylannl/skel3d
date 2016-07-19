@@ -58,6 +58,7 @@ def contract_edges(g, threshold=10):
     # note: some attributes may get lost here!
     g.contract_vertices(tg.clusters(igraph.WEAK).membership, 
         combine_attrs={ 'ma_bisec_mean': lambda x: np.mean(x, axis=0), 
+                        'ma_theta_mean': lambda x: np.mean(x, axis=0), 
                         'ma_coords_mean': lambda x: np.mean(x, axis=0), 
                         'ma_idx': lambda x: [e for e in chain(*x)]
         })
