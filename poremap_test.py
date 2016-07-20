@@ -122,7 +122,8 @@ def view(ma, vids):
             coords_start = np.array(adj_rel_start),
             coords_end = np.array(adj_rel_end),
             color = (0,1,0),
-            is_visible=True
+            is_visible=True,
+            options = ['alternate_vcolor']
         )
 
         adj_rel_start = []
@@ -150,7 +151,8 @@ def view(ma, vids):
                     normals = normals[0:6],
                     color = (0.88,1.0,1.0),
                     is_visible = False,
-                    draw_type='line_loop'
+                    # draw_type='line_loop'
+                    draw_type='triangles'
                 )
         except Exception as e:
             print('polyhedral_reconstruct failed')

@@ -7,14 +7,16 @@ class Map(object):
         self.ns = []
         self.es = []
         self.fs = []
+        self.efs = []
 
     def add_nodes(self, n):
         for i in xrange(n):
             self.add_node()
 
     def add_node(self, kwargs1={}, kwargs2={}):
-        hn1 = HalfNode(**kwargs1)
-        hn2 = HalfNode(**kwargs2)
+        shared = dict() # shared dictionary between pair of halfnodes
+        hn1 = HalfNode(shared, **kwargs1)
+        hn2 = HalfNode(shared, **kwargs2)
         hn1.twin = hn2
         hn2.twin = hn1
         self.ns.extend([hn1, hn2])
@@ -47,6 +49,10 @@ class Map(object):
             del e
         self.ns.remove(node)
         del node
+
+    def delete_halfnode(self, hn):
+        # note take care of refs from edges yourself!
+        self.ns.remove(hn)
         
     def delete_edge(self, e):
         for hn in e.nodes:
@@ -69,9 +75,14 @@ class Map(object):
         self.es.append(e)
         return e
         
-    def add_face(self, halfnode, **kwargs):
-        f = Face(halfnode, **kwargs)
-        self.fs.append(f)
+    def add_face(self, link, **kwargs):
+        f = Face(**kwargs)
+        if type(link)==HalfNode:
+            f.halfnode=link
+            self.fs.append(f)
+        elif type(link)==Edge:
+            f.edge=link
+            self.efs.append(f)
         return f
 
 def other(this, pair):
@@ -80,8 +91,9 @@ def other(this, pair):
 
 class HalfNode(object):
 
-    def __init__(self, face=None, **kwargs):
+    def __init__(self, shared, face=None, **kwargs):
         self.twin = None
+        self.shared = shared
         self.edges = {} # 
         self.face = face
         self.attributes = {}
@@ -93,7 +105,16 @@ class HalfNode(object):
     def __setitem__(self, key, value):
         self.attributes[key] = value
 
-    def cycle(self, kind, direction=0): # direction = [0,1] eg start with first or second edge from this node
+    def cycle(self, kind): # direction = [0,1] eg start with first or second edge from this node
+        """Does not care about edge direction during the cycle"""
+        if not kind in self.edges.keys(): return
+        next = self.edges[kind][1].nodes[1]
+        while next!=self:
+            yield next
+            next = next.edges[kind][1].nodes[1]
+        yield self
+    
+    def cycle_undirected(self, kind, direction=0): # direction = [0,1] eg start with first or second edge from this node
         """Does not care about edge direction during the cycle"""
         if not kind in self.edges.keys(): return
         follow_edge = self.edges[kind][direction]
@@ -119,23 +140,20 @@ class HalfNode(object):
 
 class Edge(object):
     
-    def __init__(self, source, target, kind):
+    def __init__(self, source, target, kind, face=None):
         self.nodes = (source, target)
         self.kind = kind # 'intersect' 'parallel' 'match'
+        self.face = face # i.e. the face that is a vertex cycle 
 
     def flip(self):
         self.nodes = self.nodes[1], self.nodes[0] 
-
-    # def twin(self):
-    #     return self.nodes[0]
 
     # def __repr__(self):
     #     return "Edge [{}] nodes:{}".format(self.kind, self.nodes)
 
 class Face(object):
 
-    def __init__(self, halfnode, **kwargs):
-        self.halfnode = halfnode
+    def __init__(self, **kwargs):
         self.attributes = {}
         self.attributes.update(kwargs)
 
@@ -144,9 +162,9 @@ class Face(object):
 
     def __setitem__(self, key, value):
         self.attributes[key] = value
+
     # def __repr__(self):
     #     return "Face node:{}".format(self.halfnodes)
-
 
 def test():
     m = Map()

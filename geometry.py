@@ -349,7 +349,19 @@ def build_map(g, ma):
 
     # find halfnodes with degree > 2 and try to get rid of some edges
     # first get rid of dangling edges,
-    #...
+    # to_delete = []
+    # for hn in m.ns:
+    #     if 'match' in hn.edges:
+    #         if len(hn.edges['match']) < 2:
+    #             for e in hn.edges['match']:
+    #                 print e
+    #                 m.delete_edge(e)
+    #             to_delete.append(hn)
+
+    # for hn in to_delete:
+    #     m.delete_halfnode(hn)
+
+
     # then remove edges that split loops
     for hn in m.ns:
         if 'match' in hn.edges:
@@ -362,7 +374,7 @@ def build_map(g, ma):
     N = set(m.ns)
     while len(N) > 0:
         n = N.pop()
-        f = m.add_face(halfnode=n, cycle=True)
+        f = m.add_face(link=n, cycle=True)
         n.face = f
 
         next_edge = n.edges['match'][1] # assume id 0 is the previous edge, and id 1 the next edge
@@ -395,9 +407,10 @@ def build_map(g, ma):
         b0, b1, b2 = [g.vs[hn['vid']]['ma_bisec_mean'] for hn in hnodes[:3]] 
         dob1 = b1-b0
         dob2 = b2-b1
-        if np.dot(np.cross(dob1,dob1), spoke) < 0:
+        # import ipdb; ipdb.set_trace()
+        if np.dot(np.cross(dob1,dob2), spoke) > 0:
             for hn in hnodes:
-                hn.flip()
+                hn.flip('match')
                 hn.edges['match'][0].flip()
 
     return m
@@ -406,10 +419,88 @@ def build_map(g, ma):
 def polyhedral_reconstruct(m, ma):
     """Reconstruct polyhedral model for this mat-component/cluster assuming it represents some suitable object from the inside"""
 
-    # m = build_map(g, ma)
-    # Find hnodes that are linked to the same plane, using connecting edges of 'match' kind
-    # planes = {}
-    # plane_id = 0
+    # fit each plane through its supporting points
+    for f in m.fs:
+        if f['cycle']:
+            s_idx = set()
+            for n in f.halfnode.cycle('match'):
+                s_idx |= set(n['s_idx'])
+            f['plane'] = Plane( [Point(x) for x in ma.D['coords'][list(s_idx)]] )
+        else:
+            f['plane'] = Plane( [Point(x) for x in ma.D['coords'][list(f.halfnode['s_idx'])]] )
+
+    # compute line of intersection for each halfnode pair
+    for i in range(len(m.ns)/2):
+        hn = m.ns[i*2]
+        p1 = hn.face['plane']
+        p2 = hn.twin.face['plane']
+        hn.shared['line'] = p1.intersection(p2)
+
+    # traverse vertex cycles and compute vertices
+    # note: possible to have more than 3 planes coinciding
+    E = set(m.es)
+    while len(E) > 0:
+        e = E.pop()
+        f = m.add_face(link=e, cycle=True)
+        e.face = f
+
+        if not 'match' in e.nodes[1].twin.edges:
+            f['cycle'] = False 
+            continue 
+        e_next = e.nodes[1].twin.edges['match'][1]
+
+        es_collected = [e_next]
+        while e_next!=e:
+            e_next.face=f
+            E.discard(e_next)
+            if not 'match' in e_next.nodes[1].twin.edges:
+                f['cycle'] = False 
+                break 
+            e_next = e_next.nodes[1].twin.edges['match'][1] # ie take next edge of the twin of the target node of e,
+            # import ipdb; ipdb.set_trace() 
+            es_collected.append(e_next)
+            # import ipdb; ipdb.set_trace()
+        else: # ie while condition became false and we thus have a proper cycle
+            # l0 = es_collected[0].nodes[0].shared['line']
+            es_collected += [es_collected[0]]
+            intersection_points = []
+            # note this line intersection stuff needs to be reconsidered using eg. least squares for instersection of multiple lines
+            for i in range(len(es_collected)-1):
+                la = es_collected[i].nodes[0].shared['line']
+                lb = es_collected[i+1].nodes[0].shared['line']
+                p = line_intersect(la, lb)
+                intersection_points.append(p)
+            f['vertex'] = np.nanmean(intersection_points, axis=0)
+            # print intersection_points
+            # import ipdb; ipdb.set_trace()
+    # reconstruct planes from vertices
+    # import ipdb; ipdb.set_trace()
+    planes = []
+    for f in m.fs:
+        if f['cycle']:
+            vertices = []
+            for hn in f.halfnode.cycle('match'):
+                v = hn.edges['match'][1].face['vertex']
+                vertices.append( v )
+            p = f['plane']
+            # fan-like triangulation
+            coords = np.empty((3*(len(vertices)-2),3))
+            normals = np.empty((3*(len(vertices)-2),3))
+            for i in range(len(vertices)-2):
+                coords[3*i] = vertices[0]
+                coords[3*i+1] = vertices[i+1]
+                coords[3*i+2] = vertices[i+2]
+                normals[3*i:3*i+3] = p.n
+
+            if len(vertices) ==5 :
+                print vertices
+                import ipdb; ipdb.set_trace()
+
+            
+            planes.append((coords, normals))
+    # print planes
+        # print vertices, coords
+    return planes
 
 
     # introduce virtual vertices and edges for missing planes
@@ -492,53 +583,3 @@ def polyhedral_reconstruct(m, ma):
     #         g.add_edge(virtual_vid, target_vid, spoke_cluster_map={
     #             'match':{virtual_vid:1, target_vid:target_spokecluster}
     #         })
-
-    # fit each plane through its supporting points
-    for f in m.fs:
-        if f['cycle']:
-            s_idx = set()
-            for n in f.halfnode.cycle('match'):
-                s_idx |= set(n['s_idx'])
-            f['plane'] = Plane( [Point(x) for x in ma.D['coords'][list(s_idx)]] )
-        else:
-            f['plane'] = Plane( [Point(x) for x in ma.D['coords'][list(f.halfnode['s_idx'])]] )
-
-    # orient all plane cycles ccw
-
-    # compute line of intersection for each halfnode pair
-
-    # traverse vertex cycles and compute vertices
-
-    # reconstruct planes from vertices
-    # import ipdb; ipdb.set_trace()
-    planes = []
-    for f in m.fs:
-        if f['cycle']:
-            p = f['plane']
-            lines = []
-            for hn in f.halfnode.cycle('match'):
-                lines.append(p.intersection(hn.twin.face['plane']))
-            vertices = []
-            vertices.append( line_intersect(lines[-1], lines[0]) )
-            for i in range(len(lines)-1):
-                vertices.append(line_intersect(lines[i], lines[i+1]))
-
-            
-            # fan-like triangulation
-            coords = np.empty((3*(len(vertices)-2),3))
-            normals = np.empty((3*(len(vertices)-2),3))
-            for i in range(len(vertices)-2):
-                coords[3*i] = vertices[0]
-                coords[3*i+1] = vertices[i+1]
-                coords[3*i+2] = vertices[i+2]
-                normals[3*i:3*i+3] = p.n
-
-            if len(vertices) ==5 :
-                print vertices
-                import ipdb; ipdb.set_trace()
-
-            
-            planes.append((coords, normals))
-    # print planes
-        # print vertices, coords
-    return planes
