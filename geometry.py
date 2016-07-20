@@ -357,9 +357,48 @@ def build_map(g, ma):
                 for e, hno in hn.neighbours():
                     if len(hno.edges['match']) > 2:
                         m.delete_edge(e)
+    
+    # attempt to find cycles and consistently direct all edges/halfnodes in a cycle. Incomplete cycles are also assigned faces.
+    N = set(m.ns)
+    while len(N) > 0:
+        n = N.pop()
+        f = m.add_face(halfnode=n, cycle=True)
+        n.face = f
 
+        next_edge = n.edges['match'][1] # assume id 0 is the previous edge, and id 1 the next edge
+        if next_edge.nodes[1] == n:
+            next_edge.flip()
+        next_node = next_edge.nodes[1]
+        while next_node!=n:
+            N.discard(next_node)
+            next_node.face = f
+            if len(next_node.edges['match'])!=2: # there is no next edge or there are too many edges to choose from
+                f['cycle'] = False 
+                break
+            # ensure the current next_edge is the current next_nodes' previous edge 
+            if next_node.edges['match'][0] != next_edge:
+                next_node.flip('match')
+            next_edge = next_node.edges['match'][1]
+            # flip the next edge if not consistent with direction of current edge (eg current node should be the source of the next edge)
+            if next_edge.nodes[1] == next_node:
+                next_edge.flip()
+            next_node = next_edge.nodes[1]
+        
+    # orient all cycles ccw using cross product of consecutive differences of bisector, Then see make that face the same direction as spoke vector
+    # thus from hereon we are dealing with directed edges
+    for f in m.fs:
+        if not f['cycle']: continue
+        e_previous, e_next = f.halfnode.edges['match']
 
-    # orient all plane cycles ccw
+        hnodes = [hn for hn in f.halfnode.cycle('match')]
+        spoke = hnodes[0]['spoke_cluster_center']
+        b0, b1, b2 = [g.vs[hn['vid']]['ma_bisec_mean'] for hn in hnodes[:3]] 
+        dob1 = b1-b0
+        dob2 = b2-b1
+        if np.dot(np.cross(dob1,dob1), spoke) < 0:
+            for hn in hnodes:
+                hn.flip()
+                hn.edges['match'][0].flip()
 
     return m
 
@@ -371,21 +410,7 @@ def polyhedral_reconstruct(m, ma):
     # Find hnodes that are linked to the same plane, using connecting edges of 'match' kind
     # planes = {}
     # plane_id = 0
-    N = set(m.ns)
-    while len(N) > 0:
-        n = N.pop()
-        f = m.add_face(halfnode=n, cycle=True)
-        next = None
-        for next in n.cycle(kind='match', direction=0): # assuming here we only have duplicate edges of intersect kind
-            next.face = f
-            N.discard(next)
-            # print next, next.edges['match']
-        if next != n: # see if there are some in the other direction
-            f['cycle'] = False
-            n.face = f
-            # note: following statement may crash the function
-            # for next in n.cycle(kind='match', direction=1):
-            #     next.face = f
+
 
     # introduce virtual vertices and edges for missing planes
     # we assume that all present edges are properly connected and labeled now

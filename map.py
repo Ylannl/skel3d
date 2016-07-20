@@ -106,6 +106,9 @@ class HalfNode(object):
             next = other(next, follow_edge.nodes)
         yield self
 
+    def flip(self, kind):
+        self.edges[kind] = [self.edges[kind][1], self.edges[kind][0]]
+
     def neighbours(self, kind='match'):
         if not kind in self.edges.keys(): return
         for e in self.edges[kind]:
