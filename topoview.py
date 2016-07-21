@@ -113,7 +113,7 @@ class MatApp(App):
                 # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)
                 color = np.random.uniform(0.3,1.0,3)
                 p = self.layers['Clusters'].add_data_source_line(
-                    name = 'graph {}'.format(i),
+                    name = 'cluster {}'.format(i),
                     coords_start = np.array(adj_rel_start),
                     coords_end = np.array(adj_rel_end),
                     color = tuple(color),
@@ -135,11 +135,11 @@ class ToolsDialog(QWidget):
 
         # populate datalayers list
         # print self.app.viewerWindow.data_programs.keys()
-        l=[]
-        for program_name, p in list(self.app.layers.programs(with_names=True)):
-            if not program_name.startswith('graph'):
-                l.append(program_name)
-        self.ui.listWidget_layers.addItems(l)
+        # l=[]
+        # for program_name, p in list(self.app.layers.programs(with_names=True)):
+        #     if not program_name.startswith('graph'):
+        #         l.append(program_name)
+        # self.ui.listWidget_layers.addItems(l)
 
         for layer in self.app.layers:
             item = QTreeWidgetItem([layer.name], 0)
@@ -153,7 +153,8 @@ class ToolsDialog(QWidget):
         self.ui.pushButton_regraph.clicked.connect(self.app.draw_clusters)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
-        self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
+        # self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
+        self.ui.treeWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
         # import ipdb; ipdb.set_trace()
 
     def slot_tcount(self, value):
