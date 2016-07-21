@@ -267,6 +267,10 @@ def build_map(g, ma):
         if v['ma_theta_mean'] > math.radians(p_angle_converge):
             vids_coplanar.append(v.index)
             continue
+        if len(ma_idx) < 30: # ignore small sheets, eg. often caused by oversegmentation, should actually be merged
+            vids_coplanar.append(v.index)
+            print('skipping small sheet...')
+            continue
         # elif ma.D['ma_radii'][ma_idx].min() > 0.8: # ignore sheets that are not fully going into the building edges
         #     vids_coplanar.append(v.index)
         #     continue
@@ -491,11 +495,6 @@ def polyhedral_reconstruct(m, ma):
                 coords[3*i+1] = vertices[i+1]
                 coords[3*i+2] = vertices[i+2]
                 normals[3*i:3*i+3] = p.n
-
-            if len(vertices) ==5 :
-                print vertices
-                import ipdb; ipdb.set_trace()
-
             
             planes.append((coords, normals))
     # print planes

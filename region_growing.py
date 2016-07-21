@@ -284,14 +284,14 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 		return pdict
 
 
-	def find_adjacency_relations():
+	def find_adjacency_relations(k=25):
 		"""find pairs of adjacent segments
 		"""
 		if only_interior:
-			neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords_in'])
+			neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords_in'], k=k)
 			m=ma.m
 		else:
-			neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords'])
+			neighbours_dist, neighbours_idx = get_neighbours_ma(ma.D['ma_coords'], k=k)
 			m=ma.m*2
 		pdict = {}
 

@@ -45,8 +45,8 @@ class GraphWindow(PlotWidget):
         repeat = event.isAutoRepeat()
         # print('keypressevent!')
         if key == Qt.Key_R:
-            self.layer_manager.layers[-2].mask(None)
-            self.layer_manager.layers[-1].mask(None)
+            self.layer_manager['Surface'].mask(None)
+            self.layer_manager.layers['MAT'].mask(None)
             self.master_app.viewerWindow.render()
         if key == Qt.Key_N:
             self.clear()
@@ -55,12 +55,12 @@ class GraphWindow(PlotWidget):
             ma_idx = v['ma_idx']
             f = np.zeros(ma.m*2, dtype=bool)
             f[ma_idx] = True
-            self.layer_manager.layers[-2].mask(f)
+            self.layer_manager['Surface'].mask(f)
             
             f = np.zeros(ma.m, dtype=bool)
             f[np.mod(ma_idx, ma.m)] = True
             f[self.master_app.ma.D['ma_qidx'][ma_idx]] = True
-            self.layer_manager.layers[-1].mask(f)
+            self.layer_manager.layers['MAT'].mask(f)
 
             self.master_app.viewerWindow.center_view(np.mean(self.master_app.ma.D['ma_coords'][ma_idx], axis=0))
             self.master_app.viewerWindow.render()
@@ -101,7 +101,7 @@ def view(ma, vids):
     for that_id in vids:
         this_g = vertex_clustering.subgraph(that_id)
 
-        c.addGraphWindow(this_g)
+        # c.addGraphWindow(this_g)
         
         this_m = build_map(this_g, ma)
 
@@ -147,8 +147,8 @@ def view(ma, vids):
             for i, (coords, normals) in enumerate(planes):
                 c.add_data_source_triangle(
                     name = 'plane '+str(that_id)+' '+str(i),
-                    coords = coords[0:6],
-                    normals = normals[0:6],
+                    coords = coords,
+                    normals = normals,
                     color = (0.88,1.0,1.0),
                     is_visible = False,
                     # draw_type='line_loop'
@@ -204,10 +204,10 @@ def view(ma, vids):
       coords_end = ma.D['coords'],
       color = (1,1,0)
     )
-    f = np.zeros(ma.m, dtype=bool)
-    f[s_idx] = True
-    f[ma.D['ma_qidx'][ma_ids]] = True
-    layer_s.mask(f)
+    f_s = np.zeros(ma.m, dtype=bool)
+    f_s[s_idx] = True
+    f_s[ma.D['ma_qidx'][ma_ids]] = True
+    layer_s.mask(f_s)
     
 
     for v in g.vs():
@@ -240,6 +240,7 @@ def view(ma, vids):
     f[ma_ids] = True
     layer_ma.mask(f)
 
+    c.viewerWindow.center_view(center=np.mean(ma.D['coords'][f_s], axis=0))
     c.run()
 
 if __name__ == '__main__':
