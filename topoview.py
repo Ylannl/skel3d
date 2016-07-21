@@ -11,7 +11,7 @@ from povi import App, Layer, LinkedLayer
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QToolBox
+from PyQt5.QtWidgets import QWidget, QToolBox, QTreeWidgetItem
 
 # todo:
 # - clipping planes
@@ -140,6 +140,12 @@ class ToolsDialog(QWidget):
             if not program_name.startswith('graph'):
                 l.append(program_name)
         self.ui.listWidget_layers.addItems(l)
+
+        for layer in self.app.layers:
+            item = QTreeWidgetItem([layer.name], 0)
+            for program in layer:
+                item.addChild(QTreeWidgetItem([program.name], 0))
+            self.ui.treeWidget_layers.addTopLevelItem(item)
 
         # self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
         self.ui.spinBox_linkcount.valueChanged.connect(self.app.filter_linkcount)
