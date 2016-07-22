@@ -21,11 +21,11 @@ class MatApp(App):
     def __init__(self, ma, args=[]):
         super(MatApp, self).__init__(args)
         self.ma = ma
-        self.layers.add_layer(Layer(name='Clusters'))
         self.segment_filter = ma.D['ma_segment']>0
         self.radius_value = 150.
 
     def run(self):
+        self.layers.add_layer(Layer(name='Clusters'))
         self.dialog = ToolsDialog(self)
         self.draw_clusters()
         self.update_radius(150.)
@@ -33,7 +33,7 @@ class MatApp(App):
 
     def filter_linkcount(self, value):
         f = ma.D['seg_link_adj'][:,2] >= value
-        self.layers['Graph']['Adjacency relations'].updateAttributes(filter=np.repeat(f,2))
+        self.layers['Other']['Adjacency relations'].updateAttributes(filter=np.repeat(f,2))
         # f = ma.D['seg_link_flip'][:,2] >= value
         # self.viewerWindow.data_programs['Flip relations'].updateAttributes(filter=np.repeat(f,2))
         self.viewerWindow.render()
@@ -42,7 +42,7 @@ class MatApp(App):
         for gp in self.layers['Clusters']:
             gp.is_visible = True
         self.layers['Surface'].mask()
-        self.update_radius(self.radius_value)
+        # self.update_radius(self.radius_value)
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
 
@@ -123,6 +123,8 @@ class MatApp(App):
                 p.graph = g
         self.viewerWindow.render()
 
+        self.layers['Clusters'].is_visible=True
+
         # populate comboBox_component
         self.dialog.ui.comboBox_component.insertItems(0, [name for name in self.layers['Clusters'].programs.keys()])
 
@@ -133,19 +135,13 @@ class ToolsDialog(QWidget):
         self.ui = uic.loadUi('tools.ui', self)
         self.app = app
 
-        # populate datalayers list
-        # print self.app.viewerWindow.data_programs.keys()
-        # l=[]
-        # for program_name, p in list(self.app.layers.programs(with_names=True)):
-        #     if not program_name.startswith('graph'):
-        #         l.append(program_name)
-        # self.ui.listWidget_layers.addItems(l)
-
         for layer in self.app.layers:
             item = QTreeWidgetItem([layer.name], 0)
             for program in layer:
                 item.addChild(QTreeWidgetItem([program.name], 0))
             self.ui.treeWidget_layers.addTopLevelItem(item)
+            self.ui.treeWidget_layers.expandItem(item)
+            item.setSelected(True)
 
         # self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
         self.ui.spinBox_linkcount.valueChanged.connect(self.app.filter_linkcount)
@@ -236,9 +232,10 @@ def view(ma):
         i+=1
     
     c = MatApp(ma)
-    layer_ma = c.add_layer(LinkedLayer(name='MAT'))
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
-    layer_adj = c.add_layer(Layer(name='Graph'))
+    # layer_ma = c.add_layer(LinkedLayer(name='MAT'))
+    layer_ma = c.add_layer(LinkedLayer(name='MAT'))
+    layer_misc = c.add_layer(Layer(name='Other'))
 
     layer_s.add_data_source(
         name = 'Surface points',
@@ -261,12 +258,6 @@ def view(ma):
             category=ma.D['ma_segment'].astype(np.float32),
             colormap='random'
         )
-        # f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']==0)
-        layer_ma.add_data_source(
-            name = 'MAT points unsegmented',
-            opts = ['splat_point', 'blend'],
-            points=ma.D['ma_coords']
-        )
     else:
         # f = ma.D['ma_radii_in'] < max_r
         layer_ma.add_data_source(
@@ -280,13 +271,7 @@ def view(ma):
             opts = ['splat_point', 'blend'],
             points=ma.D['ma_coords_out']
         )
-    layer_ma.add_data_source(
-        name = 'MAT points',
-        opts=['splat_point', 'with_intensity'],
-        points=ma.D['ma_coords'], 
-        category=ma.D['ma_segment'].astype(np.float32),
-        colormap='random'
-    )        
+
     layer_ma.add_data_source_line(
       name = 'Primary spokes',
       coords_start = ma.D['ma_coords'],
@@ -327,8 +312,17 @@ def view(ma):
     #     opts = ['splat_point'],
     #     points = seg_centers[f]
     # )
+    # max_r=150
+    # f = np.logical_and(ma.D['ma_radii'] < max_r, ma.D['ma_segment']==0)
+    f = ma.D['ma_segment']==0
+    layer_misc.add_data_source(
+        name = 'MAT points unsegmented',
+        opts = ['splat_point', 'blend'],
+        points=ma.D['ma_coords'][f]
+    )
+
     if len(flip_rel_start)>0:
-        layer_adj.add_data_source_line(
+        layer_misc.add_data_source_line(
             name = 'Flip relations',
             coords_start = flip_rel_start,
             coords_end = flip_rel_end
@@ -336,7 +330,7 @@ def view(ma):
 
     if len(adj_rel_start)>0:
         # f = seg_cnts!=1
-        layer_adj.add_data_source_line(
+        layer_misc.add_data_source_line(
             name = 'Adjacency relations',
             coords_start = adj_rel_start,
             coords_end = adj_rel_end,
