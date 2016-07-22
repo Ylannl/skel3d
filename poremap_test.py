@@ -55,12 +55,12 @@ class GraphWindow(PlotWidget):
             ma_idx = v['ma_idx']
             f = np.zeros(ma.m*2, dtype=bool)
             f[ma_idx] = True
-            self.layer_manager['Surface'].mask(f)
+            self.layer_manager['MAT'].mask(f)
             
             f = np.zeros(ma.m, dtype=bool)
             f[np.mod(ma_idx, ma.m)] = True
             f[self.master_app.ma.D['ma_qidx'][ma_idx]] = True
-            self.layer_manager.layers['MAT'].mask(f)
+            self.layer_manager.layers['Surface'].mask(f)
 
             self.master_app.viewerWindow.center_view(np.mean(self.master_app.ma.D['ma_coords'][ma_idx], axis=0))
             self.master_app.viewerWindow.render()
@@ -87,8 +87,8 @@ def view(ma, vids):
     
     c = TestApp(ma)
 
-    min_count = 15
-    contract_thres = 15
+    min_count = 5
+    contract_thres = 20
     g = ma.D['ma_segment_graph'].copy()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
     g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
@@ -101,7 +101,7 @@ def view(ma, vids):
     for that_id in vids:
         this_g = vertex_clustering.subgraph(that_id)
 
-        # c.addGraphWindow(this_g)
+        c.addGraphWindow(this_g)
         
         this_m = build_map(this_g, ma)
 

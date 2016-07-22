@@ -22,37 +22,40 @@ class MatApp(App):
         super(MatApp, self).__init__(args)
         self.ma = ma
         self.segment_filter = ma.D['ma_segment']>0
-        self.radius_value = 150.
+        # self.radius_value = 150.
 
     def run(self):
-        self.layers.add_layer(Layer(name='Clusters'))
+        self.layer_manager.add_layer(Layer(name='Clusters'))
         self.dialog = ToolsDialog(self)
         self.draw_clusters()
-        self.update_radius(150.)
+        # self.polyhedral_reconstruct('cluster 2')
+        # self.update_radius(150.)
         super(MatApp, self).run()
 
     def filter_linkcount(self, value):
         f = ma.D['seg_link_adj'][:,2] >= value
-        self.layers['Other']['Adjacency relations'].updateAttributes(filter=np.repeat(f,2))
+        self.layer_manager['Other']['Adjacency relations'].updateAttributes(filter=np.repeat(f,2))
         # f = ma.D['seg_link_flip'][:,2] >= value
         # self.viewerWindow.data_programs['Flip relations'].updateAttributes(filter=np.repeat(f,2))
         self.viewerWindow.render()
 
     def filter_component_all(self, toggle):
-        for gp in self.layers['Clusters']:
+        for gp in self.layer_manager['Clusters']:
             gp.is_visible = True
-        self.layers['Surface'].mask()
+        self.layer_manager['Surface'].mask()
+        self.layer_manager['MAT'].mask()
         # self.update_radius(self.radius_value)
         if toggle==True:
             self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
+        self.viewerWindow.render()
 
     def filter_component(self, index):
-        for program in self.layers['Clusters']:
+        for program in self.layer_manager['Clusters']:
             program.is_visible=False
         name = self.dialog.ui.comboBox_component.itemText(index)
-        self.layers['Clusters'][name].is_visible = True
+        self.layer_manager['Clusters'][name].is_visible = True
         
-        g = self.layers['Clusters'][name].graph
+        g = self.layer_manager['Clusters'][name].graph
         self.viewerWindow.center_view(np.mean(g.vs['ma_coords_mean'], axis=0))
         self.viewerWindow.render()
 
@@ -61,26 +64,26 @@ class MatApp(App):
         # update mat points
         f = np.zeros(self.ma.m*2, dtype=bool)
         f[ma_idx] = True
-        self.layers['MAT'].mask(f)
+        self.layer_manager['MAT'].mask(f)
         # update coords
         # find indices of all surface points related to these mat points
 
         f = np.zeros(self.ma.m, dtype=bool)
         f[np.mod(ma_idx, self.ma.m)] = True
         f[self.ma.D['ma_qidx'][ma_idx]] = True
-        self.layers['Surface'].mask(f)
+        self.layer_manager['Surface'].mask(f)
         
         self.viewerWindow.render()
 
-    def update_radius(self, value):
-        self.radius_value = value
-        self.radius_filter = self.ma.D['ma_radii'] <= self.radius_value 
-        f=np.logical_and(self.segment_filter, self.radius_filter)
-        self.layers['MAT'].mask(f)
-        return
+    # def update_radius(self, value):
+    #     self.radius_value = value
+    #     self.radius_filter = self.ma.D['ma_radii'] <= self.radius_value 
+    #     f=np.logical_and(self.segment_filter, self.radius_filter)
+    #     self.layer_manager['MAT'].mask(f)
+    #     return
 
     def draw_clusters(self):
-        self.layers['Clusters'].clear()
+        self.layer_manager['Clusters'].clear()
         self.dialog.ui.comboBox_component.clear()
         self.dialog.ui.groupBox_component.setChecked(False)
         self.filter_component_all(False)
@@ -112,7 +115,7 @@ class MatApp(App):
                 # color = np.random.rand(3)
                 # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)
                 color = np.random.uniform(0.3,1.0,3)
-                p = self.layers['Clusters'].add_data_source_line(
+                p = self.layer_manager['Clusters'].add_data_source_line(
                     name = 'cluster {}'.format(i),
                     coords_start = np.array(adj_rel_start),
                     coords_end = np.array(adj_rel_end),
@@ -123,10 +126,74 @@ class MatApp(App):
                 p.graph = g
         self.viewerWindow.render()
 
-        self.layers['Clusters'].is_visible=True
+        self.layer_manager['Clusters'].is_visible=True
 
         # populate comboBox_component
-        self.dialog.ui.comboBox_component.insertItems(0, [name for name in self.layers['Clusters'].programs.keys()])
+        self.dialog.ui.comboBox_component.insertItems(0, [name for name in self.layer_manager['Clusters'].programs.keys()])
+
+    def polyhedral_reconstruct(self, name=None):
+        if name == False:
+            name = self.dialog.ui.comboBox_component.itemText(self.dialog.ui.comboBox_component.currentIndex())
+        
+        this_g = self.layer_manager['Clusters'][name].graph
+
+        this_m = build_map(this_g, self.ma)
+        layer_map = Layer(name='MAP '+str(name))
+        self.layer_manager.add_layer(layer_map)
+
+        adj_rel_start = []
+        adj_rel_end = []
+        # this_g = g.subgraph(this_mapping)
+        for hn in this_m.ns:
+            hn['coords_mean'] = np.mean(self.ma.D['coords'][hn['s_idx']], axis=0)
+        # import ipdb;ipdb.set_trace()
+        for e in this_m.es:
+            if e.kind == 'match':
+                source, target = e.nodes
+                adj_rel_start.append(source['coords_mean'])
+                adj_rel_end.append(target['coords_mean'])
+        p = layer_map.add_data_source_line(
+            name = 'map edges {}'.format(name),
+            coords_start = np.array(adj_rel_start),
+            coords_end = np.array(adj_rel_end),
+            color = (0,1,0),
+            is_visible=True,
+            options = ['alternate_vcolor']
+        )
+
+        adj_rel_start = []
+        adj_rel_end = []
+        for i in range(len(this_m.ns)/2):
+            hn = this_m.ns[i*2]
+            source, target = hn, hn.twin
+            adj_rel_start.append(source['coords_mean'])
+            adj_rel_end.append(target['coords_mean'])
+        color = np.random.uniform(0.3,1.0,3)
+        p = layer_map.add_data_source_line(
+            name = 'map twin links {}'.format(name),
+            coords_start = np.array(adj_rel_start),
+            coords_end = np.array(adj_rel_end),
+            color = (1,1,1),
+            is_visible=False
+        )
+
+        try:
+            planes = polyhedral_reconstruct(this_m, self.ma)
+            for i, (coords, normals) in enumerate(planes):
+                layer_map.add_data_source_triangle(
+                    name = 'plane '+str(name)+' '+str(i),
+                    coords = coords,
+                    normals = normals,
+                    color = (0.88,1.0,1.0),
+                    is_visible = False,
+                    # draw_type='line_loop'
+                    draw_type='triangles'
+                )
+        except Exception as e:
+            print('polyhedral_reconstruct failed')
+            raise
+        self.dialog.addLayer(layer_map)
+        self.viewerWindow.render()
 
 
 class ToolsDialog(QWidget):
@@ -135,23 +202,27 @@ class ToolsDialog(QWidget):
         self.ui = uic.loadUi('tools.ui', self)
         self.app = app
 
-        for layer in self.app.layers:
-            item = QTreeWidgetItem([layer.name], 0)
-            for program in layer:
-                item.addChild(QTreeWidgetItem([program.name], 0))
-            self.ui.treeWidget_layers.addTopLevelItem(item)
-            self.ui.treeWidget_layers.expandItem(item)
-            item.setSelected(True)
+        for layer in self.app.layer_manager:
+            self.addLayer(layer)
 
         # self.ui.doubleSpinBox_filterRadius.valueChanged.connect(self.app.update_radius)
         self.ui.spinBox_linkcount.valueChanged.connect(self.app.filter_linkcount)
         # self.ui.doubleSpinBox_contractthres.valueChanged.connect(self.app.doubleSpinBox_contractthres)
         self.ui.pushButton_regraph.clicked.connect(self.app.draw_clusters)
+        self.ui.pushButton_reconstruct.clicked.connect(self.app.polyhedral_reconstruct)
         self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
         self.ui.comboBox_component.activated.connect(self.app.filter_component)
         # self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
         self.ui.treeWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
         # import ipdb; ipdb.set_trace()
+
+    def addLayer(self, layer):
+        item = QTreeWidgetItem([layer.name], 0)
+        for program in layer:
+            item.addChild(QTreeWidgetItem([program.name], 0))
+        self.ui.treeWidget_layers.addTopLevelItem(item)
+        self.ui.treeWidget_layers.expandItem(item)
+        item.setSelected(True)
 
     def slot_tcount(self, value):
         print('tcount', value)

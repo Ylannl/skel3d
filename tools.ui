@@ -121,6 +121,16 @@
       <item>
        <widget class="QComboBox" name="comboBox_component"/>
       </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_reconstruct">
+        <property name="text">
+         <string>Reconstruct Polyhedron</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
