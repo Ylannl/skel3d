@@ -25,7 +25,7 @@ class MatApp(App):
         # self.radius_value = 150.
 
     def run(self):
-        self.layer_manager.add_layer(Layer(name='Clusters'))
+        self.layer_manager.add_layer(Layer(name='Clusters', is_aggregate=True))
         self.dialog = ToolsDialog(self)
         self.draw_clusters()
         # self.polyhedral_reconstruct('cluster 2')

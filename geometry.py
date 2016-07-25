@@ -300,7 +300,7 @@ def build_map(g, ma):
         )
         vid_map[i]=nid_cnt
         nid_cnt += 1
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     
     # label each edge with corresponding spoke sets from incident vertices (ie. an edge can be linked to exactly one plane)
     for ge in list(g.es):
