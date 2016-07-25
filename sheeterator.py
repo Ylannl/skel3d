@@ -158,7 +158,7 @@ class GraphWindow(PlotWidget):
         super(GraphWindow, self).__init__(parent)
 
     def show_sheet(self, ma_idx):
-        self.clear()
+        # self.clear()
 
         # import ipdb/;ipdb.set_trace()
         # i = v.index
@@ -170,7 +170,7 @@ class GraphWindow(PlotWidget):
         ## notice that len(x) == len(y)+1
         # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
         color = (0,0,200,255)
-        self.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='radius '+str(42))
+        self.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='radius '+str(42), clear=True)
         
         vals=ma.D['ma_theta'][ma_idx]
         ## compute standard histogram
