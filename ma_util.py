@@ -26,6 +26,8 @@ class MAHelper(object):
 
         f1_in = self.D['coords']-self.D['ma_coords_in']
         f2_in = self.D['coords'][self.D['ma_qidx_in']]-self.D['ma_coords_in']
+        self.D['ma_f1_in'] = f1_in.copy() 
+        self.D['ma_f2_in'] = f2_in.copy()
         f1_in = f1_in/np.linalg.norm(f1_in, axis=1)[:,None]
         f2_in = f2_in/np.linalg.norm(f2_in, axis=1)[:,None]
         self.D['ma_bisec_in'] = (f1_in+f2_in)
@@ -34,6 +36,8 @@ class MAHelper(object):
 
         f1_out = self.D['coords']-self.D['ma_coords_out']
         f2_out = self.D['coords'][self.D['ma_qidx_out']]-self.D['ma_coords_out']
+        self.D['ma_f1_out'] = f1_out.copy() 
+        self.D['ma_f2_out'] = f2_out.copy()
         f1_out = f1_out/np.linalg.norm(f1_out, axis=1)[:,None]
         f2_out = f2_out/np.linalg.norm(f2_out, axis=1)[:,None]
         self.D['ma_bisec_out'] = (f1_out+f2_out)
@@ -45,6 +49,8 @@ class MAHelper(object):
         self.D['ma_theta'] = np.concatenate([self.D['ma_theta_in'], self.D['ma_theta_out']])
         self.D['ma_radii'] = np.concatenate([self.D['ma_radii_in'], self.D['ma_radii_out']])
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
+        self.D['ma_f1'] = np.concatenate([self.D['ma_f1_in'], self.D['ma_f1_out']])
+        self.D['ma_f2'] = np.concatenate([self.D['ma_f2_in'], self.D['ma_f2_out']])
 
         if 'ma_segment_graph' in datadict:
             self.g = datadict['ma_segment_graph']

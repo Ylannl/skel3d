@@ -10,7 +10,9 @@ from geometry import *
 from povi import App
 from itertools import chain
 from PyQt5.QtCore import Qt
-from pyqtgraph import PlotWidget
+from pyqtgraph import PlotWidget, LinearRegionItem
+
+from scipy.spatial.distance import cdist
 
 class TestApp(App):
 
@@ -19,7 +21,7 @@ class TestApp(App):
         self.ma = ma
 
     def run(self):
-        self.addGraphWindow()
+        # self.addGraphWindow()
         self.layer_manager.add_layer(Layer(name='Clusters', is_aggregate=True))
         # here all layers need to have been added
         self.dialog = ToolsWindow(self)
@@ -75,6 +77,7 @@ class TestApp(App):
         if toggle==True:
             self.filter_cluster(index=self.dialog.ui.comboBox_clusters.currentIndex())
         else:
+            self.filter_cluster(0)
             self.filter_idx()
         # self.viewerWindow.render()
 
@@ -83,6 +86,10 @@ class TestApp(App):
             self.filter_idx(None)
             self.active_graph = None
             self.dialog.ui.comboBox_sheets.clear()
+            for program in self.layer_manager['Clusters']:
+                program.is_visible=True
+            # self.viewerWindow.center_view(self.layer_manager['Clusters'].get_center())
+            self.viewerWindow.render()
             return
 
         for program in self.layer_manager['Clusters']:
@@ -98,7 +105,7 @@ class TestApp(App):
 
         ma_idx = np.concatenate(g.vs['ma_idx'])
         # if ma_idx.sum() <1:return
-        self.plotWindow.show_sheet(ma_idx)
+        self.dialog.plot_histogram(ma_idx)
         self.filter_idx(ma_idx)
 
         # populate sheet list
@@ -109,10 +116,11 @@ class TestApp(App):
         if index == 0:
             self.filter_cluster(self.dialog.ui.comboBox_clusters.currentIndex())
         else:
-            ma_idx = self.active_graph.vs[index-1]['ma_idx']
+            v = self.active_graph.vs[index-1]
             # if ma_idx.sum() <1:return
-            self.plotWindow.show_sheet(ma_idx)
-            self.filter_idx(ma_idx)
+            self.dialog.plot_directional_analysis(v)
+            # self.dialog.plot_histogram(v[ma_idx])
+            self.filter_idx(v['ma_idx'])
         
 
     def filter_idx(self, ma_idx=None):
@@ -133,15 +141,19 @@ class TestApp(App):
         
         self.viewerWindow.render()
     
-    def addGraphWindow(self): 
-        self.plotWindow = GraphWindow(master_app=self)
-        # self.plotWindow.addLegend()
-        self.plotWindow.show()
-        # super(TestApp, self).run()
+    # def addGraphWindow(self): 
+    #     self.plotWindow = GraphWindow(master_app=self)
+    #     # self.plotWindow.addLegend()
+    #     self.plotWindow.show()
+    #     # super(TestApp, self).run()
 
 class ToolsWindow(ToolsDialog):
     def __init__(self, app):
         super(ToolsWindow, self).__init__(app, ui_path='sheeterator.ui', parent=None)
+        self.ui.graphicsView_plotWidget.showGrid(x=True, y=True, alpha=0.4)
+        
+        # self.ui.graphicsView_plotWidget.setDownsampling(auto=True, mode='subsample')
+        # self.ui.graphicsView_plotWidget.addLegend()
 
     def connectUI(self):
         super(ToolsWindow, self).connectUI()
@@ -150,14 +162,89 @@ class ToolsWindow(ToolsDialog):
         self.ui.comboBox_sheets.activated.connect(self.app.filter_sheet)
         self.ui.groupBox_cluster.clicked.connect(self.app.toggle_selection)
 
-        
-class GraphWindow(PlotWidget):
-    def __init__(self, master_app, parent=None):
-        self.layer_manager = master_app.layer_manager
-        self.master_app = master_app
-        super(GraphWindow, self).__init__(parent)
+    def lr_changed(self, lr):
+        xmi, xma = lr.getRegion()
+        mask = np.logical_and(xmi < self.x, self.x < xma)
+        ma_idx = self.ma_idx[mask]
+        self.app.filter_idx(ma_idx)
 
-    def show_sheet(self, ma_idx):
+    def plot_directional_analysis(self, v):
+        # pick reference point: the point with median bisector
+        ma_idx = np.array(v['ma_idx'])
+        if len(ma_idx)>10000:return
+        # radii = ma.D['ma_radii'][ma_idx]
+        # thetas = ma.D['ma_theta'][ma_idx]
+        # c_id = ma_idx[np.argmax(radii)]
+        # c_id = ma_idx[np.argsort(thetas)[len(radii)//2]]
+        # c_id = np.random.randint(len(ma_idx))
+
+        # r = ma.D['ma_radii'][c_id] #ma.D['coords'][np.mod(c_id, ma.m)] - ma.D['ma_coords'][c_id]
+        # theta = ma.D['ma_theta'][c_id]
+        # b = ma.D['ma_bisec'][c_id]
+        # c = ma.D['ma_coords'][c_id]
+
+        r = np.mean(ma.D['ma_radii'][ma_idx], axis=0)
+        theta = np.mean(ma.D['ma_theta'][ma_idx], axis=0)
+        b = np.mean(ma.D['ma_bisec'][ma_idx], axis=0)
+        c = np.mean(ma.D['ma_coords'][ma_idx], axis=0)
+
+        xc = r/np.cos(theta/2)
+        x = np.empty(len(ma_idx))
+        for i in range(len(ma_idx)):
+            x[i] = xc + (np.dot(c-ma.D['ma_coords'][ma_idx[i]], b))
+        self.x = x
+        self.ma_idx = ma_idx
+
+        # sort everything? Not needed for scatter plot
+        # x_sort = np.argsort(x)
+        # ma_idx = ma_idx[x_sort]
+        # x = x[x_sort]
+
+        y = ma.D['ma_radii'][ma_idx]
+
+        # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+        color = (0,220,0,160)
+        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Radii', clear=True)
+        color = (0,220,220,160)
+        y = ma.D['ma_theta'][ma_idx]
+        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Separation angle')
+
+        y = np.empty(len(ma_idx))
+        for i in range(len(ma_idx)):
+            y[i] = angle(b, ma.D['ma_bisec'][ma_idx[i]])
+        color = (250,0,0,160)
+        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Bisector diff')
+
+        # define plane at represetative point:
+        # we need an actual point on the sheet because we can't quickly aggregate spokes, because of their inconsistent orientation
+        # c_id = ma_idx[ np.argmin(cdist(ma.D['ma_coords'][ma_idx], np.array([c]))) ]
+        c_id = ma_idx[np.argmax(ma.D['ma_radii'][ma_idx])]
+        c = ma.D['ma_coords'][c_id]
+        f1 = ma.D['ma_f1'][c_id]
+        f2 = ma.D['ma_f2'][c_id]
+        # cross product of spokes is perpendicular to bisector and tangent to sheet
+        vec_coplanar = np.cross(f1,f2)
+        # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct
+        n = np.cross(vec_coplanar, ma.D['ma_bisec'][c_id])
+        n = n / np.linalg.norm(n)
+        # plane = Plane(pc, Line(pc, pn))
+        y = np.empty(len(ma_idx))
+        for i in range(len(ma_idx)):
+            q = ma.D['ma_coords'][ma_idx[i]] - c
+            q_on_n = np.dot(q,n)
+            y[i] = q_on_n
+            # y[i] = np.linalg.norm(q-q_on_n)
+            # y[i] = plane.distance_to(Point(ma.D['ma_coords'][ma_idx[i]]))
+        color = (250,250,0,160)
+        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Plane fit') 
+
+        xmi, xma = x.min(), x.max() 
+        lr = LinearRegionItem([xmi, xma], movable=True)
+        self.ui.graphicsView_plotWidget.addItem(lr)
+        lr.sigRegionChangeFinished.connect(self.lr_changed)
+
+
+    def plot_histogram(self, ma_idx):
         # self.clear()
 
         # import ipdb/;ipdb.set_trace()
@@ -169,8 +256,8 @@ class GraphWindow(PlotWidget):
         ## Using stepMode=True causes the plot to draw two lines for each sample.
         ## notice that len(x) == len(y)+1
         # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
-        color = (0,0,200,255)
-        self.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='radius '+str(42), clear=True)
+        color = (0,220,0,255)
+        self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='radius '+str(42), clear=True)
         
         vals=ma.D['ma_theta'][ma_idx]
         ## compute standard histogram
@@ -179,8 +266,17 @@ class GraphWindow(PlotWidget):
         ## Using stepMode=True causes the plot to draw two lines for each sample.
         ## notice that len(x) == len(y)+1
         # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
-        color = (0,200,0,255)
-        self.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='theta '+str(42))
+        # color = (0,200,0,255)
+        color = (0,220,220,255)
+        self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='theta '+str(42))
+        
+# class GraphWindow(PlotWidget):
+#     def __init__(self, master_app, parent=None):
+#         self.layer_manager = master_app.layer_manager
+#         self.master_app = master_app
+#         super(GraphWindow, self).__init__(parent)
+
+
     
 
 
