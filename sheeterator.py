@@ -119,7 +119,10 @@ class TestApp(App):
             v = self.active_graph.vs[index-1]
             # if ma_idx.sum() <1:return
             self.dialog.plot_directional_analysis(v)
-            # self.dialog.plot_histogram(v[ma_idx])
+            if self.dialog.ui.checkBox_sheetCenterView.isChecked():
+                self.viewerWindow.center_view(v['ma_coords_mean'])
+                self.viewerWindow.render()
+
             self.filter_idx(v['ma_idx'])
         
 
@@ -322,8 +325,8 @@ def view(ma, vid):
     
     c = TestApp(ma)   
 
-    layer_ma = c.add_layer(LinkedLayer(name='MAT'))
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
+    layer_ma = c.add_layer(LinkedLayer(name='MAT'))
     layer_misc = c.add_layer(LinkedLayer(name='Other'))
 
     layer_s.add_data_source(
