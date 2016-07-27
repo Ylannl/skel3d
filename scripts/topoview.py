@@ -46,13 +46,13 @@ class MatApp(App):
         self.layer_manager['MAT'].mask()
         # self.update_radius(self.radius_value)
         if toggle==True:
-            self.filter_component(index=self.dialog.ui.comboBox_component.currentIndex())
+            self.filter_component(index=self.dialog.ui.comboBox_clusters.currentIndex())
         self.viewerWindow.render()
 
     def filter_component(self, index):
         for program in self.layer_manager['Clusters']:
             program.is_visible=False
-        name = self.dialog.ui.comboBox_component.itemText(index)
+        name = self.dialog.ui.comboBox_clusters.itemText(index)
         self.layer_manager['Clusters'][name].is_visible = True
         
         g = self.layer_manager['Clusters'][name].graph
@@ -84,10 +84,8 @@ class MatApp(App):
 
     def draw_clusters(self):
         self.layer_manager['Clusters'].clear()
-        self.dialog.ui.comboBox_component.clear()
-        self.dialog.ui.groupBox_component.setChecked(False)
-        self.filter_component_all(False)
-
+        self.dialog.ui.comboBox_clusters.clear()
+        self.dialog.ui.groupBox_clusters.setChecked(False)
         min_count = self.dialog.ui.spinBox_linkcount.value()
         contract_thres = self.dialog.ui.doubleSpinBox_contractthres.value()
         g = self.ma.D['ma_segment_graph'].copy()
@@ -128,12 +126,12 @@ class MatApp(App):
 
         self.layer_manager['Clusters'].is_visible=True
 
-        # populate comboBox_component
-        self.dialog.ui.comboBox_component.insertItems(0, [name for name in self.layer_manager['Clusters'].programs.keys()])
+        # populate comboBox_clusters
+        self.dialog.ui.comboBox_clusters.insertItems(0, [name for name in self.layer_manager['Clusters'].programs.keys()])
 
     def polyhedral_reconstruct(self, name=None):
         if name == False:
-            name = self.dialog.ui.comboBox_component.itemText(self.dialog.ui.comboBox_component.currentIndex())
+            name = self.dialog.ui.comboBox_clusters.itemText(self.dialog.ui.comboBox_clusters.currentIndex())
         
         this_g = self.layer_manager['Clusters'][name].graph
 
@@ -210,8 +208,8 @@ class ToolsDialog(QWidget):
         # self.ui.doubleSpinBox_contractthres.valueChanged.connect(self.app.doubleSpinBox_contractthres)
         self.ui.pushButton_regraph.clicked.connect(self.app.draw_clusters)
         self.ui.pushButton_reconstruct.clicked.connect(self.app.polyhedral_reconstruct)
-        self.ui.groupBox_component.clicked.connect(self.app.filter_component_all)
-        self.ui.comboBox_component.activated.connect(self.app.filter_component)
+        self.ui.groupBox_clusters.clicked.connect(self.app.filter_component_all)
+        self.ui.comboBox_clusters.activated.connect(self.app.filter_component)
         # self.ui.listWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
         self.ui.treeWidget_layers.itemSelectionChanged.connect(self.app.set_layer_selection)
         # import ipdb; ipdb.set_trace()

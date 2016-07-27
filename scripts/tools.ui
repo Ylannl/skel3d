@@ -113,7 +113,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_component">
+    <widget class="QGroupBox" name="groupBox_clusters">
      <property name="title">
       <string>Show single component only</string>
      </property>
@@ -155,7 +155,7 @@
        <string>Re-center view</string>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
