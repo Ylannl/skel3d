@@ -162,6 +162,36 @@ class ToolsWindow(ToolsDialog):
         self.ui.comboBox_sheets.activated.connect(self.app.filter_sheet)
         self.ui.groupBox_cluster.clicked.connect(self.app.toggle_selection)
 
+    def keyPressEvent(self, event):
+        key = event.key()
+        repeat = event.isAutoRepeat()
+        # print('keypressevent!')
+
+        if key == Qt.Key_Up:
+            newIndex = self.ui.comboBox_clusters.currentIndex() -1
+            if newIndex == -1:
+                newIndex = self.ui.comboBox_clusters.count() - 1
+            self.ui.comboBox_clusters.setCurrentIndex(newIndex)
+            self.app.filter_cluster(newIndex)
+        if key == Qt.Key_Down:
+            newIndex = self.ui.comboBox_clusters.currentIndex() + 1
+            if newIndex == self.ui.comboBox_clusters.count():
+                newIndex = 0
+            self.ui.comboBox_clusters.setCurrentIndex(newIndex)
+            self.app.filter_cluster(newIndex)
+        if key == Qt.Key_Left:
+            newIndex = self.ui.comboBox_sheets.currentIndex() - 1
+            if newIndex == -1:
+                newIndex = self.ui.comboBox_sheets.count()-1
+            self.ui.comboBox_sheets.setCurrentIndex(newIndex)
+            self.app.filter_sheet(newIndex)
+        if key == Qt.Key_Right:
+            newIndex = self.ui.comboBox_sheets.currentIndex() + 1
+            if newIndex == self.ui.comboBox_sheets.count():
+                newIndex = 0
+            self.ui.comboBox_sheets.setCurrentIndex(newIndex)
+            self.app.filter_sheet(newIndex)
+
     def lr_changed(self, lr):
         xmi, xma = lr.getRegion()
         mask = np.logical_and(xmi < self.x, self.x < xma)
