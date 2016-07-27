@@ -231,7 +231,6 @@ class ToolsWindow(ToolsDialog):
         # x = x[x_sort]
 
         y = ma.D['ma_radii'][ma_idx]
-
         # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
         color = (0,220,0,160)
         self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Radii', clear=True)
@@ -244,6 +243,12 @@ class ToolsWindow(ToolsDialog):
             y[i] = angle(b, ma.D['ma_bisec'][ma_idx[i]])
         color = (250,0,0,160)
         self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Bisector diff')
+        
+        y = np.empty(len(ma_idx))
+        for i in range(len(ma_idx)):
+            y[i] = 2*np.arccos(ma.D['ma_radii'][ma_idx[i]]/ x[i])
+        color = (250,0,255,160)
+        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='sepangle predicttion')
 
         # define plane at represetative point:
         # we need an actual point on the sheet because we can't quickly aggregate spokes, because of their inconsistent orientation
