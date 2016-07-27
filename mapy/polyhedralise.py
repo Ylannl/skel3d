@@ -1,8 +1,8 @@
 import numpy as np
-from graph import *
-from  map import *
+from .graph import *
+from .map import *
 import random
-from geom3d import *
+from .geom3d import *
 
 from sklearn.cluster import KMeans
 

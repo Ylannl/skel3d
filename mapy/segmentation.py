@@ -1,11 +1,10 @@
 import math, sys
 import numpy as np
 from time import time
-from pointio import io_npy
-from ma_util import MAHelper
-import argparse
 import igraph
 from pykdtree.kdtree import KDTree
+
+from mapy.io import npy 
 
 # INFILE = 'data/scan_npy'
 INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
@@ -232,7 +231,7 @@ def perform_segmentation_bisec(mah, **kwargs):
 	compute_segment_aggregate(g, mah.D, 'ma_bisec')
 	compute_segment_aggregate(g, mah.D, 'ma_theta')
 	mah.D['ma_segment_graph'] = g
-	io_npy.write_npy(kwargs['infile'], mah.D, ['ma_segment', 'ma_segment_graph'])
+	npy.write(kwargs['infile'], mah.D, ['ma_segment', 'ma_segment_graph'])
 	
 	return g
 	
@@ -250,7 +249,7 @@ def graph2segmentlist(g, ma_segment):
 
 # 	print R.region_counts
 # 	D['ma_segment'] = R.ma_segment
-# 	io_npy.write_npy(INFILE, D, ['ma_segment'])
+# 	npy.write(INFILE, D, ['ma_segment'])
 
 def find_relations(ma, infile=INFILE, only_interior=False):
 	"""
@@ -328,7 +327,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 		for (s, e), cnt in flip_relations.items():
 			ma.D['seg_link_flip'][i] = [s,e,cnt]
 			i+=1
-		io_npy.write_npy(infile, ma.D, ['seg_link_flip'])
+		npy.write(infile, ma.D, ['seg_link_flip'])
 
 	adj_relations = find_adjacency_relations()
 	ma.D['seg_link_adj'] = np.zeros(len(adj_relations), dtype = "3int32")
@@ -336,26 +335,9 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 	for (s, e), cnt in adj_relations.items():
 		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
-	io_npy.write_npy(infile, ma.D, ['seg_link_adj'])
+	npy.write(infile, ma.D, ['seg_link_adj'])
 
 def compute_segment_aggregate(g, datadict, key='ma_coords'):
 	"""Compute eg. avarage coordinate for each segment"""
 	for v in g.vs:
 		v[key+'_mean'] = datadict[key][v['ma_idx']].mean(axis=0)
-
-if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Region growing for MAT sheets')
-	parser.add_argument('infile', help='npy file', default=INFILE)
-	parser.add_argument('-k', help='Number of neighbours to use', default=10, type=int)
-	parser.add_argument('-b', '--bisec_thres', help='Bisec threshold in degrees', default=10.0, type=float)
-	parser.add_argument('-m', '--mincount', help='Minimum number of points in a segment', default=10, type=int)
-	# parser.add_argument('--topo', help='Also compute topological links', dest='topo', action='store_true')
-	parser.add_argument('--only_interior', help='Only use interior MAT', dest='interior', action='store_true')
-	args = parser.parse_args()
-
-	D = io_npy.read_npy(args.infile)
-	mah = MAHelper(D)
-	# import ipdb; ipdb.set_trace()
-	g = perform_segmentation_bisec(mah, **args.__dict__)
-	# if args.topo:
-		# find_relations(mah, infile=args.infile, only_interior=args.interior)

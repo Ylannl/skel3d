@@ -1,11 +1,8 @@
-from ma_util import MAHelper
-from pointio import io_npy 
+from .util import MAHelper
 import igraph
 import math
 import numpy as np
 from itertools import chain
-
-from region_growing import find_relations
 
 # def construct_graph(datadict, min_count):
 #     """return connected components in adjacency graph with an adjacency count of at least min_count"""
@@ -67,11 +64,3 @@ def contract_edges(g, threshold=10):
 # def update_points(g, datadict):
 #     for v in g.vs:
 #         datadict['ma_segment'][v['ma_idx']] = v.index
-
-if __name__ == '__main__':
-    D = io_npy.read_npy("/Users/ravi/git/masbcpp/rdam_blokken_npy")
-    g = D['ma_segment_graph']
-    contract_edges(g)
-    import ipdb; ipdb.set_trace()
-    # mah = MAHelper(D)
-    

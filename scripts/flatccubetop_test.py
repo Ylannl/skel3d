@@ -1,14 +1,14 @@
 import math, sys
 from time import time
 import numpy as np
-from pointio import io_npy
-from ma_util import MAHelper
-from povi import App
-from graph import *
-from region_growing import *
-from geometry import *
-from povi import App
 from itertools import chain
+
+from povi import App
+from mapy.io import npy
+from mapy.util import MAHelper
+from mapy.graph import *
+from mapy.segmentation import *
+from mapy.polyhedralise import *
 
 def view(ma, vids=[16,80,133]):
     # ref_count = timeit(count_refs)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
         vids = [int(sys.argv[-1])]
         # INFILE = sys.argv[-1]
     # import ipdb;ipdb.set_trace()
-    datadict = io_npy.read_npy(INFILE)
+    datadict = npy.read(INFILE)
     ma = MAHelper(datadict, origin=True)
 
     g = ma.D['ma_segment_graph']

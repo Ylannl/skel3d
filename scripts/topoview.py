@@ -1,13 +1,13 @@
 import math, sys
 from time import time
 import numpy as np
-from pointio import io_npy
-from ma_util import MAHelper
-from povi import App
-from graph import *
-from region_growing import *
-from geometry import *
+
 from povi import App, Layer, LinkedLayer
+from mapy.io import npy
+from mapy.util import MAHelper
+from mapy.graph import *
+from mapy.segmentation import *
+from mapy.polyhedralise import *
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
@@ -255,7 +255,7 @@ def assign_seg_point():
     del pdict[-1]
 
     datadict['segment_count'] = np.array([ len(s) for s in list(pdict.values()) ], dtype=np.int32)
-    io_npy.write_npy(INFILE, datadict, ['segment_count'])
+    npy.write(INFILE, datadict, ['segment_count'])
 
 def count_refs():
     """count the number of times each coord is used as feature point for a medial ball"""
@@ -414,7 +414,7 @@ if __name__ == '__main__':
     if len(sys.argv)>1:
         INFILE = sys.argv[-1]
     # import ipdb;ipdb.set_trace()
-    datadict = io_npy.read_npy(INFILE)
+    datadict = npy.read(INFILE)
     ma = MAHelper(datadict, origin=True)
 
     g = ma.D['ma_segment_graph']
