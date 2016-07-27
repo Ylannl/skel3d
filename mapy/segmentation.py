@@ -42,6 +42,7 @@ class RegionGrower(object):
 	def __init__(self, mah, **kwargs):
 		self.p = {
 			'bisec_thres':10.0,
+			'theta_thres':10.0,
 			'k':10,
 			'only_interior':False,
 			'method':'bisec',
@@ -51,14 +52,14 @@ class RegionGrower(object):
 		# import ipdb;ipdb.set_trace()
 
 		if self.p['method'] == 'bisec':
-			self.valid_candidate = self.valid_candidate_bisec # or 'normal'
+			self.valid_candidate = self.valid_candidate_bisectheta # or 'normal'
 		else:
 			self.valid_candidate = self.valid_candidate_normal
 
 		self.p_bisecthres = math.cos((self.p['bisec_thres'] / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
-		self.p_thetathres_1 = (50.0 / 180.0) * math.pi # during bisect growing
-		self.p_thetathres_2 = (10.0 / 180.0) * math.pi # during theta growing
+		self.p_thetathres_1 = (self.p['theta_thres'] / 180.0) * math.pi # during bisect growing
+		self.p_thetathres_2 = (self.p['theta_thres'] / 180.0) * math.pi # during theta growing
 		self.p_k = self.p['k']
 		self.p_mincount = self.p['mincount']
 
@@ -144,6 +145,10 @@ class RegionGrower(object):
 		else:
 			return False
 	
+	def valid_candidate_bisectheta(self, seed, candidate):
+		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
+		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate)
+
 	def valid_candidate_bisec(self, seed, candidate):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
 		return np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres

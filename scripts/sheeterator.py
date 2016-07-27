@@ -38,7 +38,7 @@ class TestApp(App):
         # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
         g = self.ma.D['ma_segment_graph']
         g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
-        contract_edges(g, contract_thres)
+        # contract_edges(g, contract_thres)
         
         # self.graphs = []
         # graphlib = get_graph_library()
@@ -206,7 +206,7 @@ class ToolsWindow(ToolsDialog):
         # pick reference point: the point with median bisector
         ma_idx = np.array(v['ma_idx'])
         if len(ma_idx)>10000:return
-        # radii = ma.D['ma_radii'][ma_idx]
+        radii = ma.D['ma_radii'][ma_idx]
         # thetas = ma.D['ma_theta'][ma_idx]
         # c_id = ma_idx[np.argmax(radii)]
         # c_id = ma_idx[np.argsort(thetas)[len(radii)//2]]
@@ -257,7 +257,7 @@ class ToolsWindow(ToolsDialog):
         # define plane at represetative point:
         # we need an actual point on the sheet because we can't quickly aggregate spokes, because of their inconsistent orientation
         # c_id = ma_idx[ np.argmin(cdist(ma.D['ma_coords'][ma_idx], np.array([c]))) ]
-        c_id = ma_idx[np.argmax(ma.D['ma_radii'][ma_idx])]
+        c_id = ma_idx[np.argsort(radii)[len(radii)//2]]
         c = ma.D['ma_coords'][c_id]
         f1 = ma.D['ma_f1'][c_id]
         f2 = ma.D['ma_f2'][c_id]
@@ -328,7 +328,8 @@ def view(ma, vid):
 
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
     layer_ma = c.add_layer(LinkedLayer(name='MAT'))
-    layer_misc = c.add_layer(LinkedLayer(name='Other'))
+    layer_misc_s = c.add_layer(LinkedLayer(name='Other s'))
+    layer_misc_ma = c.add_layer(LinkedLayer(name='Other ma'))
 
     layer_s.add_data_source(
         name = 'Surface points',
@@ -371,13 +372,21 @@ def view(ma, vid):
     )
 
     
-    layer_misc.add_data_source(
+    layer_misc_s.add_data_source(
+        name = 'Unsegmented',
+        opts=['splat_point','fixed_color', 'blend'],
+        points=ma.D['ma_coords'],
+        color=(.6,.6,.6)
+    )
+    layer_misc_s.mask(ma.D['ma_segment'] == 0)
+    
+    layer_misc_ma.add_data_source(
         name = 'Unsegmented',
         opts=['splat_point','fixed_color', 'blend'],
         points=ma.D['coords'],
         color=(.6,.6,.6)
     )
-    layer_misc.mask(ma.D['ma_segment'][:ma.m] == 0)     
+    layer_misc_ma.mask(ma.D['ma_segment'][:ma.m] == 0)     
 
     # c.viewerWindow.center_view(center=np.mean(ma.D['coords'][f_s], axis=0))
     c.run()
