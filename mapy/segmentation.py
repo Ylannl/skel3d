@@ -194,9 +194,10 @@ def perform_segmentation_bisec(mah, **kwargs):
 	# find segments based on similiraty in bisector orientation
 	print("Initiating region grower...")
 	R = RegionGrower(mah, **kwargs)
-	seedpoints = list( np.random.permutation(R.m) )
+	# seedorder = np.argsort(mah.D['ma_radii'])[::-1].tolist() # reverse
+	seedorder = list( np.random.permutation(R.m) )
 	print("\nPerforming bisector-based region growing...")
-	R.apply_region_growing_algorithm(seedpoints)
+	R.apply_region_growing_algorithm(seedorder)
 	R.unmark_small_clusters()
 	# print(np.unique(R.ma_segment, return_counts=True))
 	

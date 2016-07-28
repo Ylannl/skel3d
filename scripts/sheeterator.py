@@ -278,7 +278,7 @@ class ToolsWindow(ToolsDialog):
         self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Plane fit') 
 
         xmi, xma = x.min(), x.max() 
-        lr = LinearRegionItem([xmi, xma], movable=True)
+        lr = LinearRegionItem([xmi-.1, xma+.1], movable=True)
         self.ui.graphicsView_plotWidget.addItem(lr)
         lr.sigRegionChangeFinished.connect(self.lr_changed)
 
