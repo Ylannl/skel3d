@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from pyqtgraph import PlotWidget, LinearRegionItem
 
 from scipy.spatial.distance import cdist
+from scipy.stats import linregress
 
 from povi import App, Layer, LinkedLayer, ToolsDialog
 from mapy.io import npy
@@ -238,9 +239,20 @@ class ToolsWindow(ToolsDialog):
         # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
         color = (0,220,0,160)
         self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Radii', clear=True)
+
+        slope, intercept, r_value, p_value, std_err = linregress(x,y)
+        x_ = np.linspace(x.min()-1,x.max()+1)
+        y_ = x_*slope + intercept
+        self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name='Radius regression')
+        
         color = (0,220,220,160)
         y = ma.D['ma_theta'][ma_idx]
         self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Separation angle')
+
+        slope, intercept, r_value, p_value, std_err = linregress(x,y)
+        x_ = np.linspace(x.min()-1,x.max()+1)
+        y_ = x_*slope + intercept
+        self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name='Separation angle regression')
 
         y = np.empty(len(ma_idx))
         for i in range(len(ma_idx)):
@@ -253,6 +265,12 @@ class ToolsWindow(ToolsDialog):
             y[i] = 2*np.arccos(ma.D['ma_radii'][ma_idx[i]]/ x[i])
         color = (250,0,255,160)
         self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='sepangle predicttion')
+
+        slope, intercept, r_value, p_value, std_err = linregress(x,y)
+        x_ = np.linspace(x.min()-1,x.max()+1)
+        y_ = x_*slope + intercept
+        self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name='Separation angle pred regression')
+
 
         # define plane at represetative point:
         # we need an actual point on the sheet because we can't quickly aggregate spokes, because of their inconsistent orientation
