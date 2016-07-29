@@ -54,12 +54,27 @@ class TestApp(App):
             adj_rel_end = []
 
             if 0<g.ecount():#<1000:
+
+                # attempt to distinghuish between interior and exterior sheets based on vertical component of bisectors
+                color = (1.,0.,0.)
+                name = 'cluster {}'.format(i)
+                zsum = 0
+                for v in g.vs:
+                    zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
+                # zsum = np.prod(np.sum(np.array(g.vs['ma_bisec_mean'])[:,2], np.array([len(idx) for idx in g.vs['ma_idx']]) ), axis=1)
+                if zsum > 1:
+                    color = (0.,1.,0.)
+                elif zsum > -1:
+                    color = (0.5,0.5,0.5)
+
+                name += ' [{}]'.format(zsum)
+
                 for e in g.es:
                     adj_rel_start.append(g.vs[e.source]['ma_coords_mean'])
                     adj_rel_end.append(g.vs[e.target]['ma_coords_mean'])
-                color = np.random.uniform(0.3,1.0,3)
+                # color = np.random.uniform(0.3,1.0,3)
                 p = self.layer_manager['Clusters'].add_data_source_line(
-                    name = 'cluster {}'.format(i),
+                    name = name,
                     coords_start = np.array(adj_rel_start),
                     coords_end = np.array(adj_rel_end),
                     color = tuple(color),
@@ -204,6 +219,17 @@ class ToolsWindow(ToolsDialog):
         self.app.filter_idx(ma_idx)
 
     def plot_directional_analysis(self, v):
+        def plot(x,y,color,name):
+            self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name=name)
+            slope, intercept, r_value, p_value, std_err = linregress(x,y)
+            x_ = np.linspace(x.min()-1,x.max()+1)
+            y_ = x_*slope + intercept
+            print(name)
+            print('r_value:', str(r_value))
+            print('p_value:', str(p_value))
+            print('std_err:', str(std_err))
+            self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name=name)
+        self.ui.graphicsView_plotWidget.clear()
         # pick reference point: the point with median bisector
         ma_idx = np.array(v['ma_idx'])
         if len(ma_idx)>10000:return
@@ -238,38 +264,23 @@ class ToolsWindow(ToolsDialog):
         y = ma.D['ma_radii'][ma_idx]
         # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
         color = (0,220,0,160)
-        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Radii', clear=True)
-
-        slope, intercept, r_value, p_value, std_err = linregress(x,y)
-        x_ = np.linspace(x.min()-1,x.max()+1)
-        y_ = x_*slope + intercept
-        self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name='Radius regression')
+        plot(x,y,color,'Radii')
         
         color = (0,220,220,160)
         y = ma.D['ma_theta'][ma_idx]
-        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Separation angle')
-
-        slope, intercept, r_value, p_value, std_err = linregress(x,y)
-        x_ = np.linspace(x.min()-1,x.max()+1)
-        y_ = x_*slope + intercept
-        self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name='Separation angle regression')
+        plot(x,y,color,'SepAngle')
 
         y = np.empty(len(ma_idx))
         for i in range(len(ma_idx)):
             y[i] = angle(b, ma.D['ma_bisec'][ma_idx[i]])
         color = (250,0,0,160)
-        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Bisector diff')
+        plot(x, y, color, 'Bisector diff')
         
         y = np.empty(len(ma_idx))
         for i in range(len(ma_idx)):
             y[i] = 2*np.arccos(ma.D['ma_radii'][ma_idx[i]]/ x[i])
         color = (250,0,255,160)
-        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='sepangle predicttion')
-
-        slope, intercept, r_value, p_value, std_err = linregress(x,y)
-        x_ = np.linspace(x.min()-1,x.max()+1)
-        y_ = x_*slope + intercept
-        self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name='Separation angle pred regression')
+        plot(x,y,color,name='SepAnglePredict')
 
 
         # define plane at represetative point:
@@ -293,7 +304,7 @@ class ToolsWindow(ToolsDialog):
             # y[i] = np.linalg.norm(q-q_on_n)
             # y[i] = plane.distance_to(Point(ma.D['ma_coords'][ma_idx[i]]))
         color = (250,250,0,160)
-        self.ui.graphicsView_plotWidget.plot(x, y,  pen=None, symbol='o', symbolPen=None, symbolSize=4, symbolBrush=color, name='Plane fit') 
+        plot(x, y, color, 'Plane fit') 
 
         xmi, xma = x.min(), x.max() 
         lr = LinearRegionItem([xmi-.1, xma+.1], movable=True)
