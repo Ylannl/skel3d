@@ -59,15 +59,31 @@ class TestApp(App):
                 color = (1.,0.,0.)
                 name = 'cluster {}'.format(i)
                 zsum = 0
-                for v in g.vs:
-                    zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
+                ma_idx = np.concatenate(g.vs['ma_idx'])
+                
+                # select points with good sepangle (eg not 180deg)
+                f = np.intersect1d(np.argwhere(ma.D['ma_theta'] < math.pi*0.9), ma_idx)
+                # sort on z component of bisector, take 10% lowest and highest, compute ratio of means of that
+                l = len(f)
+                bz = ma.D['ma_bisec'][f][:,2]
+                bz_sort = np.sort(bz )
+                b_bot = np.mean(bz_sort[:l/10]) 
+                b_top = np.mean(bz_sort[l-l/10:])
+                b_ratio = abs(b_top)/abs(b_bot)
+
+                # for v in g.vs:
+                #     zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
                 # zsum = np.prod(np.sum(np.array(g.vs['ma_bisec_mean'])[:,2], np.array([len(idx) for idx in g.vs['ma_idx']]) ), axis=1)
-                if zsum > 1:
+                # use ration to decide if int or ext cluster. Now
+                if b_ratio > 1.05 or b_bot > 0: # completely `closed` or bounded clusters should have ratio closed to one (only occurs in artifical datasets, since DSM never closed)
                     color = (0.,1.,0.)
-                elif zsum > -1:
+                    if np.mean(g.vs['ma_theta_mean']) > math.pi/4: # artificial/building structures typically have a large sepangle (compared to terrain features)
+                        color = (1.,1.,0.)
+                elif b_ratio > 0.95:
                     color = (0.5,0.5,0.5)
 
-                name += ' [{}]'.format(zsum)
+
+                name += ' [{}]'.format(b_ratio)
 
                 for e in g.es:
                     adj_rel_start.append(g.vs[e.source]['ma_coords_mean'])
