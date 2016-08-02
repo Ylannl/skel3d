@@ -3,11 +3,11 @@ from time import time
 import numpy as np
 
 from povi import App, Layer, LinkedLayer
-from mapy.io import npy
-from mapy.util import MAHelper
-from mapy.graph import *
-from mapy.segmentation import *
-from mapy.polyhedralise import *
+from skel3d.io import npy
+from skel3d.util import MAHelper
+from skel3d.graph import *
+from skel3d.segmentation import *
+from skel3d.polyhedralise import *
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt

@@ -16,7 +16,7 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from mapy.io import npy, pcd
+from skel3d.io import npy, pcd
 
 def main(args):
 	keys = []

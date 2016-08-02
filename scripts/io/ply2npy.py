@@ -16,7 +16,7 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from mapy.io import npy, ply
+from skel3d.io import npy, ply
 
 def main(args):
 	datadict = ply.read(args.infile, move_to_origin=args.move_to_origin, read_normals=args.read_normals)

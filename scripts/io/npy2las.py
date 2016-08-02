@@ -16,7 +16,7 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from mapy.io import npy, las
+from skel3d.io import npy, las
 
 def main(args):
 	datadict = npy.read(args.infile)

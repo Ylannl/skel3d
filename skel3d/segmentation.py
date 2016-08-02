@@ -4,7 +4,7 @@ from time import time
 import igraph
 from pykdtree.kdtree import KDTree
 
-from mapy.io import npy 
+from .io import npy 
 
 # INFILE = 'data/scan_npy'
 INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"

@@ -1,6 +1,6 @@
-from mapy.segmentation import perform_segmentation_bisec
-from mapy.io import npy
-from mapy.util import MAHelper
+from skel3d.segmentation import perform_segmentation_bisec
+from skel3d.io import npy
+from skel3d.util import MAHelper
 import argparse
 
 # INFILE = 'data/scan_npy'

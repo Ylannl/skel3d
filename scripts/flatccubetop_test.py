@@ -4,11 +4,11 @@ import numpy as np
 from itertools import chain
 
 from povi import App
-from mapy.io import npy
-from mapy.util import MAHelper
-from mapy.graph import *
-from mapy.segmentation import *
-from mapy.polyhedralise import *
+from skel3d.io import npy
+from skel3d.util import MAHelper
+from skel3d.graph import *
+from skel3d.segmentation import *
+from skel3d.polyhedralise import *
 
 def view(ma, vids=[16,80,133]):
     # ref_count = timeit(count_refs)
