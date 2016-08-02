@@ -88,12 +88,12 @@ def view(ma, vids):
     
     c = TestApp(ma)
 
-    min_count = 5
+    min_count = 30
     contract_thres = 20
     g = ma.D['ma_segment_graph'].copy()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
     g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
-    contract_edges(g, contract_thres)
+    # contract_edges(g, contract_thres)
 
     
     graphlib = get_graph_library()

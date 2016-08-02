@@ -34,7 +34,7 @@ class TestApp(App):
 
     def draw_clusters(self):
 
-        min_count = 30 #self.dialog.ui.spinBox_linkcount.value()
+        min_count = 50 #self.dialog.ui.spinBox_linkcount.value()
         contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
         # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
         g = self.ma.D['ma_segment_graph']
@@ -67,20 +67,25 @@ class TestApp(App):
                 l = len(f)
                 bz = ma.D['ma_bisec'][f][:,2]
                 bz_sort = np.sort(bz )
-                b_bot = np.mean(bz_sort[:l/10]) 
-                b_top = np.mean(bz_sort[l-l/10:])
+                b_bot = np.mean(bz_sort[:l//10]) 
+                b_top = np.mean(bz_sort[l-l//10:])
                 b_ratio = abs(b_top)/abs(b_bot)
 
                 # for v in g.vs:
                 #     zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
                 # zsum = np.prod(np.sum(np.array(g.vs['ma_bisec_mean'])[:,2], np.array([len(idx) for idx in g.vs['ma_idx']]) ), axis=1)
                 # use ration to decide if int or ext cluster. Now
+                name_append = " | exterior"
                 if b_ratio > 1.05 or b_bot > 0: # completely `closed` or bounded clusters should have ratio closed to one (only occurs in artifical datasets, since DSM never closed)
                     color = (0.,1.,0.)
+                    name_append = " | interior"
                     if np.mean(g.vs['ma_theta_mean']) > math.pi/4: # artificial/building structures typically have a large sepangle (compared to terrain features)
                         color = (1.,1.,0.)
+                        name_append += " (building)"
                 elif b_ratio > 0.95:
                     color = (0.5,0.5,0.5)
+                    name_append = ""
+                name += name_append
 
                 # grow 1 flip sheet around this cluster
                 # note: make sure we have and updated ma_segment map
@@ -93,7 +98,7 @@ class TestApp(App):
                 #             lookup corresponding vertex in master_graph and copy to this cluster graph with connecting edge to current sheet
 
 
-                name += ' [{}]'.format(b_ratio)
+                # name += ' [{}]'.format(b_ratio)
 
                 for e in g.es:
                     adj_rel_start.append(g.vs[e.source]['ma_coords_mean'])
@@ -390,7 +395,7 @@ def view(ma, vid):
         name = 'Surface points',
         opts=['splat_disk', 'with_normals'],
         points=ma.D['coords'], 
-        normals=ma.D['normals'],
+        normals=ma.D['normals']
     )
     layer_s.add_data_source_line(
       name = 'Surface normals',
@@ -407,7 +412,8 @@ def view(ma, vid):
         opts=['splat_point', 'with_intensity'],
         points=ma.D['ma_coords'], 
         category=ma.D['ma_segment'].astype(np.float32),
-        colormap='random'
+        colormap='random',
+        default_mask=ma.D['ma_segment'] != 0
     )        
     layer_ma.add_data_source_line(
       name = 'Primary spokes',
@@ -427,21 +433,21 @@ def view(ma, vid):
     )
 
     
-    layer_misc_s.add_data_source(
-        name = 'Unsegmented',
-        opts=['splat_point','fixed_color', 'blend'],
-        points=ma.D['ma_coords'],
-        color=(.6,.6,.6)
-    )
-    layer_misc_s.mask(ma.D['ma_segment'] == 0)
-    
     layer_misc_ma.add_data_source(
         name = 'Unsegmented',
         opts=['splat_point','fixed_color', 'blend'],
-        points=ma.D['coords'],
-        color=(.6,.6,.6)
+        points=ma.D['ma_coords'],
+        color=(.6,.6,.6),
+        default_mask = ma.D['ma_segment'] == 0
     )
-    layer_misc_ma.mask(ma.D['ma_segment'][:ma.m] == 0)     
+    
+    layer_misc_s.add_data_source(
+        name = 'Unsegmented',
+        opts=['splat_point','fixed_color', 'blend'],
+        points=ma.D['coords'],
+        color=(.6,.6,.6),
+        default_mask = ma.D['ma_segment'][:ma.m] == 0
+    )
 
     # c.viewerWindow.center_view(center=np.mean(ma.D['coords'][f_s], axis=0))
     c.run()
