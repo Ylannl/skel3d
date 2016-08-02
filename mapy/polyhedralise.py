@@ -153,14 +153,14 @@ def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
 
     c0,c2 = pointsets[v0][0], pointsets[v2][0]
     angle_thres = 20
-    print "c0[0], c2[0]",
-    print math.degrees(angle(c0[0], c2[0]))
-    print "c0[0], c2[1]",
-    print math.degrees(angle(c0[0], c2[1]))
-    print "c0[1], c2[0]",
-    print math.degrees(angle(c0[1], c2[0]))
-    print "c0[1], c2[1]",
-    print math.degrees(angle(c0[1], c2[1]))
+    print("c0[0], c2[0]",)
+    print(math.degrees(angle(c0[0], c2[0])))
+    print("c0[0], c2[1]",)
+    print(math.degrees(angle(c0[0], c2[1])))
+    print("c0[1], c2[0]",)
+    print(math.degrees(angle(c0[1], c2[0])))
+    print("c0[1], c2[1]",)
+    print(math.degrees(angle(c0[1], c2[1])))
     if angle(c0[0], c2[0]) < math.radians(angle_thres):
         up = c0[0]
         plane_top_pts = pointsets[v0][1][0] | pointsets[v2][1][0]
@@ -434,7 +434,7 @@ def polyhedral_reconstruct(m, ma):
             f['plane'] = Plane( [Point(x) for x in ma.D['coords'][list(f.halfnode['s_idx'])]] )
 
     # compute line of intersection for each halfnode pair
-    for i in range(len(m.ns)/2):
+    for i in range(len(m.ns)//2):
         hn = m.ns[i*2]
         p1 = hn.face['plane']
         p2 = hn.twin.face['plane']

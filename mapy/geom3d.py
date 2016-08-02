@@ -445,7 +445,7 @@ class Plane(object):
         if maxcoef > 0:
             nr = n*max(abs(n)) # should be rational: [a,b,c]/|v|^2*max(a,b,c)
             nf = [fractions.Fraction(c).limit_denominator(maxcoef**2) for c in nr]
-            if all([abs(nr[i]-nf[i])<tol for i in xrange(len(nr))]):
+            if all([abs(nr[i]-nf[i])<tol for i in range(len(nr))]):
                 #Good rational approximation for all coef
                 factor = reduce(fractions.gcd, nf )
                 vi = [f/factor for f in nf]
@@ -491,13 +491,13 @@ class Plane(object):
 
                 # 2x2 matrix formed from normals, ommitting zerocol
                 # Since we know they intersect, should be well-determined
-                m = array([(self.n[i],obj.n[i]) for i in xrange(3) if i != zerocol]).T
+                m = array([(self.n[i],obj.n[i]) for i in range(3) if i != zerocol]).T
                 b1 = dot(self.n,self.r)
                 b2 = dot(obj.n,obj.r)
                 sol = linalg.solve(m,array([b1,b2]))
 
                 # Add 0 in to the solution in the right place
-                #pt = [sol[i] if i<zerocol else (0 if i==zerocol else sol[i-1]) for i in xrange(3)]
+                #pt = [sol[i] if i<zerocol else (0 if i==zerocol else sol[i-1]) for i in range(3)]
                 pt = concatenate((sol[:zerocol],[0.],sol[zerocol:]))
                 pt = array(pt)
 

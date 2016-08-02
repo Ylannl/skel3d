@@ -61,6 +61,6 @@ def contract_edges(g, threshold=10):
         })
     g.simplify(combine_edges='sum')
 
-# def update_points(g, datadict):
-#     for v in g.vs:
-#         datadict['ma_segment'][v['ma_idx']] = v.index
+def update_ma_segment(g, datadict):
+    for v in g.vs:
+        datadict['ma_segment'][v['ma_idx']] = v.index

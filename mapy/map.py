@@ -172,5 +172,5 @@ def test():
     m.add_edges([(0,2),(2,4),(4,0)], kind='intersect')
     n = m.ns[0]
     for x in n.cycle(kind='intersect'):
-        print x
+        print(x)
 

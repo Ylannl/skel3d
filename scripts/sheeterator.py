@@ -34,7 +34,7 @@ class TestApp(App):
 
     def draw_clusters(self):
 
-        min_count = 15 #self.dialog.ui.spinBox_linkcount.value()
+        min_count = 30 #self.dialog.ui.spinBox_linkcount.value()
         contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
         # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
         g = self.ma.D['ma_segment_graph']
@@ -81,6 +81,16 @@ class TestApp(App):
                         color = (1.,1.,0.)
                 elif b_ratio > 0.95:
                     color = (0.5,0.5,0.5)
+
+                # grow 1 flip sheet around this cluster
+                # note: make sure we have and updated ma_segment map
+                # if we are dealing with `building` cluster:
+                #     for each sheet in this cluster:
+                #         for every s_id in this sheets:
+                #             lookup sheet_ids on both side
+                #             keep counter for `other` sheet_ids
+                #         for all neighbouring sheets that are found:
+                #             lookup corresponding vertex in master_graph and copy to this cluster graph with connecting edge to current sheet
 
 
                 name += ' [{}]'.format(b_ratio)
@@ -390,7 +400,7 @@ def view(ma, vid):
     )
 
     for v in g.vs():
-		ma.D['ma_segment'][ v['ma_idx'] ] = v.index
+       ma.D['ma_segment'][v['ma_idx']] = v.index
     # f =ma.D['ma_segment'] != 0
     layer_ma.add_data_source(
         name = 'MAT points',
@@ -437,7 +447,7 @@ def view(ma, vid):
     c.run()
 
 if __name__ == '__main__':
-    vids = 4
+    vids = 5
     #box: 4,6,8 (3,10 broken in part)
     #sloped box: 7
     #simple gable: 9

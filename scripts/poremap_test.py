@@ -129,7 +129,7 @@ def view(ma, vids):
 
         adj_rel_start = []
         adj_rel_end = []
-        for i in range(len(this_m.ns)/2):
+        for i in range(len(this_m.ns)//2):
             hn = this_m.ns[i*2]
             source, target = hn, hn.twin
             adj_rel_start.append(source['coords_mean'])
@@ -212,7 +212,7 @@ def view(ma, vids):
     
 
     for v in g.vs():
-		ma.D['ma_segment'][ v['ma_idx'] ] = v.index
+        ma.D['ma_segment'][ v['ma_idx'] ] = v.index
     # f =ma.D['ma_segment'] != 0
     layer_ma.add_data_source(
         name = 'MAT points',
