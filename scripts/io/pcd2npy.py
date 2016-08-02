@@ -16,14 +16,14 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from pointio import io_npy, io_pcd
+from mapy.io import npy, pcd
 
 def main(args):
 	keys = []
 	if args.key:
 		keys.append(args.key)
-	datadict = io_pcd.read_pcd(args.infile, keys)
-	io_npy.write_npy(args.outfile, datadict, keys)
+	datadict = pcd.read(args.infile, keys)
+	npy.write(args.outfile, datadict, keys)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='convert pcl .pcd files to numpy binary files')

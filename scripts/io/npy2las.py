@@ -16,11 +16,11 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from pointio import io_npy, io_las
+from mapy.io import npy, las
 
 def main(args):
-	datadict = io_npy.read_npy(args.infile)
-	io_las.write_las(args.outfile,datadict)
+	datadict = npy.read(args.infile)
+	las.write(args.outfile,datadict)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='convert numpy binary file to LAS')

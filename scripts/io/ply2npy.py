@@ -16,11 +16,11 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from pointio import io_npy, io_ply
+from mapy.io import npy, ply
 
 def main(args):
-	datadict = io_ply.read_ply(args.infile, move_to_origin=args.move_to_origin, read_normals=args.read_normals)
-	io_npy.write_npy(args.outfile, datadict)
+	datadict = ply.read(args.infile, move_to_origin=args.move_to_origin, read_normals=args.read_normals)
+	npy.write(args.outfile, datadict)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='convert vertices in .ply file to numpy binary file')
