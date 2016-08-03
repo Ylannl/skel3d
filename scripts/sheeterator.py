@@ -37,16 +37,22 @@ class TestApp(App):
         min_count = 50 #self.dialog.ui.spinBox_linkcount.value()
         contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
         # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
-        g = self.ma.D['ma_segment_graph']
-        g = g.subgraph_edges(g.es.select(adj_count_gt=min_count))
+        master_g = self.ma.D['ma_segment_graph']
+        master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count))
         # contract_edges(g, contract_thres)
+
+        ma.D['ma_segment'] = np.zeros(ma.m*2,dtype=np.int64)
+        for v in master_g.vs:
+            ma.D['ma_segment'][v['ma_idx']] = v.index
+            v['s_id'] = v.index
+        # flipdic = find_flip_relations(ma)
         
         # self.graphs = []
         # graphlib = get_graph_library()
         # for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
         #     self.graphs.append(g.subgraph(mapping))
         
-        self.graphs = g.clusters().subgraphs()
+        self.graphs = master_g.clusters().subgraphs()
 
         i=0
         for g in self.graphs:
@@ -82,10 +88,12 @@ class TestApp(App):
                     if np.mean(g.vs['ma_theta_mean']) > math.pi/4: # artificial/building structures typically have a large sepangle (compared to terrain features)
                         color = (1.,1.,0.)
                         name_append += " (building)"
+
                 elif b_ratio > 0.95:
                     color = (0.5,0.5,0.5)
                     name_append = ""
                 name += name_append
+
 
                 # grow 1 flip sheet around this cluster
                 # note: make sure we have and updated ma_segment map
@@ -96,6 +104,34 @@ class TestApp(App):
                 #             keep counter for `other` sheet_ids
                 #         for all neighbouring sheets that are found:
                 #             lookup corresponding vertex in master_graph and copy to this cluster graph with connecting edge to current sheet
+
+                min_flipcount = 10
+                to_add = []
+                for v in g.vs:
+                    v['fliplinks'] = {}
+                    s_idx = np.concatenate([np.mod(v['ma_idx'], ma.m), ma.D['ma_qidx'][v['ma_idx']]])
+                    for s_id in s_idx:
+                        s_in = ma.D['ma_segment'][s_id]                        
+                        s_out = ma.D['ma_segment'][s_id+ma.m]
+
+                        s_other = s_in
+                        if s_in == v['s_id']:
+                            s_other = s_out
+                        
+                        if s_other == 0:
+                            continue
+
+                        if s_other in v['fliplinks']:
+                            v['fliplinks'][s_other] += 1
+                        else:
+                            v['fliplinks'][s_other] = 1
+                    for s_id, count in v['fliplinks'].items():
+                        if count > min_flipcount:
+                            to_add.append((v.index, s_id, count))
+                for source, target, count in to_add:
+                    g.add_vertex(**master_g.vs[target].attributes())
+                    g.add_edge(source, g.vcount()-1, flip_count=count)
+                                                
 
 
                 # name += ' [{}]'.format(b_ratio)
@@ -388,8 +424,7 @@ def view(ma, vid):
 
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
     layer_ma = c.add_layer(LinkedLayer(name='MAT'))
-    layer_misc_s = c.add_layer(LinkedLayer(name='Other s'))
-    layer_misc_ma = c.add_layer(LinkedLayer(name='Other ma'))
+    layer_misc = c.add_layer(LinkedLayer(name='Misc'))
 
     layer_s.add_data_source(
         name = 'Surface points',
@@ -433,21 +468,53 @@ def view(ma, vid):
     )
 
     
-    layer_misc_ma.add_data_source(
-        name = 'Unsegmented',
+    layer_misc.add_data_source(
+        name = 'Unsegmented mat',
         opts=['splat_point','fixed_color', 'blend'],
         points=ma.D['ma_coords'],
         color=(.6,.6,.6),
         default_mask = ma.D['ma_segment'] == 0
     )
     
-    layer_misc_s.add_data_source(
-        name = 'Unsegmented',
+    layer_misc.add_data_source(
+        name = 'Unsegmented surface',
         opts=['splat_point','fixed_color', 'blend'],
         points=ma.D['coords'],
         color=(.6,.6,.6),
         default_mask = ma.D['ma_segment'][:ma.m] == 0
     )
+
+    flip_rel_start = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
+    flip_rel_end = np.zeros((len(ma.D['seg_link_flip']),3), dtype=np.float32)
+    i=0
+    for s,e in ma.D['seg_link_flip'][:,:2]:
+        flip_rel_start[i] = ma.g.vs[s]['ma_coords_mean']
+        flip_rel_end[i] = ma.g.vs[e]['ma_coords_mean']
+        i+=1
+
+    adj_rel_start = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
+    adj_rel_end = np.zeros((len(ma.D['seg_link_adj']),3), dtype=np.float32)
+    i=0
+    # f = ma.D['seg_link_adj'][:,2] > min_link_adj
+    for s,e in ma.D['seg_link_adj'][:,:2]:
+        adj_rel_start[i] = ma.g.vs[s]['ma_coords_mean']
+        adj_rel_end[i] = ma.g.vs[e]['ma_coords_mean']
+        i+=1
+    if len(flip_rel_start)>0:
+        layer_misc.add_data_source_line(
+            name = 'Flip relations',
+            coords_start = flip_rel_start,
+            coords_end = flip_rel_end
+        )
+
+    if len(adj_rel_start)>0:
+        # f = seg_cnts!=1
+        layer_misc.add_data_source_line(
+            name = 'Adjacency relations',
+            coords_start = adj_rel_start,
+            coords_end = adj_rel_end,
+            color = (0,1,0)
+        )
 
     # c.viewerWindow.center_view(center=np.mean(ma.D['coords'][f_s], axis=0))
     c.run()

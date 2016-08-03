@@ -257,37 +257,36 @@ def graph2segmentlist(g, ma_segment):
 # 	D['ma_segment'] = R.ma_segment
 # 	npy.write(INFILE, D, ['ma_segment'])
 
+def find_flip_relations(ma):
+	"""Find for each pair of segments how many times they are connected by a shared feature point.
+		In a pair of segments (tuple) the lowest segmend_id is always put first
+	"""
+
+	pdict = {}
+	for i in np.arange(ma.m):
+		coord_id = i# % ma.m
+		s_in = ma.D['ma_segment'][i]
+		s_out = ma.D['ma_segment'][i + ma.m]
+
+		if not (s_in == 0 or s_out == 0):
+			if s_in < s_out:
+				pair = s_in, s_out
+			else:
+				pair = s_out, s_in
+
+			if pair in pdict:
+				pdict[pair]+= 1
+			else:
+				pdict[pair] = 1
+
+	return pdict
+
 def find_relations(ma, infile=INFILE, only_interior=False):
 	"""
 	Find topological relations between segments. Output for each relation: 
 		(segment_1, segment_2, count)
 	the higher count the stronger the relation.
 	"""
-
-	def find_flip_relations():
-		"""Find for each pair of segments how many times they are connected by a shared feature point.
-			In a pair of segments (tuple) the lowest segmend_id is always put first
-		"""
-
-		pdict = {}
-		for i in np.arange(ma.m):
-			coord_id = i# % ma.m
-			s_in = ma.D['ma_segment'][i]
-			s_out = ma.D['ma_segment'][i + ma.m]
-
-			if not (s_in == 0 or s_out == 0):
-				if s_in < s_out:
-					pair = s_in, s_out
-				else:
-					pair = s_out, s_in
-
-				if pair in pdict:
-					pdict[pair]+= 1
-				else:
-					pdict[pair] = 1
-
-		return pdict
-
 
 	def find_adjacency_relations(k=25):
 		"""find pairs of adjacent segments
@@ -327,7 +326,7 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 
 
 	if not only_interior:
-		flip_relations = find_flip_relations()
+		flip_relations = find_flip_relations(ma)
 		ma.D['seg_link_flip'] = np.zeros(len(flip_relations), dtype = "3int32")
 		i=0
 		for (s, e), cnt in flip_relations.items():
