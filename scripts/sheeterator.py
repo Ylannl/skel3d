@@ -6,7 +6,6 @@ from itertools import chain
 from PyQt5.QtCore import Qt
 from pyqtgraph import PlotWidget, LinearRegionItem
 
-from scipy.spatial.distance import cdist
 from scipy.stats import linregress
 
 from povi import App, Layer, LinkedLayer, ToolsDialog
