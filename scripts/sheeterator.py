@@ -93,43 +93,34 @@ class TestApp(App):
                     name_append = ""
                 name += name_append
 
+                if 0:
+                    # grow 1 flip sheet around this cluster
+                    min_flipcount = 10
+                    to_add = []
+                    for v in g.vs:
+                        v['fliplinks'] = {}
+                        s_idx = np.concatenate([np.mod(v['ma_idx'], ma.m), ma.D['ma_qidx'][v['ma_idx']]])
+                        for s_id in s_idx:
+                            s_in = ma.D['ma_segment'][s_id]                        
+                            s_out = ma.D['ma_segment'][s_id+ma.m]
 
-                # grow 1 flip sheet around this cluster
-                # note: make sure we have and updated ma_segment map
-                # if we are dealing with `building` cluster:
-                #     for each sheet in this cluster:
-                #         for every s_id in this sheets:
-                #             lookup sheet_ids on both side
-                #             keep counter for `other` sheet_ids
-                #         for all neighbouring sheets that are found:
-                #             lookup corresponding vertex in master_graph and copy to this cluster graph with connecting edge to current sheet
+                            s_other = s_in
+                            if s_in == v['s_id']:
+                                s_other = s_out
+                            
+                            if s_other == 0:
+                                continue
 
-                min_flipcount = 10
-                to_add = []
-                for v in g.vs:
-                    v['fliplinks'] = {}
-                    s_idx = np.concatenate([np.mod(v['ma_idx'], ma.m), ma.D['ma_qidx'][v['ma_idx']]])
-                    for s_id in s_idx:
-                        s_in = ma.D['ma_segment'][s_id]                        
-                        s_out = ma.D['ma_segment'][s_id+ma.m]
-
-                        s_other = s_in
-                        if s_in == v['s_id']:
-                            s_other = s_out
-                        
-                        if s_other == 0:
-                            continue
-
-                        if s_other in v['fliplinks']:
-                            v['fliplinks'][s_other] += 1
-                        else:
-                            v['fliplinks'][s_other] = 1
-                    for s_id, count in v['fliplinks'].items():
-                        if count > min_flipcount:
-                            to_add.append((v.index, s_id, count))
-                for source, target, count in to_add:
-                    g.add_vertex(**master_g.vs[target].attributes())
-                    g.add_edge(source, g.vcount()-1, flip_count=count)
+                            if s_other in v['fliplinks']:
+                                v['fliplinks'][s_other] += 1
+                            else:
+                                v['fliplinks'][s_other] = 1
+                        for s_id, count in v['fliplinks'].items():
+                            if count > min_flipcount:
+                                to_add.append((v.index, s_id, count))
+                    for source, target, count in to_add:
+                        g.add_vertex(**master_g.vs[target].attributes())
+                        g.add_edge(source, g.vcount()-1, flip_count=count)
                                                 
 
 
@@ -377,6 +368,18 @@ class ToolsWindow(ToolsDialog):
         self.ui.graphicsView_plotWidget.addItem(lr)
         lr.sigRegionChangeFinished.connect(self.lr_changed)
 
+        vals=ma.D['spoke_cnt'][ma.D['ma_qidx'][ma_idx]]
+        ## compute standard histogram
+        y,x = np.histogram(vals, bins=50)
+
+        ## Using stepMode=True causes the plot to draw two lines for each sample.
+        ## notice that len(x) == len(y)+1
+        # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+        # color = (0,200,0,255)
+        color = (220,220,25,255)
+        self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='bisec_z '+str(42))
+        
+
 
     def plot_histogram(self, ma_idx):
         # self.clear()
@@ -404,6 +407,17 @@ class ToolsWindow(ToolsDialog):
         color = (0,220,220,255)
         self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='theta '+str(42))
         
+        vals=ma.D['ma_bisec'][ma_idx,2]
+        ## compute standard histogram
+        y,x = np.histogram(vals, bins=50)
+
+        ## Using stepMode=True causes the plot to draw two lines for each sample.
+        ## notice that len(x) == len(y)+1
+        # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+        # color = (0,200,0,255)
+        color = (220,220,220,255)
+        self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='bisec_z '+str(42))
+        
 # class GraphWindow(PlotWidget):
 #     def __init__(self, master_app, parent=None):
 #         self.layer_manager = master_app.layer_manager
@@ -419,7 +433,14 @@ def view(ma, vid):
     max_r=190.
     # ma.g = ma.D['ma_segment_graph']
     
-    c = TestApp(ma)   
+    c = TestApp(ma)
+
+    # compute mat 'normals'
+    # cross product of spokes is perpendicular to bisector and tangent to sheet
+    vec_coplanar = np.cross(ma.D['ma_f1'],ma.D['ma_f2'])
+    # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct
+    ma_n = np.cross(vec_coplanar, ma.D['ma_bisec'])
+    ma_n = ma_n / np.linalg.norm(ma_n, axis=1)[:,None]
 
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
     layer_ma = c.add_layer(LinkedLayer(name='MAT'))
@@ -443,8 +464,9 @@ def view(ma, vid):
     # f =ma.D['ma_segment'] != 0
     layer_ma.add_data_source(
         name = 'MAT points',
-        opts=['splat_point', 'with_intensity'],
+        opts=['splat_disk', 'with_normals', 'with_intensity'],
         points=ma.D['ma_coords'], 
+        normals=ma_n,
         category=ma.D['ma_segment'].astype(np.float32),
         colormap='random',
         default_mask=ma.D['ma_segment'] != 0

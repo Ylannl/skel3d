@@ -52,6 +52,10 @@ class MAHelper(object):
         self.D['ma_f1'] = np.concatenate([self.D['ma_f1_in'], self.D['ma_f1_out']])
         self.D['ma_f2'] = np.concatenate([self.D['ma_f2_in'], self.D['ma_f2_out']])
 
+        self.D['spoke_cnt'] = zeros(self.m, dtype=int)
+        s_idx, cnts = np.unique(self.D['ma_qidx'], return_counts=True)
+        self.D['spoke_cnt'][s_idx] = cnts
+
         if 'ma_segment_graph' in datadict:
             self.g = datadict['ma_segment_graph']
 

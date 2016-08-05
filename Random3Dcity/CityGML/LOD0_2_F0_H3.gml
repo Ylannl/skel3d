@@ -9,54 +9,19 @@
     </gml:Envelope>
   </gml:boundedBy>
   <cityObjectMember>
-    <bldg:Building gml:id="d7c0e63f-6ec7-4ae9-926b-462f476c8c3a">
-      <bldg:roofType>Hipped</bldg:roofType>
-      <bldg:yearOfConstruction>1963</bldg:yearOfConstruction>
-      <bldg:function>Residential</bldg:function>
-      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
-      <bldg:lod0FootPrint>
-        <gml:MultiSurface>
-          <gml:surfaceMember>
-            <gml:Polygon gml:id="c4c47916-55a0-4292-9583-e401173879c4">
-              <gml:exterior>
-                <gml:LinearRing>
-                  <gml:posList>0.0 0.0 0.0 7.95 0.0 0.0 7.95 6.11 0.0 0.0 6.11 0.0 0.0 0.0 0.0</gml:posList>
-                </gml:LinearRing>
-              </gml:exterior>
-            </gml:Polygon>
-          </gml:surfaceMember>
-        </gml:MultiSurface>
-      </bldg:lod0FootPrint>
-      <bldg:lod0RoofEdge>
-        <gml:MultiSurface>
-          <gml:surfaceMember>
-            <gml:Polygon gml:id="784bdf80-4d44-493d-a3b3-3296563f5ad4">
-              <gml:exterior>
-                <gml:LinearRing>
-                  <gml:posList>0.0 0.0 7.65487421384 7.95 0.0 7.65487421384 7.95 6.11 7.65487421384 0.0 6.11 7.65487421384 0.0 0.0 7.65487421384</gml:posList>
-                </gml:LinearRing>
-              </gml:exterior>
-            </gml:Polygon>
-          </gml:surfaceMember>
-        </gml:MultiSurface>
-      </bldg:lod0RoofEdge>
-    </bldg:Building>
-  </cityObjectMember>
-  <cityObjectMember>
-    <bldg:Building gml:id="693f46c0-a345-478a-93b0-ea01615fb40c">
+    <bldg:Building gml:id="caf33126-a68b-4f61-a80a-aa52210befb5">
       <bldg:roofType>Shed</bldg:roofType>
-      <bldg:yearOfConstruction>2009</bldg:yearOfConstruction>
-      <bldg:function>Residential</bldg:function>
-      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
+      <bldg:yearOfConstruction>1953</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="d84f72e2-7dc8-4a3c-951c-f1bffc5a6f05">
+            <gml:Polygon gml:id="c89761cf-a726-49a0-b37b-e25cd60f52ce">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>0.0 20.0 0.0 9.27 20.0 0.0 9.27 28.61 0.0 0.0 28.61 0.0 0.0 20.0 0.0</gml:posList>
+                  <gml:posList>0.0 0.0 0.0 5.92 0.0 0.0 5.92 4.07 0.0 0.0 4.07 0.0 0.0 0.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -66,10 +31,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="257e8c60-c334-458d-95d0-74e718c6cafc">
+            <gml:Polygon gml:id="d713128f-15d4-4a3a-b38c-26ea4b802e32">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>0.0 20.0 8.145 9.27 20.0 8.145 9.27 28.61 8.145 0.0 28.61 8.145 0.0 20.0 8.145</gml:posList>
+                  <gml:posList>0.0 0.0 12.085 5.92 0.0 12.085 5.92 4.07 12.085 0.0 4.07 12.085 0.0 0.0 12.085</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -79,19 +44,264 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="e5f72295-e816-4b06-a0d1-2453f5e453bb">
+    <bldg:Building gml:id="3663d306-60a4-4f7e-858e-323076841bc1">
+      <bldg:roofType>Shed</bldg:roofType>
+      <bldg:yearOfConstruction>1951</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="66d81376-b03d-4b70-b2fd-f7f520f74575">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0.0 20.0 0.0 7.19 20.0 0.0 7.19 20.55 0.0 9.44 20.55 0.0 9.44 24.93 0.0 7.19 24.93 0.0 7.19 28.73 0.0 0.0 28.73 0.0 0.0 20.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="f06379b3-fc3a-40e6-8c76-2a1d2bf91e85">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0.0 20.0 11.275 7.19 20.0 11.275 7.19 20.55 11.275 9.44 20.55 11.275 9.44 24.93 11.275 7.19 24.93 11.275 7.19 28.73 11.275 0.0 28.73 11.275 0.0 20.0 11.275</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="735ac5d1-649b-4667-9081-2baba82db93a">
+      <bldg:roofType>Flat</bldg:roofType>
+      <bldg:yearOfConstruction>1987</bldg:yearOfConstruction>
+      <bldg:function>Residential</bldg:function>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="8d1df95a-7832-4d90-b542-d07386c38761">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0.0 40.0 0.0 5.05 40.0 0.0 5.05 46.09 0.0 0.0 46.09 0.0 0.0 40.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="efe8fbff-e844-4b29-97ad-c5538488c1eb">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0.0 40.0 9.96 5.05 40.0 9.96 5.05 46.09 9.96 0.0 46.09 9.96 0.0 40.0 9.96</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="6b995b26-b59f-4e89-81ec-6c6aedb26c2b">
+      <bldg:roofType>Flat</bldg:roofType>
+      <bldg:yearOfConstruction>2014</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="98efd3f6-ddb0-4367-b270-dc5714c9123f">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0.0 60.0 0.0 8.02 60.0 0.0 8.02 65.22 0.0 0.0 65.22 0.0 0.0 60.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="e5a23a56-9c54-437b-9af5-4f81eb69f677">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>0.0 60.0 13.08 8.02 60.0 13.08 8.02 65.22 13.08 0.0 65.22 13.08 0.0 60.0 13.08</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="4f7116cb-1a63-4eae-8951-6715330fcc7c">
+      <bldg:roofType>Flat</bldg:roofType>
+      <bldg:yearOfConstruction>1946</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="d74758f9-39ec-4e75-8308-07fe2e124bdf">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 0.0 0.0 24.52 0.0 0.0 24.52 8.18 0.0 20.0 8.18 0.0 20.0 0.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="89afbf78-875d-4da4-8a52-88759527ef38">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 0.0 3.46 24.52 0.0 3.46 24.52 8.18 3.46 20.0 8.18 3.46 20.0 0.0 3.46</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="8cf64d96-27b6-4a5f-b27d-7c5ab57bd872">
+      <bldg:roofType>Flat</bldg:roofType>
+      <bldg:yearOfConstruction>1975</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="2a3f66e0-edb1-41e2-a024-befb987771ac">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 20.0 0.0 25.13 20.0 0.0 25.13 29.66 0.0 20.0 29.66 0.0 20.0 20.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="d4b80b65-181b-425e-9262-da14d3239109">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 20.0 12.16 25.13 20.0 12.16 25.13 29.66 12.16 20.0 29.66 12.16 20.0 20.0 12.16</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="49e947c4-a537-44c2-a9c6-e9ee99d36240">
+      <bldg:roofType>Flat</bldg:roofType>
+      <bldg:yearOfConstruction>1951</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="dff74c15-26cb-469f-b16b-cda784759d34">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 40.0 0.0 23.71 40.0 0.0 23.71 47.0 0.0 20.0 47.0 0.0 20.0 40.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="e6937844-bf34-4150-8a64-251643c0feb6">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 40.0 16.7 23.71 40.0 16.7 23.71 47.0 16.7 20.0 47.0 16.7 20.0 40.0 16.7</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="962ef8c4-b803-4aee-8b6a-3d38d5ca6b00">
+      <bldg:roofType>Hipped</bldg:roofType>
+      <bldg:yearOfConstruction>2006</bldg:yearOfConstruction>
+      <bldg:function>Industrial</bldg:function>
+      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="75be3574-0fc9-4c4d-ba88-9fbe7494129e">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 60.0 0.0 26.28 60.0 0.0 26.28 63.25 0.0 20.0 63.25 0.0 20.0 60.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="ccd6a04d-c67d-4ffc-bdf4-299c14214c45">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>20.0 60.0 7.58834394904 26.28 60.0 7.58834394904 26.28 63.25 7.58834394904 20.0 63.25 7.58834394904 20.0 60.0 7.58834394904</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="958a46b6-7be8-485d-bf85-486342db083d">
       <bldg:roofType>Gabled</bldg:roofType>
-      <bldg:yearOfConstruction>2002</bldg:yearOfConstruction>
+      <bldg:yearOfConstruction>1976</bldg:yearOfConstruction>
       <bldg:function>Residential</bldg:function>
       <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
       <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="c446f0f2-c97d-4bc9-9fc2-baf3972ab6a8">
+            <gml:Polygon gml:id="0ca1e410-69f8-4ce0-8aa1-24cc33a1e423">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>0.0 40.0 0.0 5.84 40.0 0.0 5.84 47.13 0.0 0.0 47.13 0.0 0.0 40.0 0.0</gml:posList>
+                  <gml:posList>40.0 0.0 0.0 43.23 0.0 0.0 43.23 3.82 0.0 40.0 3.82 0.0 40.0 0.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -101,10 +311,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="436ae34f-7919-4c54-b8dd-8cfa1dc97923">
+            <gml:Polygon gml:id="a5af2ede-5218-412b-8cea-2141720b0f95">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>0.0 40.0 7.5875 5.84 40.0 7.5875 5.84 47.13 7.5875 0.0 47.13 7.5875 0.0 40.0 7.5875</gml:posList>
+                  <gml:posList>40.0 0.0 7.64074303406 43.23 0.0 7.64074303406 43.23 3.82 7.64074303406 40.0 3.82 7.64074303406 40.0 0.0 7.64074303406</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -114,8 +324,43 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="6ca837fc-523d-4217-b82d-4906fb0404fd">
-      <bldg:roofType>Shed</bldg:roofType>
+    <bldg:Building gml:id="ccf4a866-4080-4093-9a5c-37fb102a9aa8">
+      <bldg:roofType>Pyramidal</bldg:roofType>
+      <bldg:yearOfConstruction>2006</bldg:yearOfConstruction>
+      <bldg:function>Residential</bldg:function>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>3</bldg:storeysAboveGround>
+      <bldg:lod0FootPrint>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="2aae1666-4aed-4c13-bb69-902441720ea4">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>40.0 20.0 0.0 48.91 20.0 0.0 48.91 21.21 0.0 51.44 21.21 0.0 51.44 26.03 0.0 48.91 26.03 0.0 48.91 29.69 0.0 40.0 29.69 0.0 40.0 20.0 0.0</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0FootPrint>
+      <bldg:lod0RoofEdge>
+        <gml:MultiSurface>
+          <gml:surfaceMember>
+            <gml:Polygon gml:id="2c712ce5-2d80-4b4d-b294-10af485b771f">
+              <gml:exterior>
+                <gml:LinearRing>
+                  <gml:posList>40.0 20.0 11.4502581369 48.91 20.0 11.4502581369 48.91 21.21 11.4502581369 51.44 21.21 11.4502581369 51.44 26.03 11.4502581369 48.91 26.03 11.4502581369 48.91 29.69 11.4502581369 40.0 29.69 11.4502581369 40.0 20.0 11.4502581369</gml:posList>
+                </gml:LinearRing>
+              </gml:exterior>
+            </gml:Polygon>
+          </gml:surfaceMember>
+        </gml:MultiSurface>
+      </bldg:lod0RoofEdge>
+    </bldg:Building>
+  </cityObjectMember>
+  <cityObjectMember>
+    <bldg:Building gml:id="eacf6df5-a50c-45fe-a45b-0da3df779528">
+      <bldg:roofType>Flat</bldg:roofType>
       <bldg:yearOfConstruction>1948</bldg:yearOfConstruction>
       <bldg:function>Residential</bldg:function>
       <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
@@ -123,10 +368,10 @@
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="084cd86e-5008-4de8-b1ee-95c9df7fe21e">
+            <gml:Polygon gml:id="ff952bf5-9ab4-4e55-b084-b36c7073dee7">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>20.0 0.0 0.0 23.72 0.0 0.0 23.72 9.83 0.0 20.0 9.83 0.0 20.0 0.0 0.0</gml:posList>
+                  <gml:posList>40.0 40.0 0.0 47.73 40.0 0.0 47.73 43.63 0.0 48.56 43.63 0.0 48.56 45.29 0.0 47.73 45.29 0.0 47.73 48.92 0.0 40.0 48.92 0.0 40.0 40.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -136,10 +381,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="a68a7475-b260-46cb-84f6-e82f2aef5733">
+            <gml:Polygon gml:id="ef8f75e0-31e7-40aa-95eb-ff86183ea08b">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>20.0 0.0 8.57 23.72 0.0 8.57 23.72 9.83 8.57 20.0 9.83 8.57 20.0 0.0 8.57</gml:posList>
+                  <gml:posList>40.0 40.0 6.6 47.73 40.0 6.6 47.73 43.63 6.6 48.56 43.63 6.6 48.56 45.29 6.6 47.73 45.29 6.6 47.73 48.92 6.6 40.0 48.92 6.6 40.0 40.0 6.6</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -149,54 +394,19 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="37b27226-1d6a-40ae-9a8e-df67172b9e76">
-      <bldg:roofType>Flat</bldg:roofType>
-      <bldg:yearOfConstruction>1955</bldg:yearOfConstruction>
-      <bldg:function>Industrial</bldg:function>
-      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
-      <bldg:lod0FootPrint>
-        <gml:MultiSurface>
-          <gml:surfaceMember>
-            <gml:Polygon gml:id="af53c366-a141-4c0d-b929-148a7dddb67c">
-              <gml:exterior>
-                <gml:LinearRing>
-                  <gml:posList>20.0 20.0 0.0 25.17 20.0 0.0 25.17 24.23 0.0 20.0 24.23 0.0 20.0 20.0 0.0</gml:posList>
-                </gml:LinearRing>
-              </gml:exterior>
-            </gml:Polygon>
-          </gml:surfaceMember>
-        </gml:MultiSurface>
-      </bldg:lod0FootPrint>
-      <bldg:lod0RoofEdge>
-        <gml:MultiSurface>
-          <gml:surfaceMember>
-            <gml:Polygon gml:id="f0c1c5c5-d7fe-47bd-acc1-6a52aeb991b4">
-              <gml:exterior>
-                <gml:LinearRing>
-                  <gml:posList>20.0 20.0 13.2 25.17 20.0 13.2 25.17 24.23 13.2 20.0 24.23 13.2 20.0 20.0 13.2</gml:posList>
-                </gml:LinearRing>
-              </gml:exterior>
-            </gml:Polygon>
-          </gml:surfaceMember>
-        </gml:MultiSurface>
-      </bldg:lod0RoofEdge>
-    </bldg:Building>
-  </cityObjectMember>
-  <cityObjectMember>
-    <bldg:Building gml:id="353a591b-01e4-49a6-8fd3-360313f6ca7f">
+    <bldg:Building gml:id="3b3aaa30-44a9-4553-b4ee-a6226b810920">
       <bldg:roofType>Hipped</bldg:roofType>
-      <bldg:yearOfConstruction>1988</bldg:yearOfConstruction>
+      <bldg:yearOfConstruction>1989</bldg:yearOfConstruction>
       <bldg:function>Residential</bldg:function>
       <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
       <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="3d4cc9d3-4dab-4392-96d6-29ae22ce54ca">
+            <gml:Polygon gml:id="51ea8512-7416-44b1-879a-4719f9a4b9bc">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>20.0 40.0 0.0 24.05 40.0 0.0 24.05 49.63 0.0 20.0 49.63 0.0 20.0 40.0 0.0</gml:posList>
+                  <gml:posList>40.0 60.0 0.0 45.82 60.0 0.0 45.82 63.44 0.0 40.0 63.44 0.0 40.0 60.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -206,10 +416,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="d52e93fe-9e0b-4f60-9e16-15519291f22e">
+            <gml:Polygon gml:id="ce819ebd-5582-4a44-8f0d-28a8894e140e">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>20.0 40.0 7.75197530864 24.05 40.0 7.75197530864 24.05 49.63 7.75197530864 20.0 49.63 7.75197530864 20.0 40.0 7.75197530864</gml:posList>
+                  <gml:posList>40.0 60.0 7.74 45.82 60.0 7.74 45.82 63.44 7.74 40.0 63.44 7.74 40.0 60.0 7.74</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -219,19 +429,19 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="249246ba-d9f5-48e8-8b69-1c0677375c5a">
-      <bldg:roofType>Flat</bldg:roofType>
-      <bldg:yearOfConstruction>2004</bldg:yearOfConstruction>
-      <bldg:function>Industrial</bldg:function>
-      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
+    <bldg:Building gml:id="9521318f-6228-4eef-ad4a-f61a71ecac3c">
+      <bldg:roofType>Shed</bldg:roofType>
+      <bldg:yearOfConstruction>1952</bldg:yearOfConstruction>
+      <bldg:function>Residential</bldg:function>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="5489b124-d2a6-428c-95c0-542898c3b743">
+            <gml:Polygon gml:id="6fcef436-91da-4c40-adbd-7174f9dd56a0">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>40.0 0.0 0.0 46.11 0.0 0.0 46.11 3.68 0.0 40.0 3.68 0.0 40.0 0.0 0.0</gml:posList>
+                  <gml:posList>60.0 0.0 0.0 66.73 0.0 0.0 66.73 7.66 0.0 60.0 7.66 0.0 60.0 0.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -241,10 +451,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="7ca236e6-9d28-43b2-bcf7-d9260742001e">
+            <gml:Polygon gml:id="f4e6e59c-6efd-4f06-b68a-1cdeb692ad88">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>40.0 0.0 16.6 46.11 0.0 16.6 46.11 3.68 16.6 40.0 3.68 16.6 40.0 0.0 16.6</gml:posList>
+                  <gml:posList>60.0 0.0 4.59 66.73 0.0 4.59 66.73 7.66 4.59 60.0 7.66 4.59 60.0 0.0 4.59</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -254,19 +464,19 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="0d252789-4485-452f-85e1-52c5eb975b10">
-      <bldg:roofType>Flat</bldg:roofType>
-      <bldg:yearOfConstruction>1948</bldg:yearOfConstruction>
+    <bldg:Building gml:id="f5699ab7-6601-4bff-9e14-0148d5a08ddb">
+      <bldg:roofType>Hipped</bldg:roofType>
+      <bldg:yearOfConstruction>1992</bldg:yearOfConstruction>
       <bldg:function>Residential</bldg:function>
-      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>2</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="3deac8eb-b740-49b2-a2a7-a221c9f6ddb7">
+            <gml:Polygon gml:id="d903fbd7-7578-45a7-aeb0-59e5bef9e9ed">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>40.0 20.0 0.0 48.21 20.0 0.0 48.21 29.57 0.0 40.0 29.57 0.0 40.0 20.0 0.0</gml:posList>
+                  <gml:posList>60.0 20.0 0.0 69.91 20.0 0.0 69.91 28.64 0.0 60.0 28.64 0.0 60.0 20.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -276,10 +486,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="7ffeaedc-a9c9-4dd4-8ec5-565384941613">
+            <gml:Polygon gml:id="7343ba30-3383-4101-acd9-0336babdd6ae">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>40.0 20.0 6.98 48.21 20.0 6.98 48.21 29.57 6.98 40.0 29.57 6.98 40.0 20.0 6.98</gml:posList>
+                  <gml:posList>60.0 20.0 4.52676084763 69.91 20.0 4.52676084763 69.91 28.64 4.52676084763 60.0 28.64 4.52676084763 60.0 20.0 4.52676084763</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -289,19 +499,19 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="5644769e-43bd-4244-9984-56f1e99ab43e">
+    <bldg:Building gml:id="46b1c152-38a7-4ed1-9fd6-659361d4a84d">
       <bldg:roofType>Flat</bldg:roofType>
-      <bldg:yearOfConstruction>1962</bldg:yearOfConstruction>
+      <bldg:yearOfConstruction>1979</bldg:yearOfConstruction>
       <bldg:function>Residential</bldg:function>
-      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>1</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="0a6f3c94-d895-41b4-8282-197eda2ae360">
+            <gml:Polygon gml:id="f55d159a-f814-481f-b12f-99fc1c602809">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>40.0 40.0 0.0 45.07 40.0 0.0 45.07 48.57 0.0 40.0 48.57 0.0 40.0 40.0 0.0</gml:posList>
+                  <gml:posList>60.0 40.0 0.0 65.08 40.0 0.0 65.08 47.17 0.0 60.0 47.17 0.0 60.0 40.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -311,10 +521,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="74ab40cb-39f1-4184-82d9-6e67da946bea">
+            <gml:Polygon gml:id="6c05c489-e6a1-4f58-ad85-9692334ed65b">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>40.0 40.0 16.1 45.07 40.0 16.1 45.07 48.57 16.1 40.0 48.57 16.1 40.0 40.0 16.1</gml:posList>
+                  <gml:posList>60.0 40.0 3.02 65.08 40.0 3.02 65.08 47.17 3.02 60.0 47.17 3.02 60.0 40.0 3.02</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -324,19 +534,19 @@
     </bldg:Building>
   </cityObjectMember>
   <cityObjectMember>
-    <bldg:Building gml:id="57a35cd2-2307-4dc8-9081-d3bb5ae7f6e2">
+    <bldg:Building gml:id="1c94bc05-5633-48c7-9365-81dee85cb22f">
       <bldg:roofType>Flat</bldg:roofType>
-      <bldg:yearOfConstruction>1996</bldg:yearOfConstruction>
+      <bldg:yearOfConstruction>1964</bldg:yearOfConstruction>
       <bldg:function>Residential</bldg:function>
-      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
-      <bldg:storeysAboveGround>5</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
+      <bldg:storeysAboveGround>4</bldg:storeysAboveGround>
       <bldg:lod0FootPrint>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="e67b6601-ae50-494f-a4a5-cd9b01cfea45">
+            <gml:Polygon gml:id="3227be20-74ff-4b44-8c75-f3d639d5c4e5">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>60.0 0.0 0.0 68.67 0.0 0.0 68.67 7.37 0.0 60.0 7.37 0.0 60.0 0.0 0.0</gml:posList>
+                  <gml:posList>60.0 60.0 0.0 69.93 60.0 0.0 69.93 67.21 0.0 60.0 67.21 0.0 60.0 60.0 0.0</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>
@@ -346,10 +556,10 @@
       <bldg:lod0RoofEdge>
         <gml:MultiSurface>
           <gml:surfaceMember>
-            <gml:Polygon gml:id="70249278-3bf5-47ef-bd8f-11c5177e9dcf">
+            <gml:Polygon gml:id="ff84b33d-26e7-4922-80e6-3cb812dbe835">
               <gml:exterior>
                 <gml:LinearRing>
-                  <gml:posList>60.0 0.0 17.05 68.67 0.0 17.05 68.67 7.37 17.05 60.0 7.37 17.05 60.0 0.0 17.05</gml:posList>
+                  <gml:posList>60.0 60.0 13.84 69.93 60.0 13.84 69.93 67.21 13.84 60.0 67.21 13.84 60.0 60.0 13.84</gml:posList>
                 </gml:LinearRing>
               </gml:exterior>
             </gml:Polygon>

@@ -43,6 +43,7 @@ class RegionGrower(object):
 		self.p = {
 			'bisec_thres':10.0,
 			'theta_thres':10.0,
+			'secspokecnt_thres':10,
 			'k':10,
 			'only_interior':False,
 			'method':'bisec',
@@ -53,6 +54,8 @@ class RegionGrower(object):
 
 		if self.p['method'] == 'bisec':
 			self.valid_candidate = self.valid_candidate_bisectheta # or 'normal'
+		elif self.p['method'] == 'bisecthetacnt':
+			self.valid_candidate = self.valid_candidate_bisecthetacnt # or 'normal'
 		else:
 			self.valid_candidate = self.valid_candidate_normal
 
@@ -148,18 +151,25 @@ class RegionGrower(object):
 	def valid_candidate_bisectheta(self, seed, candidate):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
 		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate)
+	
+	def valid_candidate_bisecthetacnt(self, seed, candidate):
+		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
+		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate) and self.valid_candidate_secspokecnt(seed, candidate)
 
 	def valid_candidate_bisec(self, seed, candidate):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
 		return np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres
+
+	def valid_candidate_secspokecnt(self, seed, candidate):
+		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
+		seed = self.mah.D['ma_qidx'][seed]
+		candidate = self.mah.D['ma_qidx'][candidate]
+		return self.mah.D['spoke_cnt'][seed] < self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] < self.p['secspokecnt_thres'] or self.mah.D['spoke_cnt'][seed] >	 self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] >	 self.p['secspokecnt_thres']  
 		# if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres and math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_1:
 
 	def valid_candidate_theta(self, seed, candidate):
 		"""candidate is valid if difference between separation angles of seed and candidate is below preset threshold"""
-		if math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_2:
-			return True
-		else:
-			return False
+		return math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_2
 
 	def unmark_small_clusters(self):
 		"""find all segments that are too small and set their segment to 0"""
