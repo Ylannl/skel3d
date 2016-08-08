@@ -99,54 +99,59 @@ def view(ma, vids):
     graphlib = get_graph_library()
     vertex_clustering = g.clusters()
     # import ipdb;ipdb.set_trace()
-    for that_id in vids:
+    for that_id in [8]:
         this_g = vertex_clustering.subgraph(that_id)
 
-        c.addGraphWindow(this_g)
+        # c.addGraphWindow(this_g)
         
-        this_m = build_map(this_g, ma)
+        try:
+            
+            this_m = build_map(this_g, ma)
+            layer_thisg = c.add_layer(Layer(name='cluster '+str(that_id)))
 
-        adj_rel_start = []
-        adj_rel_end = []
-        # this_g = g.subgraph(this_mapping)
-        for hn in this_m.ns:
-            hn['coords_mean'] = np.mean(ma.D['coords'][hn['s_idx']], axis=0)
-        # import ipdb;ipdb.set_trace()
-        for e in this_m.es:
-            if e.kind == 'match':
-                source, target = e.nodes
+            adj_rel_start = []
+            adj_rel_end = []
+            # this_g = g.subgraph(this_mapping)
+            for hn in this_m.ns:
+                hn['coords_mean'] = np.mean(ma.D['coords'][hn['s_idx']], axis=0)
+            # import ipdb;ipdb.set_trace()
+            for e in this_m.es:
+                if e.kind == 'match':
+                    source, target = e.nodes
+                    adj_rel_start.append(source['coords_mean'])
+                    adj_rel_end.append(target['coords_mean'])
+            color = np.random.uniform(0.3,1.0,3)
+            p = layer_thisg.add_data_source_line(
+                name = 'map edges {}'.format(that_id),
+                coords_start = np.array(adj_rel_start),
+                coords_end = np.array(adj_rel_end),
+                color = (0,1,0),
+                is_visible=True,
+                options = ['alternate_vcolor']
+            )
+
+            adj_rel_start = []
+            adj_rel_end = []
+            for i in range(len(this_m.ns)//2):
+                hn = this_m.ns[i*2]
+                source, target = hn, hn.twin
                 adj_rel_start.append(source['coords_mean'])
                 adj_rel_end.append(target['coords_mean'])
-        color = np.random.uniform(0.3,1.0,3)
-        p = c.add_data_source_line(
-            name = 'map edges {}'.format(that_id),
-            coords_start = np.array(adj_rel_start),
-            coords_end = np.array(adj_rel_end),
-            color = (0,1,0),
-            is_visible=True,
-            options = ['alternate_vcolor']
-        )
+            color = np.random.uniform(0.3,1.0,3)
+            p = layer_thisg.add_data_source_line(
+                name = 'map twin links {}'.format(that_id),
+                coords_start = np.array(adj_rel_start),
+                coords_end = np.array(adj_rel_end),
+                color = (1,1,1),
+                is_visible=False
+            )
+        # except Exception as e:
+        #     continue
 
-        adj_rel_start = []
-        adj_rel_end = []
-        for i in range(len(this_m.ns)//2):
-            hn = this_m.ns[i*2]
-            source, target = hn, hn.twin
-            adj_rel_start.append(source['coords_mean'])
-            adj_rel_end.append(target['coords_mean'])
-        color = np.random.uniform(0.3,1.0,3)
-        p = c.add_data_source_line(
-            name = 'map twin links {}'.format(that_id),
-            coords_start = np.array(adj_rel_start),
-            coords_end = np.array(adj_rel_end),
-            color = (1,1,1),
-            is_visible=False
-        )
-
-        try:
+        # try:
             planes = polyhedral_reconstruct(this_m, ma)
             for i, (coords, normals) in enumerate(planes):
-                c.add_data_source_triangle(
+                layer_thisg.add_data_source_triangle(
                     name = 'plane '+str(that_id)+' '+str(i),
                     coords = coords,
                     normals = normals,
@@ -159,45 +164,46 @@ def view(ma, vids):
             print('polyhedral_reconstruct failed')
             raise
         # for i,pts in enumerate(pointsets):
-        #     c.add_data_source(
+        #     layer_thisg.add_data_source(
         #         name = 'Surface points _'+' vid '+ ' - ' +str(i),
         #         opts=['splat_disk', 'with_normals'],
         #         points=ma.D['coords'][list(pts)], 
         #         normals=ma.D['normals'][list(pts)],
         #     )
         
-    ma_ids = []
-    for ma_idx in this_g.vs['ma_idx']:
-        ma_ids += ma_idx
-    # ma_idx = ma_idx[0] + ma_idx[1] +ma_idx[2] +ma_idx[3]
-    s_idx = np.mod(ma_ids, ma.m)
-    
-    adj_rel_start = []
-    adj_rel_end = []
-    # this_g = g.subgraph(this_mapping)
-    for e in this_g.es:
-        adj_rel_start.append(this_g.vs[e.source]['ma_coords_mean'])
-        adj_rel_end.append(this_g.vs[e.target]['ma_coords_mean'])
-    # import ipdb; ipdb.set_trace()
-    # color = np.random.rand(3)
-    # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)
-    color = np.random.uniform(0.3,1.0,3)
-    p = c.add_data_source_line(
-        name = 'matched graph',
-        coords_start = np.array(adj_rel_start),
-        coords_end = np.array(adj_rel_end),
-        color = (0.,0.9,0.9),
-        is_visible=False
-    )
+        ma_ids = []
+        for ma_idx in this_g.vs['ma_idx']:
+            ma_ids += ma_idx
+        # ma_idx = ma_idx[0] + ma_idx[1] +ma_idx[2] +ma_idx[3]
+        s_idx = np.mod(ma_ids, ma.m)
+        
+        adj_rel_start = []
+        adj_rel_end = []
+        # this_g = g.subgraph(this_mapping)
+        for e in this_g.es:
+            adj_rel_start.append(this_g.vs[e.source]['ma_coords_mean'])
+            adj_rel_end.append(this_g.vs[e.target]['ma_coords_mean'])
+        # import ipdb; ipdb.set_trace()
+        # color = np.random.rand(3)
+        # color[np.random.random_integers(0,2)] = np.random.uniform(0.5,1.0,1)
+        color = np.random.uniform(0.3,1.0,3)
+        p = layer_thisg.add_data_source_line(
+            name = 'matched graph',
+            coords_start = np.array(adj_rel_start),
+            coords_end = np.array(adj_rel_end),
+            color = (0.,0.9,0.9),
+            is_visible=False
+        )
 
     layer_ma = c.add_layer(LinkedLayer(name='MAT'))
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
 
     layer_s.add_data_source(
         name = 'Surface points',
-        opts=['splat_disk', 'with_normals'],
+        opts=['splat_disk', 'with_normals', 'fixed_color'],
         points=ma.D['coords'], 
         normals=ma.D['normals'],
+        color = (.4,.4,1.)
     )
     layer_s.add_data_source_line(
       name = 'Surface normals',
@@ -214,13 +220,23 @@ def view(ma, vids):
     for v in g.vs():
         ma.D['ma_segment'][ v['ma_idx'] ] = v.index
     # f =ma.D['ma_segment'] != 0
+    
+    # compute mat 'normals'
+    # cross product of spokes is perpendicular to bisector and tangent to sheet
+    vec_coplanar = np.cross(ma.D['ma_f1'],ma.D['ma_f2'])
+    # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct
+    ma_n = np.cross(vec_coplanar, ma.D['ma_bisec'])
+    ma_n = ma_n / np.linalg.norm(ma_n, axis=1)[:,None]
+
     layer_ma.add_data_source(
         name = 'MAT points',
-        opts=['splat_point', 'with_intensity'],
+        opts=['splat_disk', 'with_normals', 'with_intensity'],
         points=ma.D['ma_coords'], 
-        category=ma.D['ma_segment'].astype(np.float32),
-        colormap='random'
-    )        
+        normals=ma_n,
+        category=ma.D['ma_segment'].astype(np.float),
+        colormap='random',
+        default_mask=ma.D['ma_segment'] != 0
+    )             
     layer_ma.add_data_source_line(
       name = 'Primary spokes',
       coords_start = ma.D['ma_coords'],
@@ -254,7 +270,7 @@ if __name__ == '__main__':
         vids = [int(sys.argv[-1])]
         # INFILE = sys.argv[-1]
     # import ipdb;ipdb.set_trace()
-    INFILE = "/Users/ravi/git/mat_util/Random3Dcity/NPY"
+    INFILE = "/Users/ravi/git/mat_util/Random3Dcity/1/NPY"
     # INFILE = "/Users/ravi/git/mat_util/test_cases/sloped_gable/NPY"
     datadict = npy.read(INFILE)
     ma = MAHelper(datadict, origin=True)

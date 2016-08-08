@@ -448,9 +448,10 @@ def view(ma, vid):
 
     layer_s.add_data_source(
         name = 'Surface points',
-        opts=['splat_disk', 'with_normals'],
+        opts=['splat_disk', 'with_normals', 'fixed_color'],
         points=ma.D['coords'], 
-        normals=ma.D['normals']
+        normals=ma.D['normals'],
+        color= (.4,.4,1.)
     )
     layer_s.add_data_source_line(
       name = 'Surface normals',
@@ -467,7 +468,7 @@ def view(ma, vid):
         opts=['splat_disk', 'with_normals', 'with_intensity'],
         points=ma.D['ma_coords'], 
         normals=ma_n,
-        category=ma.D['ma_segment'].astype(np.float32),
+        category=ma.D['ma_segment'].astype(np.float),
         colormap='random',
         default_mask=ma.D['ma_segment'] != 0
     )        
