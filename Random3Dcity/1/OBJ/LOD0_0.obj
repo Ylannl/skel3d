@@ -1,0 +1,19 @@
+# Converted from CityGML to OBJ with CityGML2OBJs.
+# Conversion tool developed by Filip Biljecki, TU Delft <fbiljecki@gmail.com>, see more at Github:
+# https://github.com/tudelft3d/CityGML2OBJs
+#
+
+
+v 0.0 54.0 0.0
+v 0.0 0.0 0.0
+v 54.0 0.0 0.0
+v 54.0 54.0 0.0
+v 60.0 54.0 0.0
+v 60.0 0.0 0.0
+v 114.0 0.0 0.0
+v 114.0 54.0 0.0
+
+f 1 2 3 
+f 3 4 1 
+f 5 6 7 
+f 7 8 5 
