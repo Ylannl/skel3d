@@ -368,17 +368,16 @@ class ToolsWindow(ToolsDialog):
         self.ui.graphicsView_plotWidget.addItem(lr)
         lr.sigRegionChangeFinished.connect(self.lr_changed)
 
-        vals=ma.D['spoke_cnt'][ma.D['ma_qidx'][ma_idx]]
-        ## compute standard histogram
-        y,x = np.histogram(vals, bins=50)
+        # vals=ma.D['spoke_cnt'][ma.D['ma_qidx'][ma_idx]]
+        # ## compute standard histogram
+        # y,x = np.histogram(vals, bins=50)
 
-        ## Using stepMode=True causes the plot to draw two lines for each sample.
-        ## notice that len(x) == len(y)+1
-        # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
-        # color = (0,200,0,255)
-        color = (220,220,25,255)
-        self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='bisec_z '+str(42))
-        
+        # ## Using stepMode=True causes the plot to draw two lines for each sample.
+        # ## notice that len(x) == len(y)+1
+        # # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+        # # color = (0,200,0,255)
+        # color = (220,220,25,255)
+        # self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='bisec_z '+str(42))
 
 
     def plot_histogram(self, ma_idx):
@@ -407,8 +406,8 @@ class ToolsWindow(ToolsDialog):
         color = (0,220,220,255)
         self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='theta '+str(42))
         
+        ## compute histogram of bisector z-components
         vals=ma.D['ma_bisec'][ma_idx,2]
-        ## compute standard histogram
         y,x = np.histogram(vals, bins=50)
 
         ## Using stepMode=True causes the plot to draw two lines for each sample.

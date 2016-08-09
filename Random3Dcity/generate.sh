@@ -1,3 +1,7 @@
+mkdir CityGML
+mkdir OBJ
+mkdir PCD
+mkdir NPY
 python /Users/ravi/git/Random3Dcity/randomiseCity.py -p 1 -n 16 -o /Users/ravi/git/mat_util/Random3Dcity/info.xml
 python /Users/ravi/git/Random3Dcity/generateCityGML.py -i /Users/ravi/git/mat_util/Random3Dcity/info.xml -o /Users/ravi/git/mat_util/Random3Dcity/CityGML/
 python /Users/ravi/git/CityGML2OBJs/CityGML2OBJs.py -i /Users/ravi/git/mat_util/Random3Dcity/CityGML/ -o /Users/ravi/git/mat_util/Random3Dcity/OBJ/
