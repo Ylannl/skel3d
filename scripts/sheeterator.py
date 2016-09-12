@@ -339,8 +339,7 @@ class ToolsWindow(ToolsDialog):
         color = (250,0,255,160)
         plot(x,y,color,name='SepAnglePredict')
 
-
-        # define plane at represetative point:
+        # define plane at representative point:
         # we need an actual point on the sheet because we can't quickly aggregate spokes, because of their inconsistent orientation
         # c_id = ma_idx[ np.argmin(cdist(ma.D['ma_coords'][ma_idx], np.array([c]))) ]
         c_id = ma_idx[np.argsort(radii)[len(radii)//2]]
