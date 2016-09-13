@@ -339,17 +339,32 @@ class ToolsWindow(ToolsDialog):
         color = (250,0,255,160)
         plot(x,y,color,name='SepAnglePredict')
 
+        #
+        def cluster_spokes(ma,ma_idx):
+            cross = np.cross(ma.D['ma_f1'][ma_idx], ma.D['ma_f2'][ma_idx])
+            l = Line([Point(v) for v in cross])
+            # l.t is a unit vector in one direction of the line
+            x = np.empty(len(cross))
+            for i, v in enumerate(cross):
+                x[i] = np.dot(l.t,v)
+
+            print (x)
+
+            return x > 0, cross
+
         # define plane at representative point:
         # we need an actual point on the sheet because we can't quickly aggregate spokes, because of their inconsistent orientation
         # c_id = ma_idx[ np.argmin(cdist(ma.D['ma_coords'][ma_idx], np.array([c]))) ]
-        c_id = ma_idx[np.argsort(radii)[len(radii)//2]]
-        c = ma.D['ma_coords'][c_id]
-        f1 = ma.D['ma_f1'][c_id]
-        f2 = ma.D['ma_f2'][c_id]
+        # c_id = ma_idx[np.argsort(radii)[len(radii)//2]]
+        # c = ma.D['ma_coords'][c_id]
+        # f1 = ma.D['ma_f1'][c_id]
+        # f2 = ma.D['ma_f2'][c_id]
         # cross product of spokes is perpendicular to bisector and tangent to sheet
-        vec_coplanar = np.cross(f1,f2)
+        one_side, cross = cluster_spokes(ma, ma_idx)
+        # align al crosses and compute average
+        vec_coplanar = np.mean(np.concatenate([cross[one_side], -1*cross[~one_side]]), axis=0)
         # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct
-        n = np.cross(vec_coplanar, ma.D['ma_bisec'][c_id])
+        n = np.cross(vec_coplanar, b)
         n = n / np.linalg.norm(n)
         # plane = Plane(pc, Line(pc, pn))
         y = np.empty(len(ma_idx))
