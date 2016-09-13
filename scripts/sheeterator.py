@@ -362,7 +362,10 @@ class ToolsWindow(ToolsDialog):
         # cross product of spokes is perpendicular to bisector and tangent to sheet
         one_side, cross = cluster_spokes(ma, ma_idx)
         # align al crosses and compute average
-        vec_coplanar = np.mean(np.concatenate([cross[one_side], -1*cross[~one_side]]), axis=0)
+        cross_align = cross 
+        cross_align[~one_side] *= -1  
+        # np.concatenate([cross[one_side], -1*cross[~one_side]])
+        vec_coplanar = np.mean(cross_align, axis=0)
         # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct
         n = np.cross(vec_coplanar, b)
         n = n / np.linalg.norm(n)
@@ -375,7 +378,14 @@ class ToolsWindow(ToolsDialog):
             # y[i] = np.linalg.norm(q-q_on_n)
             # y[i] = plane.distance_to(Point(ma.D['ma_coords'][ma_idx[i]]))
         color = (250,250,0,160)
-        plot(x, y, color, 'Plane fit') 
+        plot(x, y, color, 'Plane fit')
+
+        # diff in cross
+        y = np.empty(len(ma_idx))
+        for i in range(len(ma_idx)):
+            y[i] = angle(vec_coplanar, cross_align[i])
+        color = (200,200,200,160)
+        plot(x, y, color, 'Cross diff') 
 
         xmi, xma = x.min(), x.max() 
         lr = LinearRegionItem([xmi-.1, xma+.1], movable=True)
