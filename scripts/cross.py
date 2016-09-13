@@ -53,11 +53,11 @@ def mat(input_npy, cluster_id, sheet_id, near_clip, far_clip):
     clustermap, cross = cluster_spokes(ma, ma_idx)
     print(clustermap)
 
-    group_A = ma.D['ma_f1'][ma_idx]
-    # group_A[~clustermap] =  ma.D['ma_f1'][ma_idx][~clustermap]
+    side_A = ma.D['ma_f1'][ma_idx]
+    side_A[~clustermap] =  ma.D['ma_f2'][ma_idx][~clustermap]
 
-    group_B = ma.D['ma_f2'][ma_idx]
-    # group_B[clustermap] =  ma.D['ma_f2'][ma_idx][clustermap]
+    side_B = ma.D['ma_f1'][ma_idx]
+    side_B[clustermap] =  ma.D['ma_f2'][ma_idx][clustermap]
 
 
     ma_coords = ma.D['ma_coords'][ma_idx]
@@ -67,14 +67,14 @@ def mat(input_npy, cluster_id, sheet_id, near_clip, far_clip):
     c.add_data_source_line(
         name = 'cluster A',
         coords_start = ma_coords,
-        coords_end = group_A+ma_coords,
+        coords_end = side_A+ma_coords,
         color=(.9,0,0)
     )
 
     c.add_data_source_line(
         name = 'cluster B',
         coords_start = ma_coords,
-        coords_end = group_B+ma_coords,
+        coords_end = side_B+ma_coords,
         color=(0,0,0.9)
     )
 
