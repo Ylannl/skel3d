@@ -282,6 +282,8 @@ class ToolsWindow(ToolsDialog):
             x_ = np.linspace(x.min()-1,x.max()+1)
             y_ = x_*slope + intercept
             print(name)
+            print('intercept:', str(intercept))
+            print('slope:', str(slope))
             print('r_value:', str(r_value))
             print('p_value:', str(p_value))
             print('std_err:', str(std_err))
@@ -347,8 +349,6 @@ class ToolsWindow(ToolsDialog):
             x = np.empty(len(cross))
             for i, v in enumerate(cross):
                 x[i] = np.dot(l.t,v)
-
-            print (x)
 
             return x > 0, cross
 
