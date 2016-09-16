@@ -16,6 +16,7 @@
 # Copyright 2015 Ravi Peters
 
 import numpy as np
+import os
 
 def read(infile, move_to_origin=False, limit_points=0, delimiter=' '):
 	"""collect vertex coordinates from ascii input file"""
@@ -48,3 +49,19 @@ def read(infile, move_to_origin=False, limit_points=0, delimiter=' '):
 			datadict['coords'][i] = x-ox,y-oy,z-oz
 
 	return datadict
+
+def write(dir, datadict, keys=[]):
+	if not os.path.exists(dir):
+	    os.makedirs(dir)
+
+	for key,val in list(datadict.items()):
+		if key == 'ma_segment_graph':
+			continue
+		elif key in keys or len(keys)==0:
+			fname = os.path.join(dir,key) + '.xyz'
+			with open(fname, 'w') as fo:
+				for item in val:
+					line = ' '.join([str(i) for i in item]) + '\n'
+					fo.write(line)
+
+
