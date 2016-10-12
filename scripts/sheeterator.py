@@ -471,7 +471,8 @@ def view(ma, vid):
 
     layer_s.add_data_source(
         name = 'Surface points',
-        opts=['splat_disk', 'with_normals', 'fixed_color'],
+        opts=['splat_disk', 'with_normals'],
+        # opts=['splat_disk', 'with_normals', 'fixed_color'],
         points=ma.D['coords'], 
         normals=ma.D['normals'],
         color= (.4,.4,1.)
