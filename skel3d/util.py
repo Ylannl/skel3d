@@ -2,6 +2,11 @@
 from numpy import array, zeros, empty, invert, concatenate, nanmax, isnan
 import numpy as np
 
+def angle(a, b):
+    a = a/np.linalg.norm(a)
+    b = b/np.linalg.norm(b)
+    return np.arccos(np.inner(a, b))
+
 class MAHelper(object):
 
     def __init__(self, datadict, origin=True):

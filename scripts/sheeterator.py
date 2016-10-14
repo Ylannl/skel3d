@@ -33,6 +33,7 @@ class TestApp(App):
 
     def draw_clusters(self):
 
+        ## Remove insignificant edges in graph
         min_count = 50 #self.dialog.ui.spinBox_linkcount.value()
         contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
         # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
@@ -40,6 +41,7 @@ class TestApp(App):
         master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count))
         # contract_edges(g, contract_thres)
 
+        ## Update segment indices based on graph ids
         ma.D['ma_segment'] = np.zeros(ma.m*2,dtype=np.int64)
         for v in master_g.vs:
             ma.D['ma_segment'][v['ma_idx']] = v.index
@@ -51,6 +53,7 @@ class TestApp(App):
         # for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
         #     self.graphs.append(g.subgraph(mapping))
         
+        ## Find clusters, ie. connected component analysis
         self.graphs = master_g.clusters().subgraphs()
 
         i=0
@@ -60,6 +63,7 @@ class TestApp(App):
 
             if 0<g.ecount():#<1000:
 
+                ## Classify clusters as inside or outside
                 # attempt to distinghuish between interior and exterior sheets based on vertical component of bisectors
                 color = (1.,0.,0.)
                 name = 'cluster {}'.format(i)
