@@ -33,28 +33,7 @@ class TestApp(App):
 
     def draw_clusters(self):
 
-        ## Remove insignificant edges in graph
-        min_count = 50 #self.dialog.ui.spinBox_linkcount.value()
-        contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
-        # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
-        master_g = self.ma.D['ma_segment_graph']
-        master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count))
-        # contract_edges(g, contract_thres)
-
-        ## Update segment indices based on graph ids
-        ma.D['ma_segment'] = np.zeros(ma.m*2,dtype=np.int64)
-        for v in master_g.vs:
-            ma.D['ma_segment'][v['ma_idx']] = v.index
-            v['s_id'] = v.index
-        # flipdic = find_flip_relations(ma)
-        
-        # self.graphs = []
-        # graphlib = get_graph_library()
-        # for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
-        #     self.graphs.append(g.subgraph(mapping))
-        
-        ## Find clusters, ie. connected component analysis
-        self.graphs = master_g.clusters().subgraphs()
+        self.graphs = self.ma.D['ma_clusters']
 
         i=0
         for g in self.graphs:
@@ -159,6 +138,30 @@ class TestApp(App):
             self.filter_idx()
         # self.viewerWindow.render()
 
+    def toggle_tester(self, toggle):
+        if toggle==True:
+            # self.test_sheets()
+            p = self.layer_manager['MAT'].programs['MAT points']
+            p.update_colormap('validation')
+            data = np.ones(2*self.ma.m, dtype=np.float32)*0.5
+            for g in self.graphs:
+                for v in g.vs:
+                    # import ipdb;ipdb.set_trace()
+                    # print(v.attributes().keys())
+                    if 'sheet_analysis' in v.attributes().keys():
+                        print( v['sheet_analysis']['radius']['slope'], -.2 < v['sheet_analysis']['radius']['slope'] < .2 )
+                        if -.1 < v['sheet_analysis']['radius']['slope'] < .1:
+                            data[v['ma_idx']] = 200/256
+                        else:
+                            data[v['ma_idx']] = 1/256
+            
+            # data = np.ones(2*self.ma.m, dtype=np.float32)*255/256
+            # data[self.ma.m:] = 0./256
+            # import ipdb;ipdb.set_trace()
+            p.updateAttribute('a_intensity', data)
+        self.viewerWindow.render()
+
+
     def filter_cluster(self, index):
         if index == 0:
             self.filter_idx(None)
@@ -242,6 +245,7 @@ class ToolsWindow(ToolsDialog):
         self.ui.comboBox_clusters.activated.connect(self.app.filter_cluster)
         self.ui.comboBox_sheets.activated.connect(self.app.filter_sheet)
         self.ui.groupBox_cluster.clicked.connect(self.app.toggle_selection)
+        self.ui.groupBox_sheettester.clicked.connect(self.app.toggle_tester)
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -499,7 +503,7 @@ def view(ma, vid):
         category=ma.D['ma_segment'].astype(np.float),
         colormap='random',
         default_mask=ma.D['ma_segment'] != 0
-    )        
+    )
     layer_ma.add_data_source_line(
       name = 'Primary spokes',
       coords_start = ma.D['ma_coords'],
