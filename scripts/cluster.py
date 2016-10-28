@@ -19,6 +19,7 @@ if __name__ == '__main__':
     D = npy.read(args.infile)
     mah = MAHelper(D)
 
+    clustering.get_clusters(mah, args.mincount)
     clustering.classify_clusters(mah)
     for g in mah.D['ma_clusters']:
         if g['classification'] == 'interior (building)':

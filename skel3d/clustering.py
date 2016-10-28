@@ -1,3 +1,4 @@
+from __future__ import division
 import math, sys
 from time import time
 import numpy as np
@@ -150,6 +151,15 @@ def analyse_cluster(ma, g):
         for i in range(len(ma_idx)):
             Y['biseco_diff'][i] = angle(vec_coplanar, cross_align[i])
 
+        # this ratio should say something about the relative number of primary feature points on each side of the sheet
+        n_oneside = one_side.sum()
+        n_total = len(one_side)
+        n_otherside = n_total-n_oneside
+        if n_oneside > n_otherside:
+            regularity_ratio = n_oneside/n_total
+        else:
+            regularity_ratio = n_otherside/n_total
+
         result = {}
         for key, y in Y.items():
             slope, intercept, r_value, p_value, std_err = linregress(x,y)
@@ -159,6 +169,7 @@ def analyse_cluster(ma, g):
             result[key]['r_value']=r_value
             result[key]['p_value']=p_value
             result[key]['std_err']=std_err
+            result[key]['regularity_ratio']=regularity_ratio
         v['sheet_analysis'] = result
 
 
