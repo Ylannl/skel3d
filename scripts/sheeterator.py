@@ -154,6 +154,11 @@ class TestApp(App):
                             data[v['ma_idx']] = 200/256
                         else:
                             data[v['ma_idx']] = 1/256
+
+                        if v['sheet_analysis']['ma_planfit']['std_err'] < 0.1:
+                            data[v['ma_idx']] = 200/256
+                        else:
+                            data[v['ma_idx']] = 1/256
             
             # data = np.ones(2*self.ma.m, dtype=np.float32)*255/256
             # data[self.ma.m:] = 0./256
