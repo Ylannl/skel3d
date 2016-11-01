@@ -1,11 +1,13 @@
-import math, sys
+import math, sys, os
 from time import time
-import numpy as np
-
 from itertools import chain
+
+from PyQt5 import uic
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QToolBox
 from pyqtgraph import PlotWidget, LinearRegionItem
 
+import numpy as np
 from scipy.stats import linregress
 
 from povi import App, Layer, LinkedLayer, ToolsDialog
@@ -26,6 +28,8 @@ class TestApp(App):
         self.layer_manager.add_layer(Layer(name='Clusters', is_aggregate=True))
         # here all layers need to have been added
         self.dialog = ToolsWindow(self)
+        self.coloriser = ColoriserWindow(self)
+        self.coloriser.show()
         self.draw_clusters()
         super(TestApp, self).run()
         
@@ -236,6 +240,47 @@ class TestApp(App):
     #     self.plotWindow.show()
     #     # super(TestApp, self).run()
 
+class ColoriserWindow(QToolBox):
+    def __init__(self, app, ui_path=os.path.join(os.path.dirname(__file__),'coloriser.ui'), parent=None):
+        super(QToolBox, self).__init__(parent)
+        self.ui = uic.loadUi(ui_path, self)
+        self.app = app
+
+        self.connectUI()
+
+
+    def connectUI(self):
+        self.ui.radioButton_mat_sheetanalysis.toggled.connect(self.color_sheetanalysis)
+        self.ui.radioButton_mat_segmentid.toggled.connect(self.color_segmentid)
+        self.ui.radioButton_mat_elevation.toggled.connect(self.color_elevation)
+
+    def color_sheetanalysis(self, checked):
+        pass
+    
+    def color_segmentid(self, checked):
+        if checked:
+            self.color('segmentid')
+    
+    def color_elevation(self, checked):
+        if checked:
+            self.color('elevation')
+
+    def color(self, mode, data=None):
+        p = self.app.layer_manager['MAT'].programs['MAT points']
+        if mode == 'segmentid':
+            p.update_colormap('random')
+            data = self.app.ma.D['ma_segment'].astype(np.float32)
+            data *= 1./np.nanmax(data)
+        elif mode == 'elevation':
+            p.update_colormap('jet')
+            data = self.app.ma.D['ma_coords'][:,2]
+            data = (data%256)/256.
+        elif mode == 'sheetanalysis':
+            p.update_colormap('validation')
+        
+        p.updateAttribute('a_intensity', data.astype(np.float32))
+        self.app.viewerWindow.render()
+
 class ToolsWindow(ToolsDialog):
     def __init__(self, app):
         super(ToolsWindow, self).__init__(app, ui_path='sheeterator.ui', parent=None)
@@ -250,7 +295,7 @@ class ToolsWindow(ToolsDialog):
         self.ui.comboBox_clusters.activated.connect(self.app.filter_cluster)
         self.ui.comboBox_sheets.activated.connect(self.app.filter_sheet)
         self.ui.groupBox_cluster.clicked.connect(self.app.toggle_selection)
-        self.ui.groupBox_sheettester.clicked.connect(self.app.toggle_tester)
+        # self.ui.groupBox_sheettester.clicked.connect(self.app.toggle_tester)
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -454,14 +499,8 @@ class ToolsWindow(ToolsDialog):
         color = (220,220,220,255)
         self.ui.graphicsView_plotWidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2}, name='bisec_z '+str(42))
         
-# class GraphWindow(PlotWidget):
-#     def __init__(self, master_app, parent=None):
-#         self.layer_manager = master_app.layer_manager
-#         self.master_app = master_app
-#         super(GraphWindow, self).__init__(parent)
 
 
-    
 
 
 def view(ma, vid):

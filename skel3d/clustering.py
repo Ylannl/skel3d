@@ -169,7 +169,7 @@ def analyse_cluster(ma, g):
             result[key]['r_value']=r_value
             result[key]['p_value']=p_value
             result[key]['std_err']=std_err
-            result[key]['regularity_ratio']=regularity_ratio
+        result['regularity_ratio']=regularity_ratio
         v['sheet_analysis'] = result
 
 

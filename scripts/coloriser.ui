@@ -35,49 +35,45 @@
        <string>Conditionally based on sheet analysis</string>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QGraphicsView" name="graphicsView">
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
+          <string>regularity ratio</string>
          </property>
         </widget>
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>TextLabel</string>
+          <string>planfit [std_err]</string>
          </property>
         </widget>
        </item>
        <item row="3" column="0">
-        <widget class="QGraphicsView" name="graphicsView_2"/>
+        <widget class="PlotWidget" name="graphicsView_shta_planfitstderr"/>
        </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_3">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
          <property name="text">
-          <string>TextLabel</string>
+          <string>radius [slope]</string>
          </property>
         </widget>
        </item>
        <item row="5" column="0">
-        <widget class="QGraphicsView" name="graphicsView_3"/>
+        <widget class="PlotWidget" name="graphicsView_shta_regularityratio"/>
        </item>
-       <item row="6" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>TextLabel</string>
+       <item row="1" column="0">
+        <widget class="PlotWidget" name="graphicsView_shta_radiusslope">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
          </property>
         </widget>
        </item>
        <item row="7" column="0">
-        <widget class="QGraphicsView" name="graphicsView_4"/>
+        <widget class="PlotWidget" name="graphicsView_shta_select"/>
+       </item>
+       <item row="6" column="0">
+        <widget class="QComboBox" name="comboBox_shta_select"/>
        </item>
       </layout>
      </widget>
@@ -90,21 +86,21 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QRadioButton" name="radioButton_2">
+     <widget class="QRadioButton" name="radioButton_mat_segmentid">
       <property name="text">
        <string/>
       </property>
      </widget>
     </item>
     <item row="2" column="0">
-     <widget class="QRadioButton" name="radioButton_3">
+     <widget class="QRadioButton" name="radioButton_mat_elevation">
       <property name="text">
        <string/>
       </property>
      </widget>
     </item>
     <item row="0" column="0">
-     <widget class="QRadioButton" name="radioButton">
+     <widget class="QRadioButton" name="radioButton_mat_sheetanalysis">
       <property name="text">
        <string/>
       </property>
@@ -131,8 +127,31 @@
    <attribute name="label">
     <string>Surface points</string>
    </attribute>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QRadioButton" name="radioButton_4">
+      <property name="text">
+       <string>Elevation</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="radioButton_5">
+      <property name="text">
+       <string>Solid</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
