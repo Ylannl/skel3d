@@ -273,7 +273,7 @@ if __name__ == '__main__':
     INFILE = "/Users/ravi/git/mat_util/Random3Dcity/1/NPY"
     # INFILE = "/Users/ravi/git/mat_util/test_cases/sloped_gable/NPY"
     datadict = npy.read(INFILE)
-    ma = MAHelper(datadict, origin=True)
+    ma = MAHelper(datadict)
 
     g = ma.D['ma_segment_graph']
     for v in g.vs:

@@ -163,12 +163,11 @@ def analyse_cluster(ma, g):
         result = {}
         for key, y in Y.items():
             slope, intercept, r_value, p_value, std_err = linregress(x,y)
-            result[key] = {}
-            result[key]['slope']=slope
-            result[key]['intercept']=intercept
-            result[key]['r_value']=r_value
-            result[key]['p_value']=p_value
-            result[key]['std_err']=std_err
+            result[key+'_slope']=slope
+            result[key+'_intercept']=intercept
+            result[key+'_r_value']=r_value
+            result[key+'_p_value']=p_value
+            result[key+'_std_err']=std_err
         result['regularity_ratio']=regularity_ratio
         v['sheet_analysis'] = result
 

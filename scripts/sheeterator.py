@@ -28,9 +28,9 @@ class TestApp(App):
         self.layer_manager.add_layer(Layer(name='Clusters', is_aggregate=True))
         # here all layers need to have been added
         self.dialog = ToolsWindow(self)
+        self.draw_clusters()
         self.coloriser = ColoriserWindow(self)
         self.coloriser.show()
-        self.draw_clusters()
         super(TestApp, self).run()
         
         # self.plotWindow.plot(np.random.normal(size=100), name="Data 1")
@@ -47,38 +47,13 @@ class TestApp(App):
             if 0<g.ecount():#<1000:
 
                 ## Classify clusters as inside or outside
-                # attempt to distinghuish between interior and exterior sheets based on vertical component of bisectors
                 color = (1.,0.,0.)
-                name = 'cluster {}'.format(i)
-                zsum = 0
-                ma_idx = np.concatenate(g.vs['ma_idx'])
-                
-                # select points with good sepangle (eg not 180deg)
-                f = np.intersect1d(np.argwhere(ma.D['ma_theta'] < math.pi*0.9), ma_idx)
-                # sort on z component of bisector, take 10% lowest and highest, compute ratio of means of that
-                l = len(f)
-                bz = ma.D['ma_bisec'][f][:,2]
-                bz_sort = np.sort(bz )
-                b_bot = np.mean(bz_sort[:l//10]) 
-                b_top = np.mean(bz_sort[l-l//10:])
-                b_ratio = abs(b_top)/abs(b_bot)
-
-                # for v in g.vs:
-                #     zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
-                # zsum = np.prod(np.sum(np.array(g.vs['ma_bisec_mean'])[:,2], np.array([len(idx) for idx in g.vs['ma_idx']]) ), axis=1)
-                # use ration to decide if int or ext cluster. Now
-                name_append = " | exterior"
-                if b_ratio > 1.05 or b_bot > 0: # completely `closed` or bounded clusters should have ratio closed to one (only occurs in artifical datasets, since DSM never closed)
+                if g['classification'] == "interior":
                     color = (0.,1.,0.)
-                    name_append = " | interior"
-                    if np.mean(g.vs['ma_theta_mean']) > math.pi/4: # artificial/building structures typically have a large sepangle (compared to terrain features)
-                        color = (1.,1.,0.)
-                        name_append += " (building)"
-
-                elif b_ratio > 0.95:
+                elif g['classification'] == "interior (building)":
+                    color = (1.,1.,0.)
+                elif g['classification'] == "":
                     color = (0.5,0.5,0.5)
-                    name_append = ""
-                name += name_append
 
                 if 0:
                     # grow 1 flip sheet around this cluster
@@ -118,7 +93,7 @@ class TestApp(App):
                     adj_rel_end.append(g.vs[e.target]['ma_coords_mean'])
                 # color = np.random.uniform(0.3,1.0,3)
                 p = self.layer_manager['Clusters'].add_data_source_line(
-                    name = name,
+                    name = 'cluster {} {}'.format(i, g['classification']),
                     coords_start = np.array(adj_rel_start),
                     coords_end = np.array(adj_rel_end),
                     color = tuple(color),
@@ -141,35 +116,6 @@ class TestApp(App):
             self.filter_cluster(0)
             self.filter_idx()
         # self.viewerWindow.render()
-
-    def toggle_tester(self, toggle):
-        if toggle==True:
-            # self.test_sheets()
-            p = self.layer_manager['MAT'].programs['MAT points']
-            p.update_colormap('validation')
-            data = np.ones(2*self.ma.m, dtype=np.float32)*0.5
-            for g in self.graphs:
-                for v in g.vs:
-                    # import ipdb;ipdb.set_trace()
-                    # print(v.attributes().keys())
-                    if 'sheet_analysis' in v.attributes().keys():
-                        print( v['sheet_analysis']['radius']['slope'], -.2 < v['sheet_analysis']['radius']['slope'] < .2 )
-                        if -.1 < v['sheet_analysis']['radius']['slope'] < .1:
-                            data[v['ma_idx']] = 200/256
-                        else:
-                            data[v['ma_idx']] = 1/256
-
-                        if v['sheet_analysis']['ma_planfit']['std_err'] < 0.1:
-                            data[v['ma_idx']] = 200/256
-                        else:
-                            data[v['ma_idx']] = 1/256
-            
-            # data = np.ones(2*self.ma.m, dtype=np.float32)*255/256
-            # data[self.ma.m:] = 0./256
-            # import ipdb;ipdb.set_trace()
-            p.updateAttribute('a_intensity', data)
-        self.viewerWindow.render()
-
 
     def filter_cluster(self, index):
         if index == 0:
@@ -247,23 +193,68 @@ class ColoriserWindow(QToolBox):
         self.app = app
 
         self.connectUI()
+        
+        self.draw_plots()
 
 
     def connectUI(self):
-        self.ui.radioButton_mat_sheetanalysis.toggled.connect(self.color_sheetanalysis)
-        self.ui.radioButton_mat_segmentid.toggled.connect(self.color_segmentid)
-        self.ui.radioButton_mat_elevation.toggled.connect(self.color_elevation)
+        self.ui.radioButton_mat_sheetanalysis.clicked.connect(self.color_sheetanalysis)
+        self.ui.radioButton_mat_segmentid.clicked.connect(self.color_segmentid)
+        self.ui.radioButton_mat_elevation.clicked.connect(self.color_elevation)
 
-    def color_sheetanalysis(self, checked):
-        pass
+    def draw_plots(self):
+        # self.ui.graphicsView_shta_radiusslope
+        l = []
+        l.append((self.ui.graphicsView_shta_radiusslope, 'radius_slope'))
+        l.append((self.ui.graphicsView_shta_planfitstderr, 'ma_planfit_std_err'))
+        l.append((self.ui.graphicsView_shta_regularityratio, 'regularity_ratio'))
+        # graphicsView_shta_select
+        
+        self.LinearRegionItems = {}
+        for graphicsView, attribute in l: 
+            vals = []
+            for g in self.app.ma.D['ma_clusters']:
+                for v in g.vs:
+                    # import ipdb;ipdb.set_trace()
+                    # print(v.attributes().keys())
+                    if 'sheet_analysis' in v.attributes().keys():
+                        vals.append(v['sheet_analysis'][attribute])
+            y,x = np.histogram(vals, bins=100)
+            ## Using stepMode=True causes the plot to draw two lines for each sample.
+            ## notice that len(x) == len(y)+1
+            # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+            # color = (0,200,0,255)
+            color = (220,220,25,255)
+            graphicsView.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2})
+            
+            xmi, xma = x.min(), x.max() 
+            lr = LinearRegionItem([xmi-.01, xma+.01], movable=True)
+            graphicsView.addItem(lr)
+            lr.sigRegionChangeFinished.connect(self.color_sheetanalysis)
+            self.LinearRegionItems[attribute] = lr
+
+    # def lr_changed(self, lr):
+    #     # xmi, xma = lr.getRegion()
+    #     self.color_sheetanalysis()
+        
+
+    def color_sheetanalysis(self):
+        # draw only points that are recognized as interior/building
+        p = self.app.layer_manager['MAT'].programs['MAT points']
+        ma_idx = []
+        for g in self.app.ma.D['ma_clusters']:
+            if g['classification'] == 'interior (building)':
+                ma_idx += list(np.concatenate(g.vs['ma_idx']))
+        self.app.filter_idx(ma_idx)
+        self.color('sheetanalysis', self.get_conditional_data())
     
-    def color_segmentid(self, checked):
-        if checked:
-            self.color('segmentid')
+    def color_segmentid(self):
+        self.app.filter_idx()
+        self.color('segmentid')
     
-    def color_elevation(self, checked):
-        if checked:
-            self.color('elevation')
+    def color_elevation(self):
+        self.app.filter_idx()
+        self.color('elevation')
 
     def color(self, mode, data=None):
         p = self.app.layer_manager['MAT'].programs['MAT points']
@@ -280,6 +271,27 @@ class ColoriserWindow(QToolBox):
         
         p.updateAttribute('a_intensity', data.astype(np.float32))
         self.app.viewerWindow.render()
+
+    def get_conditional_data(self):
+
+        # self.test_sheets()
+        p = self.app.layer_manager['MAT'].programs['MAT points']
+        data = np.ones(2*self.app.ma.m, dtype=np.float32)*0.5
+        for g in self.app.graphs:
+            filterthis = True
+            for v in g.vs:
+                # import ipdb;ipdb.set_trace()
+                # print(v.attributes().keys())
+                if 'sheet_analysis' in v.attributes().keys():
+                    for attribute, lr in self.LinearRegionItems.items(): 
+                        vmin, vmax = lr.getRegion()
+                        filterthis &= (vmin <= v['sheet_analysis'][attribute] <= vmax)
+                    if filterthis:
+                        data[v['ma_idx']] = 0.9
+                    else:
+                        data[v['ma_idx']] = 0.1
+        return data
+            
 
 class ToolsWindow(ToolsDialog):
     def __init__(self, app):
@@ -345,6 +357,7 @@ class ToolsWindow(ToolsDialog):
             print('r_value:', str(r_value))
             print('p_value:', str(p_value))
             print('std_err:', str(std_err))
+            print('regularity ratio:', str(v['sheet_analysis']['regularity_ratio']))
             self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name=name)
         self.ui.graphicsView_plotWidget.clear()
         # pick reference point: the point with median bisector
