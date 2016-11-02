@@ -101,6 +101,7 @@ class TestApp(App):
                 )
                 i+=1
                 p.graph = g
+
         self.viewerWindow.render()
 
         self.layer_manager['Clusters'].is_visible=True
@@ -307,6 +308,7 @@ class ToolsWindow(ToolsDialog):
         self.ui.comboBox_clusters.activated.connect(self.app.filter_cluster)
         self.ui.comboBox_sheets.activated.connect(self.app.filter_sheet)
         self.ui.groupBox_cluster.clicked.connect(self.app.toggle_selection)
+        self.ui.pushButton_reconstruct.clicked.connect(self.reconstruct)
         # self.ui.groupBox_sheettester.clicked.connect(self.app.toggle_tester)
 
     def keyPressEvent(self, event):
@@ -338,6 +340,64 @@ class ToolsWindow(ToolsDialog):
                 newIndex = 0
             self.ui.comboBox_sheets.setCurrentIndex(newIndex)
             self.app.filter_sheet(newIndex)
+
+    def reconstruct(self, checked):
+        name = self.app.dialog.ui.comboBox_clusters.itemText(self.app.dialog.ui.comboBox_clusters.currentIndex())
+        g = self.app.layer_manager['Clusters'][name].graph
+
+        try:
+            this_m = build_map(g, self.app.ma)
+            # self.app.viewerWindow.context.makeCurrent(self.app.viewerWindow)
+            # create new layer and add it to the layer_manager
+            layer = self.app.layer_manager.add_layer(Layer(name='MAP '+str(name)))
+
+            adj_rel_start = []
+            adj_rel_end = []
+            # this_g = g.subgraph(this_mapping)
+            for hn in this_m.ns:
+                hn['coords_mean'] = np.mean(ma.D['coords'][hn['s_idx']], axis=0)
+            
+            for e in this_m.es:
+                if e.kind == 'match':
+                    source, target = e.nodes
+                    adj_rel_start.append(source['coords_mean'])
+                    adj_rel_end.append(target['coords_mean'])
+            p = layer.add_data_source_line(
+                name = 'map edges',
+                coords_start = np.array(adj_rel_start),
+                coords_end = np.array(adj_rel_end),
+                color = (0,1,0),
+                options = ['alternate_vcolor']
+            )
+            import ipdb;ipdb.set_trace()
+
+            adj_rel_start = []
+            adj_rel_end = []
+            for i in range(len(this_m.ns)//2):
+                hn = this_m.ns[i*2]
+                source, target = hn, hn.twin
+                adj_rel_start.append(source['coords_mean'])
+                adj_rel_end.append(target['coords_mean'])
+            p = layer.add_data_source_line(
+                name = 'map twin links',
+                coords_start = np.array(adj_rel_start),
+                coords_end = np.array(adj_rel_end),
+                color = (1,1,1)
+            )
+
+            # layer.add_data_source(
+            #     name = 'Debug',
+            #     opts=['splat_point','fixed_color', 'blend'],
+            #     points=self.app.ma.D['ma_coords'],
+            #     color=(1.,.2,.6),
+            # )
+
+            # add layer to layer list
+            self.app.dialog.addLayer(layer)
+        except Exception as e:
+            print('MAP reconstruction failed')
+            print(e)
+
 
     def lr_changed(self, lr):
         xmi, xma = lr.getRegion()
