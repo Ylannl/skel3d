@@ -30,7 +30,7 @@ class Map(object):
 
     def contract_halfnode(self, node):
         # only cares about match edges
-        # add new edges between neighbours of this node if they connect though this node
+        # add new edges between neighbours of this node if they connect through this node
         for e1, hn1 in node.neighbours():
             for e2, hn2 in node.neighbours():
                 if hn1 != hn2:

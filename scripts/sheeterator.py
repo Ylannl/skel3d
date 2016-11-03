@@ -202,6 +202,9 @@ class ColoriserWindow(QToolBox):
         self.ui.radioButton_mat_sheetanalysis.clicked.connect(self.color_sheetanalysis)
         self.ui.radioButton_mat_segmentid.clicked.connect(self.color_segmentid)
         self.ui.radioButton_mat_elevation.clicked.connect(self.color_elevation)
+        self.ui.radioButton_mat_select.clicked.connect(self.color_select)
+
+        self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta'])
 
     def draw_plots(self):
         # self.ui.graphicsView_shta_radiusslope
@@ -253,6 +256,11 @@ class ColoriserWindow(QToolBox):
         self.app.filter_idx()
         self.color('segmentid')
     
+    def color_select(self):
+        self.app.filter_idx()
+        mode = self.ui.comboBox_mat_select.itemText(self.ui.comboBox_mat_select.currentIndex())
+        self.color(mode)
+    
     def color_elevation(self):
         self.app.filter_idx()
         self.color('elevation')
@@ -262,11 +270,15 @@ class ColoriserWindow(QToolBox):
         if mode == 'segmentid':
             p.update_colormap('random')
             data = self.app.ma.D['ma_segment'].astype(np.float32)
-            data *= 1./np.nanmax(data)
+            data = (data%256)/256.
+        elif mode in ['ma_radii', 'ma_theta']:
+            p.update_colormap('jet')
+            data = self.app.ma.D[mode]
+            data *= 1./10
         elif mode == 'elevation':
             p.update_colormap('jet')
             data = self.app.ma.D['ma_coords'][:,2]
-            data = (data%256)/256.
+            data *= 1./np.nanmax(data)
         elif mode == 'sheetanalysis':
             p.update_colormap('validation')
         

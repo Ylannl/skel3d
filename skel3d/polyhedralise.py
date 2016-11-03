@@ -260,7 +260,7 @@ def build_map(g, ma):
 
     # for each sheet find two sets of surface points, each corresponding to a distinct plane. Store results in sheet
     vids_coplanar = [] # list to keep sheets that we ignore because they support parallel planes (separation angle=180deg)
-    vid_map = {}
+    vid_map = {} # mapping we need to keep because we are skipping some nodes in the graph and indexing is based on position in list 
     nid_cnt = 0
     for i,v in enumerate(g.vs):
         ma_idx = v['ma_idx']

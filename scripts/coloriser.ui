@@ -21,14 +21,42 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>447</width>
-     <height>583</height>
+     <width>432</width>
+     <height>592</height>
     </rect>
    </property>
    <attribute name="label">
     <string>MAT points</string>
    </attribute>
    <layout class="QGridLayout" name="gridLayout_2">
+    <item row="1" column="0">
+     <widget class="QRadioButton" name="radioButton_mat_select">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QRadioButton" name="radioButton_mat_segmentid">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QRadioButton" name="radioButton_mat_sheetanalysis">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>segment_id</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="2">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
@@ -79,37 +107,19 @@
      </widget>
     </item>
     <item row="1" column="2">
-     <widget class="QLabel" name="label_5">
-      <property name="text">
-       <string>Segment ID</string>
-      </property>
-     </widget>
+     <widget class="QComboBox" name="comboBox_mat_select"/>
     </item>
-    <item row="1" column="0">
-     <widget class="QRadioButton" name="radioButton_mat_segmentid">
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
+    <item row="3" column="0">
      <widget class="QRadioButton" name="radioButton_mat_elevation">
       <property name="text">
        <string/>
       </property>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="QRadioButton" name="radioButton_mat_sheetanalysis">
+    <item row="3" column="2">
+     <widget class="QLabel" name="label_4">
       <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="2">
-     <widget class="QLabel" name="label_6">
-      <property name="text">
-       <string>Elevation</string>
+       <string>elevation</string>
       </property>
      </widget>
     </item>
