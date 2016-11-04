@@ -268,7 +268,7 @@ if __name__ == '__main__':
     #exterior: 5
     if len(sys.argv)>1:
         vids = [int(sys.argv[-1])]
-        # INFILE = sys.argv[-1]
+        INFILE = sys.argv[-1]
     # import ipdb;ipdb.set_trace()
     INFILE = "/Users/ravi/git/mat_util/Random3Dcity/1/NPY"
     # INFILE = "/Users/ravi/git/mat_util/test_cases/sloped_gable/NPY"
