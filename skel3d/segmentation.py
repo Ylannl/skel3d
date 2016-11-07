@@ -201,7 +201,7 @@ class RegionGrower(object):
 	# 	return self.mah.D['spoke_cnt'][seed] < self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] < self.p['secspokecnt_thres'] or self.mah.D['spoke_cnt'][seed] >	 self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] >	 self.p['secspokecnt_thres']  
 		# if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres and math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_1:
 
-	def valid_candidate_theta(self, seed, candidate):
+	def valid_candidate_theta(self, seed, candidate, **kwargs):
 		"""candidate is valid if difference between separation angles of seed and candidate is below preset threshold"""
 		return math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_2
 
