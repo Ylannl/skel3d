@@ -194,8 +194,6 @@ class ColoriserWindow(QToolBox):
         self.app = app
 
         self.connectUI()
-        
-        self.draw_plots()
 
 
     def connectUI(self):
@@ -206,36 +204,38 @@ class ColoriserWindow(QToolBox):
 
         self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta', 'ma_bisecdiff'])
 
-    def draw_plots(self):
-        # self.ui.graphicsView_shta_radiusslope
-        l = []
-        l.append((self.ui.graphicsView_shta_radiusslope, 'radius_slope'))
-        l.append((self.ui.graphicsView_shta_planfitstderr, 'ma_planfit_std_err'))
-        l.append((self.ui.graphicsView_shta_regularityratio, 'regularity_ratio'))
-        # graphicsView_shta_select
+        shta_keys = ['radius_p_value', 'ma_theta_std_err', 'ma_bisec_diff_slope', 'ma_thetap_std_err', 'biseco_diff_p_value', 'radius_std_err', 'radius_intercept', 'ma_theta_p_value', 'biseco_diff_std_err', 'ma_thetap_r_value', 'ma_planfit_r_value', 'ma_planfit_slope', 'ma_bisec_diff_std_err', 'ma_theta_r_value', 'biseco_diff_r_value', 'ma_planfit_std_err', 'radius_slope', 'biseco_diff_intercept', 'ma_thetap_intercept', 'ma_planfit_intercept', 'ma_thetap_p_value', 'biseco_diff_slope', 'ma_bisec_diff_intercept', 'ma_theta_slope', 'regularity_ratio', 'ma_bisec_diff_r_value', 'ma_planfit_rms', 'ma_planfit_p_value', 'ma_theta_intercept', 'ma_thetap_slope', 'ma_bisec_diff_p_value', 'radius_r_value']
+        self.ui.comboBox_shta_select.insertItems(0, shta_keys)
+        self.ui.comboBox_shta_select.activated.connect(self.draw_plot)
+
+    def draw_plot(self, index):
+
+        plotwidget = self.ui.graphicsView_shta_select
+        plotwidget.clear()
+        attribute = self.ui.comboBox_shta_select.itemText(index)
         
         self.LinearRegionItems = {}
-        for graphicsView, attribute in l: 
-            vals = []
-            for g in self.app.ma.D['ma_clusters']:
-                for v in g.vs:
-                    # import ipdb;ipdb.set_trace()
-                    # print(v.attributes().keys())
-                    if 'sheet_analysis' in v.attributes().keys():
-                        vals.append(v['sheet_analysis'][attribute])
-            y,x = np.histogram(vals, bins=100)
-            ## Using stepMode=True causes the plot to draw two lines for each sample.
-            ## notice that len(x) == len(y)+1
-            # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
-            # color = (0,200,0,255)
-            color = (220,220,25,255)
-            graphicsView.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2})
-            
-            xmi, xma = x.min(), x.max() 
-            lr = LinearRegionItem([xmi-.01, xma+.01], movable=True)
-            graphicsView.addItem(lr)
-            lr.sigRegionChangeFinished.connect(self.color_sheetanalysis)
-            self.LinearRegionItems[attribute] = lr
+
+        vals = []
+        for g in self.app.ma.D['ma_clusters']:
+            for v in g.vs:
+                # import ipdb;ipdb.set_trace()
+                # print(v.attributes().keys())
+                if 'sheet_analysis' in v.attributes().keys():
+                    vals.append(v['sheet_analysis'][attribute])
+        y,x = np.histogram(vals, bins=100)
+        ## Using stepMode=True causes the plot to draw two lines for each sample.
+        ## notice that len(x) == len(y)+1
+        # color = tuple(np.random.uniform(0.3,1.0,3)*255) + (255,)
+        # color = (0,200,0,255)
+        color = (220,220,25,255)
+        plotwidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2})
+        
+        xmi, xma = x.min(), x.max() 
+        lr = LinearRegionItem([xmi-.01, xma+.01], movable=True)
+        plotwidget.addItem(lr)
+        lr.sigRegionChangeFinished.connect(self.color_sheetanalysis)
+        self.LinearRegionItems[attribute] = lr
 
     # def lr_changed(self, lr):
     #     # xmi, xma = lr.getRegion()

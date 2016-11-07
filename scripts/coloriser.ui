@@ -21,23 +21,45 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>432</width>
-     <height>592</height>
+     <width>447</width>
+     <height>583</height>
     </rect>
    </property>
    <attribute name="label">
     <string>MAT points</string>
    </attribute>
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="1" column="0">
-     <widget class="QRadioButton" name="radioButton_mat_select">
+    <item row="0" column="1">
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>Binary based on sheet analysis</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="0">
+        <widget class="PlotWidget" name="graphicsView_shta_select"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QComboBox" name="comboBox_shta_select"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLabel" name="label_6">
       <property name="text">
-       <string/>
+       <string>segment_id</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QRadioButton" name="radioButton_mat_segmentid">
+    <item row="4" column="1">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>elevation</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QRadioButton" name="radioButton_mat_elevation">
       <property name="text">
        <string/>
       </property>
@@ -50,76 +72,32 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="2">
-     <widget class="QLabel" name="label_6">
-      <property name="text">
-       <string>segment_id</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QGroupBox" name="groupBox">
-      <property name="title">
-       <string>Conditionally based on sheet analysis</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>regularity ratio</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>planfit [std_err]</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="PlotWidget" name="graphicsView_shta_planfitstderr"/>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>radius [slope]</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="PlotWidget" name="graphicsView_shta_regularityratio"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="PlotWidget" name="graphicsView_shta_radiusslope">
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="PlotWidget" name="graphicsView_shta_select"/>
-       </item>
-       <item row="6" column="0">
-        <widget class="QComboBox" name="comboBox_shta_select"/>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="1" column="2">
-     <widget class="QComboBox" name="comboBox_mat_select"/>
-    </item>
     <item row="3" column="0">
-     <widget class="QRadioButton" name="radioButton_mat_elevation">
+     <widget class="QRadioButton" name="radioButton_mat_segmentid">
       <property name="text">
        <string/>
       </property>
      </widget>
     </item>
-    <item row="3" column="2">
-     <widget class="QLabel" name="label_4">
+    <item row="1" column="1">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="title">
+       <string>Colormap based on scalar attribute</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QComboBox" name="comboBox_mat_select"/>
+       </item>
+       <item>
+        <widget class="PlotWidget" name="graphicsView_mat_select"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QRadioButton" name="radioButton_mat_select">
       <property name="text">
-       <string>elevation</string>
+       <string/>
       </property>
      </widget>
     </item>
