@@ -204,7 +204,7 @@ class ColoriserWindow(QToolBox):
         self.ui.radioButton_mat_elevation.clicked.connect(self.color_elevation)
         self.ui.radioButton_mat_select.clicked.connect(self.color_select)
 
-        self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta'])
+        self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta', 'ma_bisecdiff'])
 
     def draw_plots(self):
         # self.ui.graphicsView_shta_radiusslope
@@ -271,10 +271,10 @@ class ColoriserWindow(QToolBox):
             p.update_colormap('random')
             data = self.app.ma.D['ma_segment'].astype(np.float32)
             data = (data%256)/256.
-        elif mode in ['ma_radii', 'ma_theta']:
+        elif mode in ['ma_radii', 'ma_theta', 'ma_bisecdiff']:
             p.update_colormap('jet')
             data = self.app.ma.D[mode]
-            data *= 1./10
+            data *= 1.
         elif mode == 'elevation':
             p.update_colormap('jet')
             data = self.app.ma.D['ma_coords'][:,2]

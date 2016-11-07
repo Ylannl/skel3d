@@ -145,6 +145,7 @@ def analyse_cluster(ma, g):
             q = ma.D['ma_coords'][ma_idx[i]] - c
             q_on_n = np.dot(q,n)
             Y['ma_planfit'][i] = q_on_n
+        planfit_rms = np.sqrt(np.square(Y['ma_planfit']).sum()/len(ma_idx))
 
         # diff in cross
         Y['biseco_diff'] = np.empty(len(ma_idx))
@@ -169,6 +170,8 @@ def analyse_cluster(ma, g):
             result[key+'_p_value']=p_value
             result[key+'_std_err']=std_err
         result['regularity_ratio']=regularity_ratio
+        result['ma_planfit_rms']=planfit_rms
+        
         v['sheet_analysis'] = result
 
 
