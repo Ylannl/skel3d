@@ -205,6 +205,7 @@ class ColoriserWindow(QToolBox):
         self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta', 'ma_bisecdiff'])
 
         shta_keys = ['radius_p_value', 'ma_theta_std_err', 'ma_bisec_diff_slope', 'ma_thetap_std_err', 'biseco_diff_p_value', 'radius_std_err', 'radius_intercept', 'ma_theta_p_value', 'biseco_diff_std_err', 'ma_thetap_r_value', 'ma_planfit_r_value', 'ma_planfit_slope', 'ma_bisec_diff_std_err', 'ma_theta_r_value', 'biseco_diff_r_value', 'ma_planfit_std_err', 'radius_slope', 'biseco_diff_intercept', 'ma_thetap_intercept', 'ma_planfit_intercept', 'ma_thetap_p_value', 'biseco_diff_slope', 'ma_bisec_diff_intercept', 'ma_theta_slope', 'regularity_ratio', 'ma_bisec_diff_r_value', 'ma_planfit_rms', 'ma_planfit_p_value', 'ma_theta_intercept', 'ma_thetap_slope', 'ma_bisec_diff_p_value', 'radius_r_value']
+        shta_keys.sort()
         self.ui.comboBox_shta_select.insertItems(0, shta_keys)
         self.ui.comboBox_shta_select.activated.connect(self.draw_plot)
 
@@ -213,8 +214,6 @@ class ColoriserWindow(QToolBox):
         plotwidget = self.ui.graphicsView_shta_select
         plotwidget.clear()
         attribute = self.ui.comboBox_shta_select.itemText(index)
-        
-        self.LinearRegionItems = {}
 
         vals = []
         for g in self.app.ma.D['ma_clusters']:
@@ -235,7 +234,7 @@ class ColoriserWindow(QToolBox):
         lr = LinearRegionItem([xmi-.01, xma+.01], movable=True)
         plotwidget.addItem(lr)
         lr.sigRegionChangeFinished.connect(self.color_sheetanalysis)
-        self.LinearRegionItems[attribute] = lr
+        self.LinearRegionItem_shta_select = lr
 
     # def lr_changed(self, lr):
     #     # xmi, xma = lr.getRegion()
@@ -288,17 +287,14 @@ class ColoriserWindow(QToolBox):
     def get_conditional_data(self):
 
         # self.test_sheets()
+        attribute = self.ui.comboBox_shta_select.itemText(self.ui.comboBox_shta_select.currentIndex())
         p = self.app.layer_manager['MAT'].programs['MAT points']
         data = np.ones(2*self.app.ma.m, dtype=np.float32)*0.5
+        vmin, vmax = self.LinearRegionItem_shta_select.getRegion()
         for g in self.app.graphs:
-            filterthis = True
             for v in g.vs:
-                # import ipdb;ipdb.set_trace()
-                # print(v.attributes().keys())
-                if 'sheet_analysis' in v.attributes().keys():
-                    for attribute, lr in self.LinearRegionItems.items(): 
-                        vmin, vmax = lr.getRegion()
-                        filterthis &= (vmin <= v['sheet_analysis'][attribute] <= vmax)
+                if 'sheet_analysis' in v.attributes().keys(): 
+                    filterthis = (vmin <= v['sheet_analysis'][attribute] <= vmax)
                     if filterthis:
                         data[v['ma_idx']] = 0.9
                     else:
