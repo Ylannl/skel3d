@@ -13,7 +13,7 @@ from .util import angle
 
 from .geom3d import *
 
-def get_clusters(ma, min_count = 50):
+def get_clusters(ma, min_count = 20):
     ## Remove insignificant edges in graph
     contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))

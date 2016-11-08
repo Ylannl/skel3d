@@ -199,17 +199,40 @@ class ColoriserWindow(QToolBox):
     def connectUI(self):
         self.ui.radioButton_mat_sheetanalysis.clicked.connect(self.color_sheetanalysis)
         self.ui.radioButton_mat_segmentid.clicked.connect(self.color_segmentid)
-        self.ui.radioButton_mat_elevation.clicked.connect(self.color_elevation)
+        # self.ui.radioButton_mat_elevation.clicked.connect(self.color_elevation)
         self.ui.radioButton_mat_select.clicked.connect(self.color_select)
+        # self.ui.comboBox_mat_select_cmap
 
-        self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta', 'ma_bisecdiff'])
+        self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta', 'elevation'])
+        self.ui.comboBox_mat_select.activated.connect(self.draw_attribute_plot)
 
         shta_keys = ['radius_p_value', 'ma_theta_std_err', 'ma_bisec_diff_slope', 'ma_thetap_std_err', 'biseco_diff_p_value', 'radius_std_err', 'radius_intercept', 'ma_theta_p_value', 'biseco_diff_std_err', 'ma_thetap_r_value', 'ma_planfit_r_value', 'ma_planfit_slope', 'ma_bisec_diff_std_err', 'ma_theta_r_value', 'biseco_diff_r_value', 'ma_planfit_std_err', 'radius_slope', 'biseco_diff_intercept', 'ma_thetap_intercept', 'ma_planfit_intercept', 'ma_thetap_p_value', 'biseco_diff_slope', 'ma_bisec_diff_intercept', 'ma_theta_slope', 'regularity_ratio', 'ma_bisec_diff_r_value', 'ma_planfit_rms', 'ma_planfit_p_value', 'ma_theta_intercept', 'ma_thetap_slope', 'ma_bisec_diff_p_value', 'radius_r_value']
         shta_keys.sort()
         self.ui.comboBox_shta_select.insertItems(0, shta_keys)
-        self.ui.comboBox_shta_select.activated.connect(self.draw_plot)
+        self.ui.comboBox_shta_select.activated.connect(self.draw_shta_plot)
 
-    def draw_plot(self, index):
+    def draw_attribute_plot(self, index):
+
+        plotwidget = self.ui.graphicsView_mat_select
+        plotwidget.clear()
+        attribute = self.ui.comboBox_mat_select.itemText(index)
+
+        if attribute == 'elevation':
+            vals = self.app.ma.D['ma_coords'][:,2]
+        else:
+            vals = self.app.ma.D[attribute]
+        y,x = np.histogram(vals, bins=100)
+        color = (220,220,25,255)
+        plotwidget.plot(x, y, stepMode=True, fillLevel=0, pen={'color': color, 'width': 2})
+        
+        xmi, xma = x.min(), x.max() 
+        lr = LinearRegionItem([xmi-.01, xma+.01], movable=True)
+        plotwidget.addItem(lr)
+        lr.sigRegionChangeFinished.connect(self.color_select)
+        self.LinearRegionItem_mat_select = lr
+
+
+    def draw_shta_plot(self, index):
 
         plotwidget = self.ui.graphicsView_shta_select
         plotwidget.clear()
@@ -266,20 +289,24 @@ class ColoriserWindow(QToolBox):
 
     def color(self, mode, data=None):
         p = self.app.layer_manager['MAT'].programs['MAT points']
+        
         if mode == 'segmentid':
             p.update_colormap('random')
             data = self.app.ma.D['ma_segment'].astype(np.float32)
             data = (data%256)/256.
-        elif mode in ['ma_radii', 'ma_theta', 'ma_bisecdiff']:
+        elif mode in ['ma_radii', 'ma_theta']:
             p.update_colormap('jet')
             data = self.app.ma.D[mode]
-            data *= 1.
+            vmin, vmax = self.LinearRegionItem_mat_select.getRegion()
+            data = (data-vmin) * 1/vmax
         elif mode == 'elevation':
             p.update_colormap('jet')
             data = self.app.ma.D['ma_coords'][:,2]
-            data *= 1./np.nanmax(data)
+            vmin, vmax = self.LinearRegionItem_mat_select.getRegion()
+            data = (data-vmin) * 1/vmax
         elif mode == 'sheetanalysis':
             p.update_colormap('validation')
+
         
         p.updateAttribute('a_intensity', data.astype(np.float32))
         self.app.viewerWindow.render()

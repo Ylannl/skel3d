@@ -12,7 +12,7 @@ INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Clusterer of MAT sheets')
     parser.add_argument('infile', help='npy file', default=INFILE)
-    parser.add_argument('-m', '--mincount', help='Minimum edge count used during connected compenent analysis', default=50, type=int)
+    parser.add_argument('-m', '--mincount', help='Minimum edge count used during connected compenent analysis', default=20, type=int)
     # parser.add_argument('-a', '--analyse', help='Also compute statistics for each sheet', dest='analyse', action='store_true')
     args = parser.parse_args()
 
