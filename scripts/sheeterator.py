@@ -201,7 +201,10 @@ class ColoriserWindow(QToolBox):
         self.ui.radioButton_mat_segmentid.clicked.connect(self.color_segmentid)
         # self.ui.radioButton_mat_elevation.clicked.connect(self.color_elevation)
         self.ui.radioButton_mat_select.clicked.connect(self.color_select)
+        self.ui.radioButton_surf_matseg.clicked.connect(self.color_surface_matseg)
+        self.ui.radioButton_surf_attribute.clicked.connect(self.color_surface_attribute)
         # self.ui.comboBox_mat_select_cmap
+        
 
         self.ui.comboBox_mat_select.insertItems(0, ['ma_radii', 'ma_theta', 'elevation'])
         self.ui.comboBox_mat_select.activated.connect(self.draw_attribute_plot)
@@ -306,7 +309,34 @@ class ColoriserWindow(QToolBox):
             data = (data-vmin) * 1/vmax
         elif mode == 'sheetanalysis':
             p.update_colormap('validation')
+        
+        p.updateAttribute('a_intensity', data.astype(np.float32))
+        self.app.viewerWindow.render()
+    
+    def color_surface_attribute(self):
+        self.app.filter_idx()
+        self.color_surface('elevation')
+    def color_surface_matseg(self):
+        self.app.filter_idx()
+        self.color_surface('matseg')
 
+    def color_surface(self, mode, data=None):
+        p = self.app.layer_manager['Surface'].programs['Surface points']
+        
+        if mode == 'elevation':
+            p.update_colormap('jet')
+            data = self.app.ma.D['coords'][:,2]
+            # vmin, vmax = self.LinearRegionItem_mat_select.getRegion()
+            vmin, vmax = self.app.ma.D['coords'].min(), self.app.ma.D['coords'].max()
+            data = (data-vmin) * 1/vmax
+        elif mode == 'matseg':
+            p.update_colormap('random')
+            data = np.zeros(self.app.ma.m, dtype=np.float32)
+            for cluster in self.app.graphs:
+                if cluster['classification'].startswith('interior'):
+                    # np.concatenate(g.vs['ma_idx'])
+                    for ma_idx in cluster.vs['ma_idx']:
+                        data[self.app.ma.s_idx(ma_idx)] = random.random()            
         
         p.updateAttribute('a_intensity', data.astype(np.float32))
         self.app.viewerWindow.render()
@@ -452,7 +482,10 @@ class ToolsWindow(ToolsDialog):
             print('r_value:', str(r_value))
             print('p_value:', str(p_value))
             print('std_err:', str(std_err))
-            print('regularity ratio:', str(v['sheet_analysis']['regularity_ratio']))
+            if 'sheet_analysis' in v.attributes():
+                print('regularity ratio:', str(v['sheet_analysis']['regularity_ratio']))
+            else:
+                print('no regularity ration found')
             self.ui.graphicsView_plotWidget.plot(x_, y_, pen={'color': color}, name=name)
         self.ui.graphicsView_plotWidget.clear()
         # pick reference point: the point with median bisector
@@ -631,10 +664,11 @@ def view(ma, vid):
 
     layer_s.add_data_source(
         name = 'Surface points',
-        opts=['splat_disk', 'with_normals'],
+        opts=['splat_disk', 'with_normals', 'with_intensity'],
         # opts=['splat_disk', 'with_normals', 'fixed_color'],
         points=ma.D['coords'], 
         normals=ma.D['normals'],
+        intensity=ma.D['coords'][:,2],
         color= (.4,.4,1.)
     )
     layer_s.add_data_source_line(
@@ -664,8 +698,9 @@ def view(ma, vid):
     layer_ma.add_data_source_line(
       name = 'Secondary spokes',
       coords_start = ma.D['ma_coords'],
-      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[ma.D['ma_qidx']]
-    )
+      coords_end = np.concatenate([ma.D['coords'],ma.D['coords']])[ma.D['ma_qidx']],
+      color=(1.,0.,1.) 
+   )
     layer_ma.add_data_source_line(
         name = 'Bisectors',
         coords_start = ma.D['ma_coords'],

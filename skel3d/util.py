@@ -67,6 +67,12 @@ class MAHelper(object):
         self.filtered = {}
         self.reset_filter()
 
+    def s_idx(self, ma_idx):
+        f = np.zeros(self.m, dtype=bool)
+        f[np.mod(ma_idx, self.m)] = True
+        f[self.D['ma_qidx'][ma_idx]] = True
+        return np.nonzero(f)
+
     def reset_filter(self):
         self.filtered['in'] = zeros(self.m) == True
         self.filtered['out'] = zeros(self.m) == True

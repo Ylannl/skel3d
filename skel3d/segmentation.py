@@ -96,6 +96,7 @@ class RegionGrower(object):
 			self.valid_candidate = self.valid_candidate_bisecthetacnt
 		else:
 			self.valid_candidate = self.valid_candidate_normal
+		print(self.p['method'])
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
 		
@@ -237,7 +238,7 @@ class RegionGrower(object):
 def perform_segmentation_bisec(mah, **kwargs):
 	# find segments based on similiraty in bisector orientation
 	print("Initiating region grower...")
-	kwargs['method']='bisecavg'
+	# kwargs['method']='bisecavg'
 	R = RegionGrower(mah, **kwargs)
 	# seedorder = np.argsort(mah.D['ma_radii'])[::-1].tolist() # reverse
 	seedorder = list( np.random.permutation(R.m) )

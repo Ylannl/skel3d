@@ -14,7 +14,7 @@
    <string>Coloriser</string>
   </property>
   <property name="currentIndex">
-   <number>0</number>
+   <number>1</number>
   </property>
   <widget class="QWidget" name="page">
    <property name="geometry">
@@ -124,16 +124,30 @@
    </attribute>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QRadioButton" name="radioButton_4">
+     <widget class="QRadioButton" name="radioButton_surf_attribute">
       <property name="text">
        <string>Elevation</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QRadioButton" name="radioButton_5">
+     <widget class="QRadioButton" name="radioButton_surf_solid">
       <property name="text">
        <string>Solid</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="radioButton_surf_matseg">
+      <property name="text">
+       <string>MAT sheet segmentation</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="radioButton">
+      <property name="text">
+       <string>MAT cluster id</string>
       </property>
      </widget>
     </item>
