@@ -145,7 +145,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QRadioButton" name="radioButton">
+     <widget class="QRadioButton" name="radioButton_surf_matcluster">
       <property name="text">
        <string>MAT cluster id</string>
       </property>

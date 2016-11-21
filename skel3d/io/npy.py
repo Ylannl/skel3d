@@ -32,6 +32,9 @@ def write(dir, datadict, keys=[]):
 			clusterdir = os.path.join(dir, 'ma_clusters')
 			if not os.path.exists(clusterdir):
 				os.makedirs(clusterdir)
+			else:
+				for cluster_file in glob(os.path.join(clusterdir, '*.pickle')):
+					os.remove(cluster_file)
 			for i, cluster in enumerate(datadict[key]):
 				cluster.write_pickle(os.path.join(clusterdir, 'ma_cluster_'+str(i)+'.pickle'))
 		elif key in keys or len(keys)==0:
