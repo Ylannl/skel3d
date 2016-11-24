@@ -99,7 +99,7 @@ def view(ma, vids):
     graphlib = get_graph_library()
     vertex_clustering = g.clusters()
     # import ipdb;ipdb.set_trace()
-    for that_id in [8]:
+    for that_id in vids:
         this_g = vertex_clustering.subgraph(that_id)
 
         # c.addGraphWindow(this_g)
@@ -261,7 +261,7 @@ def view(ma, vids):
     c.run()
 
 if __name__ == '__main__':
-    vids = [4]
+    vids = [8]
     #box: 4,6,8 (3,10 broken in part)
     #sloped box: 7
     #simple gable: 9

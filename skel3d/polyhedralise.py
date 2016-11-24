@@ -342,7 +342,7 @@ def build_map(g, ma):
 
         m.add_edge(s_min, t_min, kind='match')
         # m.add_edge(s_other, t_other, kind) # we don't need these it seems
-
+    yield m
     # remove locked sheets and rewire local topology
     to_delete = []
     for hn in m.ns:        
@@ -365,7 +365,7 @@ def build_map(g, ma):
     # for hn in to_delete:
     #     m.delete_halfnode(hn)
 
-
+    yield m
     # then remove edges that split loops
     for hn in m.ns:
         if 'match' in hn.edges:
@@ -373,7 +373,7 @@ def build_map(g, ma):
                 for e, hno in hn.neighbours():
                     if len(hno.edges['match']) > 2:
                         m.delete_edge(e)
-    
+    yield m
     # attempt to find cycles and consistently direct all edges/halfnodes in a cycle. Incomplete cycles are also assigned faces.
     N = set(m.ns)
     while len(N) > 0:
@@ -417,7 +417,7 @@ def build_map(g, ma):
                 hn.flip('match')
                 hn.edges['match'][0].flip()
 
-    return m
+    yield m
 
 
 def polyhedral_reconstruct(m, ma):

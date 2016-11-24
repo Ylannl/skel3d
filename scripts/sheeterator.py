@@ -759,6 +759,7 @@ def view(ma, vid):
 
     # c.viewerWindow.center_view(center=np.mean(ma.D['coords'][f_s], axis=0))
     c.run()
+    return c
 
 if __name__ == '__main__':
     vids = 5
@@ -779,4 +780,4 @@ if __name__ == '__main__':
     for v in g.vs:
         v['up_angle'] = np.sign(v['ma_bisec_mean'])[2] * np.arccos(np.dot(v['ma_bisec_mean'], [0,0,1] ))
 
-    view(ma, vids)
+    app = view(ma, vids)
