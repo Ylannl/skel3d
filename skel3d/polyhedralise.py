@@ -40,7 +40,7 @@ def ransac_plane_fit(point_array, point_indices, threshold=0.05, n_planes=2, max
         plane, inliers = candidate_solutions[0]
 
         idx = list(set(idx) - set(inliers))
-        solutions.append(plane)
+        solutions.append((plane, len(inliers)))
 
     return solutions
 
@@ -257,6 +257,7 @@ def build_map(g, ma):
 
     # create MAP datastructure
     m = Map()
+    print("Creating nodes...")
 
     # for each sheet find two sets of surface points, each corresponding to a distinct plane. Store results in sheet
     vids_coplanar = [] # list to keep sheets that we ignore because they support parallel planes (separation angle=180deg)
@@ -289,11 +290,16 @@ def build_map(g, ma):
 
         idx = np.concatenate([s_idx, ma.D['ma_qidx'][ma_idx]])
 
-        km = KMeans(n_clusters = 2)
-        labels = km.fit_predict(spokes)
 
         locked = ma.D['ma_radii'][ma_idx].min() > 0.8
 
+        # m.add_node(
+        #     {'s_idx':v['s_idx1'], 'spoke_cluster_center':v['spoke_cluster_center1'], 'locked':locked, 'vid':i}, 
+        #     {'s_idx':v['s_idx2'], 'spoke_cluster_center':v['spoke_cluster_center2'], 'locked':locked, 'vid':i}
+        # )
+
+        km = KMeans(n_clusters = 2)
+        labels = km.fit_predict(spokes)
         m.add_node(
             {'s_idx':idx[labels==0], 'spoke_cluster_center':km.cluster_centers_[0], 'locked':locked, 'vid':i}, 
             {'s_idx':idx[labels==1], 'spoke_cluster_center':km.cluster_centers_[1], 'locked':locked, 'vid':i}
@@ -301,7 +307,9 @@ def build_map(g, ma):
         vid_map[i]=nid_cnt
         nid_cnt += 1
     # import ipdb; ipdb.set_trace()
-    
+
+    print("Creating edges...")
+
     # label each edge with corresponding spoke sets from incident vertices (ie. an edge can be linked to exactly one plane)
     for ge in list(g.es):
         # convert source/target idx to halfnode idx in map
@@ -336,13 +344,18 @@ def build_map(g, ma):
 
         if angles[other_pair] > math.radians(p_angle_parallel): # what threshold is reasonable here? 175 degrees seems to be too high
             continue # skip parallel edges for now
-            kind='parallel'
+            other_kind='parallel'
+        elif angles[other_pair] < math.radians(30):
+            other_kind='match'
         else:
-            kind='intersect'
+            other_kind='intersect'
 
-        m.add_edge(s_min, t_min, kind='match')
-        # m.add_edge(s_other, t_other, kind) # we don't need these it seems
-    yield m
+        m.add_edge(s_min, t_min, kind='match', other_kind=other_kind)
+        # m.add_edge(s_other, t_other, other_kind) # we don't need these it seems
+    
+    
+    print("Removing locked sheets...")
+
     # remove locked sheets and rewire local topology
     to_delete = []
     for hn in m.ns:        
@@ -365,7 +378,8 @@ def build_map(g, ma):
     # for hn in to_delete:
     #     m.delete_halfnode(hn)
 
-    yield m
+    
+    print("Removing edges that split loops...")
     # then remove edges that split loops
     for hn in m.ns:
         if 'match' in hn.edges:
@@ -373,7 +387,9 @@ def build_map(g, ma):
                 for e, hno in hn.neighbours():
                     if len(hno.edges['match']) > 2:
                         m.delete_edge(e)
-    yield m
+
+    print("Orienting cycles...")
+    
     # attempt to find cycles and consistently direct all edges/halfnodes in a cycle. Incomplete cycles are also assigned faces.
     N = set(m.ns)
     while len(N) > 0:
@@ -417,7 +433,7 @@ def build_map(g, ma):
                 hn.flip('match')
                 hn.edges['match'][0].flip()
 
-    yield m
+    return m
 
 
 def polyhedral_reconstruct(m, ma):

@@ -129,9 +129,23 @@ def analyse_cluster(ma, g):
         ## compute 'normal' direction for sheet
         # cross product of spokes is perpendicular to bisector and tangent to sheet
         one_side, cross = cluster_spokes(ma, ma_idx)
+
+        s_idx = ma.s_idx(ma_idx, remove_duplicates=False)
+        side_mask = np.concatenate([one_side, one_side==False])
+        spokes = np.concatenate([ma.D['ma_f1'][ma_idx], ma.D['ma_f2'][ma_idx]])
+
+        # import ipdb; ipdb.set_trace()
+
+        v['s_idx1'] = s_idx[side_mask] 
+        v['spoke_cluster_center1'] = np.mean(spokes[side_mask], axis=0)
+        v['s_idx2'] = s_idx[side_mask==False]
+        v['spoke_cluster_center2'] = np.mean(spokes[side_mask==False], axis=0)
+
+        
+
         # align al crosses and compute average
         cross_align = cross 
-        cross_align[~one_side] *= -1  
+        cross_align[~one_side] *= -1
         # np.concatenate([cross[one_side], -1*cross[~one_side]])
         vec_coplanar = np.mean(cross_align, axis=0)
         # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct

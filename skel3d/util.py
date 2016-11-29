@@ -67,11 +67,18 @@ class MAHelper(object):
         self.filtered = {}
         self.reset_filter()
 
-    def s_idx(self, ma_idx):
-        f = np.zeros(self.m, dtype=bool)
-        f[np.mod(ma_idx, self.m)] = True
-        f[self.D['ma_qidx'][ma_idx]] = True
-        return np.nonzero(f)[0]
+    def s_idx(self, ma_idx, remove_duplicates=True):
+        """return surface points corresponding to ma_idx: f1, then f2"""
+        primary_spokes = np.mod(ma_idx, self.m)
+        secondary_spokes = self.D['ma_qidx'][ma_idx]
+
+        if remove_duplicates:
+            f = np.zeros(self.m, dtype=bool)
+            f[primary_spokes] = True
+            f[secondary_spokes] = True
+            return np.nonzero(f)[0]
+        else:
+            return np.concatenate([primary_spokes, secondary_spokes])
 
     def reset_filter(self):
         self.filtered['in'] = zeros(self.m) == True

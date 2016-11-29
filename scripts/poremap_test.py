@@ -261,15 +261,10 @@ def view(ma, vids):
     c.run()
 
 if __name__ == '__main__':
-    vids = [8]
-    #box: 4,6,8 (3,10 broken in part)
-    #sloped box: 7
-    #simple gable: 9
-    #exterior: 5
+    vids = [8] # or 3
+    
     if len(sys.argv)>1:
         vids = [int(sys.argv[-1])]
-        INFILE = sys.argv[-1]
-    # import ipdb;ipdb.set_trace()
     INFILE = "/Users/ravi/git/mat_util/Random3Dcity/1/NPY"
     # INFILE = "/Users/ravi/git/mat_util/test_cases/sloped_gable/NPY"
     datadict = npy.read(INFILE)
