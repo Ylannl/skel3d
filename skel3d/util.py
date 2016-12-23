@@ -56,6 +56,11 @@ class MAHelper(object):
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
         self.D['ma_f1'] = np.concatenate([self.D['ma_f1_in'], self.D['ma_f1_out']])
         self.D['ma_f2'] = np.concatenate([self.D['ma_f2_in'], self.D['ma_f2_out']])
+        
+        self.D['ma_spokecross'] =  np.cross(self.D['ma_f1'],self.D['ma_f2'])
+        self.D['ma_n'] = np.cross(self.D['ma_spokecross'], self.D['ma_bisec'])
+        self.D['ma_n'] = self.D['ma_n'] / np.linalg.norm(self.D['ma_n'], axis=1)[:,None]
+
 
         self.D['spoke_cnt'] = zeros(self.m, dtype=int)
         s_idx, cnts = np.unique(self.D['ma_qidx'], return_counts=True)

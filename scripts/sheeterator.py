@@ -12,10 +12,11 @@ from scipy.stats import linregress
 
 from povi import App, Layer, LinkedLayer, ToolsDialog
 from skel3d.io import npy
-from skel3d.util import MAHelper
+from skel3d.util import *
 from skel3d.graph import *
 from skel3d.segmentation import *
-from skel3d.polyhedralise import *
+from skel3d.geom3d import Point, Line
+# from skel3d.polyhedralise import *
 
 class TestApp(App):
 
@@ -651,13 +652,6 @@ def view(ma, vid):
     
     c = TestApp(ma)
 
-    # compute mat 'normals'
-    # cross product of spokes is perpendicular to bisector and tangent to sheet
-    vec_coplanar = np.cross(ma.D['ma_f1'],ma.D['ma_f2'])
-    # now compute this cross product to find a vector in the normal direction of the plane that we want to reconstruct
-    ma_n = np.cross(vec_coplanar, ma.D['ma_bisec'])
-    ma_n = ma_n / np.linalg.norm(ma_n, axis=1)[:,None]
-
     layer_s = c.add_layer(LinkedLayer(name='Surface'))
     layer_ma = c.add_layer(LinkedLayer(name='MAT'))
     layer_misc = c.add_layer(LinkedLayer(name='Misc'))
@@ -685,7 +679,7 @@ def view(ma, vid):
         name = 'MAT points',
         opts=['splat_disk', 'with_normals', 'with_intensity'],
         points=ma.D['ma_coords'], 
-        normals=ma_n,
+        normals=ma.D['ma_n'],
         category=ma.D['ma_segment'].astype(np.float),
         colormap='random',
         default_mask=ma.D['ma_segment'] != 0

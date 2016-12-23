@@ -49,6 +49,7 @@ class RegionGrower(object):
 			'only_interior':False,
 			'method':'bisec',
 			'mincount':10,
+			'spokecross_thres':5.0,
 			'mask':None
 		}
 		self.p.update(kwargs)
@@ -61,6 +62,7 @@ class RegionGrower(object):
 		self.p_thetathres_2 = (self.p['theta_thres'] / 180.0) * math.pi # during theta growing
 		self.p_k = self.p['k']
 		self.p_mincount = self.p['mincount']
+		self.p_spokecross_thres = math.cos((self.p['spokecross_thres'] / 180.0) * math.pi)
 
 		# self.mah = mah
 		# self.filt = self.mah.D['ma_radii'] < 190.
@@ -94,8 +96,10 @@ class RegionGrower(object):
 			self.valid_candidate = self.valid_candidate_bisecavgtheta
 		elif self.p['method'] == 'bisecthetacnt':
 			self.valid_candidate = self.valid_candidate_bisecthetacnt
+		elif self.p['method'] == 'spokecross':
+			self.valid_candidate = self.valid_candidate_spokecross
 		else:
-			self.valid_candidate = self.valid_candidate_normal
+			self.valid_candidate = self.p['method'] # provide a function
 		print(self.p['method'])
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
@@ -194,6 +198,9 @@ class RegionGrower(object):
 	def valid_candidate_bisecdiff(self, seed, candidate, **kwargs):
 		"""candidate is valid if difference in bisecangle is similar and segmend_id is the same"""
 		return (abs(self.ma_bisecdiff[seed] - self.ma_bisecdiff[candidate]) < self.p_bisecdiffthres) and (self.ma_segment[seed] == self.ma_segment[candidate])
+
+	def valid_candidate_spokecross(self, seed, candidate, **kwargs):
+		return np.dot(self.ma_spokecross[seed], self.ma_spokecross[candidate]) > self.p_spokecross_thres
 
 	# def valid_candidate_secspokecnt(self, seed, candidate):
 	# 	"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
