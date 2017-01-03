@@ -7,7 +7,30 @@ def angle(a, b):
     b = b/np.linalg.norm(b)
     return np.arccos(np.inner(a, b))
 
+# class MAArrays(object):
+
+#     def __init__(self, datadict):
+#         self._datadict = datadict
+
+#     def 
+
 class MAHelper(object):
+    ma_arrays = [
+        'ma_coords',
+        'ma_bisec',
+        'ma_theta',
+        'ma_radii',
+        'ma_qidx',
+        'ma_f1',
+        'ma_f2',
+        'ma_spokecross',
+        'ma_n',
+        'ma_segment']
+    s_arrays = [
+        'coords',
+        'normals'
+    ]
+    arrays = ma_arrays + s_arrays
 
     def __init__(self, datadict, origin=True):
         
@@ -69,8 +92,22 @@ class MAHelper(object):
         if 'ma_segment_graph' in datadict:
             self.g = datadict['ma_segment_graph']
 
-        self.filtered = {}
-        self.reset_filter()
+        # self.filtered = {}
+        # self.reset_filter()
+        self.ma_idx_mask = None
+
+    def set_mask(self, ma_idx=None):
+        self.ma_idx_mask = ma_idx
+
+    def f(self, key):
+        a = self.D[key]
+        if type(a) != np.ndarray or self.ma_idx_mask is None:
+            return a
+        if len(a) == self.m*2:
+            return a[self.ma_idx_mask]
+        elif len(a) == self.m:
+            return a[self.s_idx(self.ma_idx_mask)]
+        return a
 
     def s_idx(self, ma_idx, remove_duplicates=True):
         """return surface points corresponding to ma_idx: f1, then f2"""
@@ -85,9 +122,9 @@ class MAHelper(object):
         else:
             return np.concatenate([primary_spokes, secondary_spokes])
 
-    def reset_filter(self):
-        self.filtered['in'] = zeros(self.m) == True
-        self.filtered['out'] = zeros(self.m) == True
+    # def reset_filter(self):
+    #     self.filtered['in'] = zeros(self.m) == True
+    #     self.filtered['out'] = zeros(self.m) == True
         
     def compute_lfs(self, k=10, only_interior=False):
         from pykdtree.kdtree import KDTree
