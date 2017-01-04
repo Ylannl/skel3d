@@ -13,24 +13,23 @@ def angle(a, b):
 #         self._datadict = datadict
 
 #     def 
-
+MAHelper_ma_arrays = [
+    'ma_coords',
+    'ma_bisec',
+    'ma_theta',
+    'ma_radii',
+    'ma_qidx',
+    'ma_f1',
+    'ma_f2',
+    'ma_spokecross',
+    'ma_n',
+    'ma_segment']
+MAHelper_s_arrays = [
+    'coords',
+    'normals'
+]
+MAHelper_arrays = MAHelper_ma_arrays + MAHelper_s_arrays
 class MAHelper(object):
-    ma_arrays = [
-        'ma_coords',
-        'ma_bisec',
-        'ma_theta',
-        'ma_radii',
-        'ma_qidx',
-        'ma_f1',
-        'ma_f2',
-        'ma_spokecross',
-        'ma_n',
-        'ma_segment']
-    s_arrays = [
-        'coords',
-        'normals'
-    ]
-    arrays = ma_arrays + s_arrays
 
     def __init__(self, datadict, origin=True):
         
