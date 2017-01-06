@@ -21,6 +21,9 @@ MAHelper_ma_arrays = [
     'ma_qidx',
     'ma_f1',
     'ma_f2',
+    'ma_qidx',
+    'ma_q1',
+    'ma_q2',
     'ma_spokecross',
     'ma_n',
     'ma_segment']
@@ -78,6 +81,9 @@ class MAHelper(object):
         self.D['ma_qidx'] = np.concatenate([self.D['ma_qidx_in'], self.D['ma_qidx_out']])
         self.D['ma_f1'] = np.concatenate([self.D['ma_f1_in'], self.D['ma_f1_out']])
         self.D['ma_f2'] = np.concatenate([self.D['ma_f2_in'], self.D['ma_f2_out']])
+
+        self.D['ma_q1'] = np.concatenate([self.D['coords'], self.D['coords']])
+        self.D['ma_q2'] = np.concatenate([self.D['coords'][self.D['ma_qidx_in']], self.D['coords'][self.D['ma_qidx_out']]])
         
         self.D['ma_spokecross'] =  np.cross(self.D['ma_f1'],self.D['ma_f2'])
         self.D['ma_n'] = np.cross(self.D['ma_spokecross'], self.D['ma_bisec'])
@@ -105,7 +111,7 @@ class MAHelper(object):
         if len(a) == self.m*2:
             return a[self.ma_idx_mask]
         elif len(a) == self.m:
-            return a[self.s_idx(self.ma_idx_mask)]
+            return a[self.s_idx(self.ma_idx_mask, remove_duplicates=False)]
         return a
 
     def s_idx(self, ma_idx, remove_duplicates=True):
