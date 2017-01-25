@@ -13,6 +13,14 @@ def angle(a, b):
 #         self._datadict = datadict
 
 #     def 
+MAHelper_ma_io_arrays = [
+    'ma_coords_in',
+    'ma_coords_out',
+    'ma_qidx_in',
+    'ma_qidx_out',
+    'ma_radii_in',
+    'ma_radii_out'
+]
 MAHelper_ma_arrays = [
     'ma_coords',
     'ma_bisec',
@@ -99,19 +107,16 @@ class MAHelper(object):
 
         # self.filtered = {}
         # self.reset_filter()
-        self.ma_idx_mask = None
 
-    def set_mask(self, ma_idx=None):
-        self.ma_idx_mask = ma_idx
 
-    def f(self, key):
+    def f(self, ma_idx, key):
         a = self.D[key]
-        if type(a) != np.ndarray or self.ma_idx_mask is None:
+        if type(a) != np.ndarray or ma_idx is None:
             return a
         if len(a) == self.m*2:
-            return a[self.ma_idx_mask]
+            return a[ma_idx]
         elif len(a) == self.m:
-            return a[self.s_idx(self.ma_idx_mask, remove_duplicates=False)]
+            return a[self.s_idx(ma_idx, remove_duplicates=False)]
         return a
 
     def s_idx(self, ma_idx, remove_duplicates=True):
