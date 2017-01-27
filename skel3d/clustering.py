@@ -36,51 +36,57 @@ def get_clusters(ma, min_count = 20):
     ## Find clusters, ie. connected component analysis
     ma.D['ma_clusters'] = master_g.clusters().subgraphs()
 
+CLASSDICT = {2:'exterior', 3:'interior', 4:'building', 1:'other', 0:'never classified'}
+def classify_cluster(cluster, ma):
+    g=cluster
+
+    adj_rel_start = []
+    adj_rel_end = []
+
+    classification = 0
+    if 0<g.ecount():#<1000:
+
+        ## Classify clusters as inside or outside
+        # attempt to distinghuish between interior and exterior sheets based on vertical component of bisectors
+        zsum = 0
+        ma_idx = np.concatenate(g.vs['ma_idx'])
+        
+        # select points with good sepangle (eg not 180deg)
+        f = np.intersect1d(np.argwhere(ma.D['ma_theta'] < math.pi*0.9), ma_idx)
+        # sort on z component of bisector, take 10% lowest and highest, compute ratio of means of that
+        l = len(f)
+        bz = ma.D['ma_bisec'][f][:,2]
+        bz_sort = np.sort(bz )
+        b_bot = np.mean(bz_sort[:l//10]) 
+        b_top = np.mean(bz_sort[l-l//10:])
+        b_ratio = abs(b_top)/abs(b_bot)
+
+        # for v in g.vs:
+        #     zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
+        # zsum = np.prod(np.sum(np.array(g.vs['ma_bisec_mean'])[:,2], np.array([len(idx) for idx in g.vs['ma_idx']]) ), axis=1)
+        # use ration to decide if int or ext cluster. Now
+        
+        if b_ratio > 1.05 or b_bot > 0: # completely `closed` or bounded clusters should have ratio closed to one (only occurs in artifical datasets, since DSM never closed)
+            if np.mean(g.vs['ma_theta_mean']) > math.pi/4: # artificial/building structures typically have a large sepangle (compared to terrain features)
+                classification = 4 #result['interior_building'].append(g)
+            else:
+                classification = 3 #result['interior'].append(g)
+
+        elif b_ratio > 0.95:
+            classification = 1 #result['unclassified'].append(g)
+        else:
+            classification = 2 #result['exterior'].append(g)
+        
+    g['classification'] = classification
+
+    return g, classification
 
 def classify_clusters(ma):
-    i=0
+    
     for g in ma.D['ma_clusters']:
-        adj_rel_start = []
-        adj_rel_end = []
-
-        if 0<g.ecount():#<1000:
-
-            ## Classify clusters as inside or outside
-            # attempt to distinghuish between interior and exterior sheets based on vertical component of bisectors
-            color = (1.,0.,0.)
-            name = 'cluster {}'.format(i)
-            zsum = 0
-            ma_idx = np.concatenate(g.vs['ma_idx'])
-            
-            # select points with good sepangle (eg not 180deg)
-            f = np.intersect1d(np.argwhere(ma.D['ma_theta'] < math.pi*0.9), ma_idx)
-            # sort on z component of bisector, take 10% lowest and highest, compute ratio of means of that
-            l = len(f)
-            bz = ma.D['ma_bisec'][f][:,2]
-            bz_sort = np.sort(bz )
-            b_bot = np.mean(bz_sort[:l//10]) 
-            b_top = np.mean(bz_sort[l-l//10:])
-            b_ratio = abs(b_top)/abs(b_bot)
-
-            # for v in g.vs:
-            #     zsum += v['ma_bisec_mean'][2]#*len(v['ma_idx'])
-            # zsum = np.prod(np.sum(np.array(g.vs['ma_bisec_mean'])[:,2], np.array([len(idx) for idx in g.vs['ma_idx']]) ), axis=1)
-            # use ration to decide if int or ext cluster. Now
-            classname = "exterior"
-            if b_ratio > 1.05 or b_bot > 0: # completely `closed` or bounded clusters should have ratio closed to one (only occurs in artifical datasets, since DSM never closed)
-                color = (0.,1.,0.)
-                classname = "interior"
-                if np.mean(g.vs['ma_theta_mean']) > math.pi/4: # artificial/building structures typically have a large sepangle (compared to terrain features)
-                    color = (1.,1.,0.)
-                    classname += " (building)"
-
-            elif b_ratio > 0.95:
-                color = (0.5,0.5,0.5)
-                classname = ""
-
-            g['classification'] = classname
-
-
+        classify_cluster(g,ma)
+        
+    return ma.D['ma_clusters'], CLASSDICT
 
 def analyse_cluster(ma, g):
     def cluster_spokes(ma,ma_idx):

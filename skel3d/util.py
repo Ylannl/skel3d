@@ -39,7 +39,6 @@ MAHelper_s_arrays = [
     'coords',
     'normals'
 ]
-MAHelper_arrays = MAHelper_ma_arrays + MAHelper_s_arrays
 class MAHelper(object):
 
     def __init__(self, datadict, origin=True):

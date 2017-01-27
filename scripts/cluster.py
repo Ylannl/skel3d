@@ -26,7 +26,7 @@ if __name__ == '__main__':
     clustering.get_clusters(mah, args.mincount)
     clustering.classify_clusters(mah)
     for g in mah.D['ma_clusters']:
-        if g['classification'] == 'interior (building)':
+        if g['classification'] == 4: # building class
             clustering.analyse_cluster(mah, g)
 
     npy.write(args.infile,mah.D, ['ma_clusters'])
