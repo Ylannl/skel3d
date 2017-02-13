@@ -13,11 +13,17 @@ from .util import angle
 
 from .geom3d import *
 
-def get_clusters(ma, min_count = 20):
+def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0):
     ## Remove insignificant edges in graph
     contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
-    master_g = ma.D['ma_segment_graph']
+    master_g = ma.D['ma_segment_graph'].copy()
+    # delete vertex with the highest degree (ie the exterior 'MAT dome')
+    if remove_highest_degree_vs:
+        degrees = master_g.degree()
+        degrees.sort()
+        max_degree = degrees[-remove_highest_degree_vs]
+        master_g.delete_vertices(master_g.vs.select(_degree_lt = max_degree))
     master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count))
     # contract_edges(g, contract_thres)
 

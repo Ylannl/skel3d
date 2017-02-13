@@ -37,7 +37,8 @@ MAHelper_ma_arrays = [
     'ma_segment']
 MAHelper_s_arrays = [
     'coords',
-    'normals'
+    'normals',
+    'colors'
 ]
 class MAHelper(object):
 
@@ -108,14 +109,26 @@ class MAHelper(object):
         # self.reset_filter()
 
 
-    def f(self, ma_idx, key):
+    def f(self, idx, key):
+        """idx can be indices or bool with lenth of m (surface point idx) or 2*m (ma idx)"""
+        # check if we have a valid idx input and if the key gets us an ndarray
         a = self.D[key]
-        if type(a) != np.ndarray or ma_idx is None:
+        if type(a) != np.ndarray or idx is None or not len(idx) in [self.m, 2*self.m]:
             return a
-        if len(a) == self.m*2:
-            return a[ma_idx]
-        elif len(a) == self.m:
-            return a[self.s_idx(ma_idx, remove_duplicates=False)]
+        
+        if len(idx) == self.m*2:
+            if len(a) == self.m*2:
+                return a[idx]
+            elif len(a) == self.m:
+                #convert to integer indices if necessary
+                if idx.dtype is np.dtype(np.bool):
+                    idx = np.argwhere(idx)
+                return a[self.s_idx(idx, remove_duplicates=False)]
+        elif len(idx) == self.m:
+            if len(a) == self.m:
+                return a[idx]
+            elif len(a) == self.m*2:
+                return a[np.concatenate([idx,idx])]
         return a
 
     def s_idx(self, ma_idx, remove_duplicates=True):

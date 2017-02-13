@@ -20,7 +20,7 @@ from glob import glob
 import numpy as np
 import igraph
 
-def write(dir, datadict, keys=[]):
+def write(dir, datadict, keys=[], dtype=np.float32):
 	if not os.path.exists(dir):
 	    os.makedirs(dir)
 
@@ -39,7 +39,7 @@ def write(dir, datadict, keys=[]):
 				cluster.write_pickle(os.path.join(clusterdir, 'ma_cluster_'+str(i)+'.pickle'))
 		elif key in keys or len(keys)==0:
 			fname = os.path.join(dir,key)
-			np.save(fname, val)
+			np.save(fname, val.astype(dtype))
 
 def read(dir, keys=[]):
 	assert os.path.exists(dir)

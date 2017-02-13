@@ -25,6 +25,7 @@ if __name__ == '__main__':
     #     contract_edges(mah.D['ma_segment_graph'], args.contract)
     clustering.get_clusters(mah, args.mincount)
     clustering.classify_clusters(mah)
+    print("I found {} clusters".format(len(mah.D['ma_clusters'])))
     for g in mah.D['ma_clusters']:
         if g['classification'] == 4: # building class
             clustering.analyse_cluster(mah, g)
