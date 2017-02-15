@@ -179,7 +179,7 @@ def test():
 
 import math
 import numpy as np
-from .polyhedralise import angle, ransac_plane_fit
+from .util import angle
 from .geom3d import Plane, Point
 def build_map(g, ma):
     def surface_match(n1, n2):

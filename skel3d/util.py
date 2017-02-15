@@ -108,31 +108,60 @@ class MAHelper(object):
         # self.filtered = {}
         # self.reset_filter()
 
+    def convert_mask(self, idx, l, is_ma_idx):
+        """l is the length of the array that is to be masked"""
+        if is_ma_idx:
+            if l == self.m*2:
+                return idx
+            elif l == self.m:
+                return self.s_idx(idx, remove_duplicates=True)
+        else:
+            if l == self.m:
+                return idx
+            elif l == self.m*2:
+                return self.ma_idx(idx)
 
     def f(self, idx, key):
-        """idx can be indices or bool with lenth of m (surface point idx) or 2*m (ma idx)"""
+        """idx is a list of indices,type tuples 
+        where indices can bool with lenth of m (surface point idx) or 2*m (ma idx) or integer
+        and type is 'ma' or 's'
+        """
         # check if we have a valid idx input and if the key gets us an ndarray
         a = self.D[key]
-        if type(a) != np.ndarray or idx is None or not len(idx) in [self.m, 2*self.m]:
+        if type(a) != np.ndarray:
             return a
-        
-        if len(idx) == self.m*2:
-            if len(a) == self.m*2:
-                return a[idx]
-            elif len(a) == self.m:
-                #convert to integer indices if necessary
-                if idx.dtype is np.dtype(np.bool):
-                    idx = np.argwhere(idx)
-                return a[self.s_idx(idx, remove_duplicates=False)]
-        elif len(idx) == self.m:
-            if len(a) == self.m:
-                return a[idx]
-            elif len(a) == self.m*2:
-                return a[np.concatenate([idx,idx])]
-        return a
+
+        mask = np.ones(len(a), dtype=bool)
+        for i,t in idx:
+            if i is None:
+                continue
+            if t == 's':
+                if not i.dtype is np.dtype(np.bool):
+                    bi = np.zeros(self.m, dtype=bool)
+                    bi[i] = True
+                else:
+                    bi =i
+                ic = self.convert_mask(bi, len(a), is_ma_idx=False)
+            elif t == 'ma':
+                if not i.dtype is np.dtype(np.bool):
+                    bi = np.zeros(2*self.m, dtype=bool)
+                    bi[i] = True
+                else:
+                    bi =i
+                ic = self.convert_mask(bi, len(a), is_ma_idx=True)
+
+            mask = np.logical_and(mask, ic)
+
+        return a[mask]
 
     def s_idx(self, ma_idx, remove_duplicates=True):
         """return surface points corresponding to ma_idx: f1, then f2"""
+        if ma_idx.dtype is np.dtype(np.bool):
+            return_bool = True
+            ma_idx = np.nonzero(ma_idx)[0]
+        else:
+            return_bool = False
+        
         primary_spokes = np.mod(ma_idx, self.m)
         secondary_spokes = self.D['ma_qidx'][ma_idx]
 
@@ -140,9 +169,18 @@ class MAHelper(object):
             f = np.zeros(self.m, dtype=bool)
             f[primary_spokes] = True
             f[secondary_spokes] = True
-            return np.nonzero(f)[0]
+            if return_bool:
+                return f
+            else:
+                return np.nonzero(f)[0]
         else:
             return np.concatenate([primary_spokes, secondary_spokes])
+
+    def ma_idx(self, s_idx):
+        if s_idx.dtype is np.dtype(np.bool):
+            return np.concatenate([s_idx, s_idx])
+        else:
+            return np.concatenate([s_idx, self.m+s_idx])
 
     # def reset_filter(self):
     #     self.filtered['in'] = zeros(self.m) == True

@@ -3,6 +3,7 @@ from .graph import *
 from .map import *
 import random
 from .geom3d import *
+from .util import angle
 
 from sklearn.cluster import KMeans
 
@@ -82,11 +83,6 @@ def line_intersect(l1,l2):
     # assuming there is an intersection and the lines are not parallel
     l2m = (l1.t[0] * (l2.r[1]-l1.r[1]) + l1.t[1]*l1.r[0] - l2.r[0]*l1.t[1]) / (l2.t[0]*l1.t[1] - l1.t[0]*l2.t[1])
     return l2.r + l2m*l2.t
-
-def angle(a, b):
-    a = a/np.linalg.norm(a)
-    b = b/np.linalg.norm(b)
-    return np.arccos(np.inner(a, b))
 
 def gf_flatcube_top(master_graph, mapping, ma, ground_level=0):
     """compute cube geometry for matched graph based on the mapping with library graph
