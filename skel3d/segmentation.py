@@ -42,6 +42,7 @@ class RegionGrower(object):
 	def __init__(self, mah, **kwargs):
 		self.p = {
 			'bisec_thres':10.0,
+			'bisecavg_thres':10.0,
 			'bisecdiff_thres':5.0,
 			'theta_thres':10.0,
 			'secspokecnt_thres':10,
@@ -56,6 +57,7 @@ class RegionGrower(object):
 		# import ipdb;ipdb.set_trace()
 
 		self.p_bisecthres = math.cos((self.p['bisec_thres'] / 180.0) * math.pi)
+		self.p_bisecavgthres = math.cos((self.p['bisecavg_thres'] / 180.0) * math.pi)
 		self.p_bisecdiffthres = math.cos((self.p['bisecdiff_thres'] / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
 		self.p_thetathres_1 = (self.p['theta_thres'] / 180.0) * math.pi # during bisect growing
@@ -189,7 +191,9 @@ class RegionGrower(object):
 
 	def valid_candidate_bisecavg(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
-		return np.dot(kwargs['bisector_sum']/kwargs['point_count'], self.ma_bisec[candidate]) > self.p_bisecthres
+		return np.dot(
+			kwargs['bisector_sum'] / np.linalg.norm(kwargs['bisector_sum']), 
+			self.ma_bisec[candidate]) > self.p_bisecavgthres
 
 	def valid_candidate_bisec(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
@@ -247,8 +251,10 @@ def perform_segmentation_bisec(mah, **kwargs):
 	print("Initiating region grower...")
 	# kwargs['method']='bisecavg'
 	R = RegionGrower(mah, **kwargs)
-	# seedorder = np.argsort(mah.D['ma_radii'])[::-1].tolist() # reverse
+	seedorder = np.argsort(mah.D['ma_radii'])[::-1].tolist() # reverse
 	seedorder = list( np.random.permutation(R.m) )
+	# seedorder = list( np.argsort(R.ma_theta) )
+	# seedorder.reverse()
 	print("\nPerforming bisector-based region growing...")
 	R.apply_region_growing_algorithm(seedorder)
 	R.unmark_small_clusters()
@@ -289,10 +295,11 @@ def perform_segmentation_bisec(mah, **kwargs):
 	mah.D['ma_segment'] = np.zeros(R.m, dtype=np.int64)
 	graph2segmentlist(g, mah.D['ma_segment'])
 	
-	find_relations(mah, kwargs['infile'])
+	adj_dict, flip_dict = find_relations(mah, kwargs['infile'])
 	
 	for start_id, end_id, count in mah.D['seg_link_adj']:
-		g.add_edge(start_id, end_id, adj_count=count)
+		e = g.add_edge(start_id, end_id, adj_count=count, is_fliprel = (start_id, end_id) in flip_dict)
+
 
 	compute_segment_aggregate(g, mah.D, 'ma_coords')
 	compute_segment_aggregate(g, mah.D, 'ma_bisec')
@@ -408,6 +415,8 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
 	npy.write(infile, ma.D, ['seg_link_adj'])
+
+	return adj_relations, flip_relations
 
 def compute_segment_aggregate(g, datadict, key='ma_coords'):
 	"""Compute eg. avarage coordinate for each segment"""

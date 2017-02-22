@@ -39,7 +39,7 @@ def write(dir, datadict, keys=[], dtype=np.float32):
 				cluster.write_pickle(os.path.join(clusterdir, 'ma_cluster_'+str(i)+'.pickle'))
 		elif key in keys or len(keys)==0:
 			fname = os.path.join(dir,key)
-			np.save(fname, val.astype(dtype))
+			np.save(fname, val.astype(dtype)) # maybe we should respect the dtype of the array here...
 
 def read(dir, keys=[]):
 	assert os.path.exists(dir)

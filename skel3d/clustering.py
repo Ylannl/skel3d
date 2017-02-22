@@ -13,7 +13,7 @@ from .util import angle
 
 from .geom3d import *
 
-def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0):
+def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0, min_r=9.0, max_theta=1.0, del_flip=True):
     ## Remove insignificant edges in graph
     contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
@@ -23,8 +23,15 @@ def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0):
         degrees = master_g.degree()
         degrees.sort()
         max_degree = degrees[-remove_highest_degree_vs]
-        master_g.delete_vertices(master_g.vs.select(_degree_lt = max_degree))
-    master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count))
+        master_g.delete_vertices(master_g.vs.select(_degree_gt = max_degree))
+
+    master_g.delete_vertices(master_g.vs.select(r_max_gt=min_r, t_min_lt=max_theta))
+
+    if del_flip:
+        master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count, is_fliprel=False))
+    else:
+        master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count))
+
     # contract_edges(g, contract_thres)
 
     ## Update segment indices based on graph ids
@@ -39,8 +46,10 @@ def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0):
     # for mapping in g.get_subisomorphisms_vf2(graphlib['flatcube_top']):
     #     self.graphs.append(g.subgraph(mapping))
     
-    ## Find clusters, ie. connected component analysis
-    ma.D['ma_clusters'] = master_g.clusters().subgraphs()
+    ## Find clusters, ie. connected component analysis, and sort
+    ma_clusters = master_g.clusters().subgraphs()
+    ma_clusters.sort(key = lambda c: c.vcount(), reverse=True)
+    ma.D['ma_clusters'] = ma_clusters
 
 CLASSDICT = {2:'exterior', 3:'interior', 4:'building', 1:'other', 0:'never classified'}
 def classify_cluster(cluster, ma):
