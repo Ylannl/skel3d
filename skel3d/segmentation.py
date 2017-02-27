@@ -42,7 +42,7 @@ class RegionGrower(object):
 	def __init__(self, mah, **kwargs):
 		self.p = {
 			'bisec_thres':10.0,
-			'bisecavg_thres':10.0,
+			'bisecavg_thres':2.0,
 			'bisecdiff_thres':5.0,
 			'theta_thres':10.0,
 			'secspokecnt_thres':10,
