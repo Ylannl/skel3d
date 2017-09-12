@@ -13,7 +13,7 @@ from .util import angle
 
 from .geom3d import *
 
-def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0, min_r=9.0, max_theta=1.0, del_flip=True):
+def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0, min_r=9.0, max_theta=1.0, remove_rtheta=False, del_flip=True):
     ## Remove insignificant edges in graph
     contract_thres = 15 #self.dialog.ui.doubleSpinBox_contractthres.value()
     # g = g.subgraph(g.vs.select(ma_theta_mean_lt=math.radians(100), up_angle_gt=math.radians(40)))
@@ -25,7 +25,8 @@ def get_clusters(ma, min_count = 20, remove_highest_degree_vs = 0, min_r=9.0, ma
         max_degree = degrees[-remove_highest_degree_vs]
         master_g.delete_vertices(master_g.vs.select(_degree_gt = max_degree))
 
-    master_g.delete_vertices(master_g.vs.select(r_max_gt=min_r, t_min_lt=max_theta))
+    if remove_rtheta:
+        master_g.delete_vertices(master_g.vs.select(r_max_gt=min_r, t_min_lt=max_theta))
 
     if del_flip:
         master_g = master_g.subgraph_edges(master_g.es.select(adj_count_gt=min_count, is_fliprel=False))
