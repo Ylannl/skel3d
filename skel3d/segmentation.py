@@ -42,53 +42,81 @@ class RegionGrower(object):
 	def __init__(self, mah, **kwargs):
 		self.p = {
 			'bisec_thres':10.0,
+			'bisecavg_thres':2.0,
+			'bisecdiff_thres':5.0,
 			'theta_thres':10.0,
 			'secspokecnt_thres':10,
 			'k':10,
 			'only_interior':False,
 			'method':'bisec',
-			'mincount':10
+			'mincount':10,
+			'maxcount':1000,
+			'spokecross_thres':5.0,
+			'mask':None
 		}
 		self.p.update(kwargs)
 		# import ipdb;ipdb.set_trace()
 
-		if self.p['method'] == 'bisec':
-			self.valid_candidate = self.valid_candidate_bisectheta # or 'normal'
-		elif self.p['method'] == 'bisecthetacnt':
-			self.valid_candidate = self.valid_candidate_bisecthetacnt # or 'normal'
-		else:
-			self.valid_candidate = self.valid_candidate_normal
-
 		self.p_bisecthres = math.cos((self.p['bisec_thres'] / 180.0) * math.pi)
+		self.p_bisecavgthres = math.cos((self.p['bisecavg_thres'] / 180.0) * math.pi)
+		self.p_bisecdiffthres = math.cos((self.p['bisecdiff_thres'] / 180.0) * math.pi)
 		self.p_normalthres = math.cos((5.0 / 180.0) * math.pi)
 		self.p_thetathres_1 = (self.p['theta_thres'] / 180.0) * math.pi # during bisect growing
 		self.p_thetathres_2 = (self.p['theta_thres'] / 180.0) * math.pi # during theta growing
 		self.p_k = self.p['k']
 		self.p_mincount = self.p['mincount']
+		self.p_spokecross_thres = math.cos((self.p['spokecross_thres'] / 180.0) * math.pi)
 
-		self.mah = mah
+		# self.mah = mah
 		# self.filt = self.mah.D['ma_radii'] < 190.
 
-		if self.p['only_interior']:
-			self.ma_coords = self.mah.D['ma_coords_in']
-			# self.mah.D['m']
-			self.m = self.mah.m
-			self.ma_bisec = self.mah.D['ma_bisec_in']
-			self.ma_theta = self.mah.D['ma_theta_in']
+
+		# if self.p['only_interior']:
+		# 	self.ma_coords = self.mah.D['ma_coords_in']
+		# 	# self.mah.D['m']
+		# 	self.m = self.mah.m
+		# 	self.ma_bisec = self.mah.D['ma_bisec_in']
+		# 	self.ma_theta = self.mah.D['ma_theta_in']
+		if self.p['mask'] is None:
+			self.ma_coords = mah.D['ma_coords']
+			self.m = mah.m*2
+			self.ma_bisec = mah.D['ma_bisec']
+			self.ma_theta = mah.D['ma_theta']
 		else:
-			self.ma_coords = self.mah.D['ma_coords']
-			# self.mah.D['m']
-			self.m = self.mah.m*2
-			self.ma_bisec = self.mah.D['ma_bisec']
-			self.ma_theta = self.mah.D['ma_theta']
+			self.ma_coords = mah.D['ma_coords'][self.p['mask']]
+			self.m = len(self.ma_coords)
+			self.ma_bisec = mah.D['ma_bisec'][self.p['mask']]
+			self.ma_theta = mah.D['ma_theta'][self.p['mask']]
 
 		self.neighbours_dist, self.neighbours_idx = get_neighbours_ma(self.ma_coords, self.p_k)
+
+		# self.compute_bisecdiffs()
 		# self.estimate_normals()
+
+		if self.p['method'] == 'bisec':
+			self.valid_candidate = self.valid_candidate_bisectheta # or 'normal'
+		elif self.p['method'] == 'bisecavg':
+			self.valid_candidate = self.valid_candidate_bisecavgtheta
+		elif self.p['method'] == 'bisecthetacnt':
+			self.valid_candidate = self.valid_candidate_bisecthetacnt
+		elif self.p['method'] == 'spokecross':
+			self.valid_candidate = self.valid_candidate_spokecross
+		else:
+			self.valid_candidate = self.p['method'] # provide a function
+		print(self.p['method'])
 
 		self.ma_segment = np.zeros(self.m, dtype=np.int64)
 		
 		self.region_nr = 1
 		self.overwrite_regions = False
+
+	def compute_bisecdiffs(self):
+		self.ma_bisecdiff = np.empty(self.m)
+		for i, nns in enumerate(self.ma_bisec[self.neighbours_idx]):
+			# take nearest neighbours for each ma_coords, compute bisec angle, take the largest one within the neighbourhood
+			self.ma_bisecdiff[i] = np.arccos(np.dot(nns[1:5], nns[0])).max()
+		# import ipdb;ipdb.set_trace()
+
 
 	# def estimate_normals(self):
 	#	from sklearn.decomposition import PCA
@@ -124,8 +152,9 @@ class RegionGrower(object):
 	def grow_region(self, initial_seed):
 		"""Use initial_seed to grow a region by testing if its neighbours are valid candidates. Valid candidates are added to the current region/segment and _its_ neighbours are also tested. Stop when we run out of valid candidates."""
 		candidate_stack = [initial_seed]
-		point_count = 1
 		self.ma_segment[initial_seed] = self.region_nr
+		more_parameters = {'point_count': 1}
+		more_parameters['bisector_sum'] = self.ma_bisec[initial_seed] 
 		neighbours_in_region = set() 
 		while len(candidate_stack) > 0:
 			seed = candidate_stack.pop()
@@ -133,41 +162,59 @@ class RegionGrower(object):
 				if not self.overwrite_regions:
 					if self.ma_segment[neighbour] != 0:
 						continue
-				if self.valid_candidate(seed, neighbour):
+				if self.valid_candidate(seed, neighbour, **more_parameters):
 					self.ma_segment[neighbour] = self.region_nr
 					candidate_stack.append(neighbour)
 					neighbours_in_region.add(neighbour)
-					point_count += 1
+					more_parameters['point_count'] += 1
+					more_parameters['bisector_sum'] += self.ma_bisec[neighbour]
 		# print("found region nr %d with %d points" % (self.region_nr, point_count))
 		return neighbours_in_region
 
-	def valid_candidate_normal(self, seed, candidate):
+	def valid_candidate_normal(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between normals of seed and candidate is below preset threshold"""
 		if math.fabs(np.dot(self.ma_normals[seed], self.ma_normals[candidate])) > self.p_normalthres:
 			return True
 		else:
 			return False
 	
-	def valid_candidate_bisectheta(self, seed, candidate):
+	def valid_candidate_bisecavgtheta(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
-		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate)
+		return self.valid_candidate_bisecavg(seed, candidate, **kwargs) and self.valid_candidate_theta(seed, candidate)
 	
-	def valid_candidate_bisecthetacnt(self, seed, candidate):
+	def valid_candidate_bisectheta(self, seed, candidate, **kwargs):
+		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
+		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate)# and kwargs['point_count'] < self.p['maxcount']
+	
+	def valid_candidate_bisecthetacnt(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
 		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate) and self.valid_candidate_secspokecnt(seed, candidate)
 
-	def valid_candidate_bisec(self, seed, candidate):
+	def valid_candidate_bisecavg(self, seed, candidate, **kwargs):
+		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
+		return np.dot(
+			kwargs['bisector_sum'] / np.linalg.norm(kwargs['bisector_sum']), 
+			self.ma_bisec[candidate]) > self.p_bisecavgthres
+
+	def valid_candidate_bisec(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
 		return np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres
 
-	def valid_candidate_secspokecnt(self, seed, candidate):
-		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
-		seed = self.mah.D['ma_qidx'][seed]
-		candidate = self.mah.D['ma_qidx'][candidate]
-		return self.mah.D['spoke_cnt'][seed] < self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] < self.p['secspokecnt_thres'] or self.mah.D['spoke_cnt'][seed] >	 self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] >	 self.p['secspokecnt_thres']  
+	def valid_candidate_bisecdiff(self, seed, candidate, **kwargs):
+		"""candidate is valid if difference in bisecangle is similar and segmend_id is the same"""
+		return (abs(self.ma_bisecdiff[seed] - self.ma_bisecdiff[candidate]) < self.p_bisecdiffthres) and (self.ma_segment[seed] == self.ma_segment[candidate])
+
+	def valid_candidate_spokecross(self, seed, candidate, **kwargs):
+		return np.dot(self.ma_spokecross[seed], self.ma_spokecross[candidate]) > self.p_spokecross_thres
+
+	# def valid_candidate_secspokecnt(self, seed, candidate):
+	# 	"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
+	# 	seed = self.mah.D['ma_qidx'][seed]
+	# 	candidate = self.mah.D['ma_qidx'][candidate]
+	# 	return self.mah.D['spoke_cnt'][seed] < self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] < self.p['secspokecnt_thres'] or self.mah.D['spoke_cnt'][seed] >	 self.p['secspokecnt_thres'] and self.mah.D['spoke_cnt'][candidate] >	 self.p['secspokecnt_thres']  
 		# if np.dot(self.ma_bisec[seed], self.ma_bisec[candidate]) > self.p_bisecthres and math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_1:
 
-	def valid_candidate_theta(self, seed, candidate):
+	def valid_candidate_theta(self, seed, candidate, **kwargs):
 		"""candidate is valid if difference between separation angles of seed and candidate is below preset threshold"""
 		return math.fabs(self.ma_theta[seed]-self.ma_theta[candidate]) < self.p_thetathres_2
 
@@ -203,17 +250,28 @@ class RegionGrower(object):
 def perform_segmentation_bisec(mah, **kwargs):
 	# find segments based on similiraty in bisector orientation
 	print("Initiating region grower...")
+	# kwargs['method']='bisecavg'
 	R = RegionGrower(mah, **kwargs)
-	# seedorder = np.argsort(mah.D['ma_radii'])[::-1].tolist() # reverse
+	seedorder = np.argsort(mah.D['ma_radii'])[::-1].tolist() # reverse
 	seedorder = list( np.random.permutation(R.m) )
+	# seedorder = list( np.argsort(R.ma_theta) )
+	# seedorder.reverse()
 	print("\nPerforming bisector-based region growing...")
 	R.apply_region_growing_algorithm(seedorder)
 	R.unmark_small_clusters()
 	# print(np.unique(R.ma_segment, return_counts=True))
+
+	# Try to split sheets that are curvy into sheets with constant bisector
+	# seedpoints = list(np.where(np.logical_and(R.ma_segment!=0, R.ma_theta < (175.0/180)*math.pi ))[0])
+	# R.valid_candidate = R.valid_candidate_bisecdiff
+	# R.overwrite_regions = True
+	# print("Performing bisecdiff-based region growing...")
+	# R.apply_region_growing_algorithm(seedpoints)
+	# R.unmark_small_clusters()
 	
 	# now try to find segments that have a large separation angle (and unstable bisector orientation)
 	seedpoints = list(np.where(np.logical_and(R.ma_segment==0, R.ma_theta > (175.0/180)*math.pi ))[0])
-	# R.overwrite_regions = True
+	R.overwrite_regions = False
 	R.valid_candidate = R.valid_candidate_theta
 	print("Performing theta-based region growing...")
 	R.apply_region_growing_algorithm(seedpoints)
@@ -235,22 +293,32 @@ def perform_segmentation_bisec(mah, **kwargs):
 	for k,v in ma_segment_dict.items():
 		g.add_vertex(ma_idx=v)
 	
-	mah.D['ma_segment'] = np.zeros(R.mah.m*2, dtype=np.int64)
+	mah.D['ma_segment'] = np.zeros(R.m, dtype=np.int64)
 	graph2segmentlist(g, mah.D['ma_segment'])
 	
-	find_relations(mah, kwargs['infile'])
+	print("Constructing graph...Computing Adjacency/flip relations")
+	adj_dict, flip_dict = find_relations(mah, kwargs['infile'])
 	
+	print("Constructing graph...Computing Adjacency/flip relations...adding edges")
 	for start_id, end_id, count in mah.D['seg_link_adj']:
-		g.add_edge(start_id, end_id, adj_count=count)
+		e = g.add_edge(start_id, end_id, adj_count=count, is_fliprel = (start_id, end_id) in flip_dict)
 
+	print("Constructing graph...Computing Adjacency/flip relations...adding edges...segment aggregates")
 	compute_segment_aggregate(g, mah.D, 'ma_coords')
 	compute_segment_aggregate(g, mah.D, 'ma_bisec')
 	compute_segment_aggregate(g, mah.D, 'ma_theta')
 	mah.D['ma_segment_graph'] = g
+
+	# mah.D['ma_bisecdiff'] = R.ma_bisecdiff
+
+	print("Writing to disk")
 	npy.write(kwargs['infile'], mah.D, ['ma_segment', 'ma_segment_graph'])
 	
 	return g
 	
+def segment_curvy_sheet(mah, v):
+	R = RegionGrower()
+
 def graph2segmentlist(g, ma_segment):
 	for v in g.vs():
 		ma_segment[ v['ma_idx'] ] = v.index	
@@ -351,6 +419,8 @@ def find_relations(ma, infile=INFILE, only_interior=False):
 		ma.D['seg_link_adj'][i] = [s,e,cnt]
 		i+=1
 	npy.write(infile, ma.D, ['seg_link_adj'])
+
+	return adj_relations, flip_relations
 
 def compute_segment_aggregate(g, datadict, key='ma_coords'):
 	"""Compute eg. avarage coordinate for each segment"""

@@ -16,10 +16,11 @@
 # Copyright 2015 Ravi Peters
 
 import os
+from glob import glob
 import numpy as np
 import igraph
 
-def write(dir, datadict, keys=[]):
+def write(dir, datadict, keys=[], dtype=np.float32):
 	if not os.path.exists(dir):
 	    os.makedirs(dir)
 
@@ -27,9 +28,18 @@ def write(dir, datadict, keys=[]):
 		if key == 'ma_segment_graph':
 			if type(datadict[key]) is igraph.Graph:
 				datadict[key].write_pickle(os.path.join(dir, key+'.pickle'))
+		elif key == 'ma_clusters':
+			clusterdir = os.path.join(dir, 'ma_clusters')
+			if not os.path.exists(clusterdir):
+				os.makedirs(clusterdir)
+			else:
+				for cluster_file in glob(os.path.join(clusterdir, '*.pickle')):
+					os.remove(cluster_file)
+			for i, cluster in enumerate(datadict[key]):
+				cluster.write_pickle(os.path.join(clusterdir, 'ma_cluster_'+str(i)+'.pickle'))
 		elif key in keys or len(keys)==0:
 			fname = os.path.join(dir,key)
-			np.save(fname, val)
+			np.save(fname, val.astype(dtype)) # maybe we should respect the dtype of the array here...
 
 def read(dir, keys=[]):
 	assert os.path.exists(dir)
@@ -47,9 +57,14 @@ def read(dir, keys=[]):
 	if os.path.exists(fname):
 		datadict['ma_segment_graph'] = igraph.read(fname)
 
+	fname = os.path.join(dir, 'ma_clusters')
+	if os.path.exists(fname):
+		datadict['ma_clusters'] = []
+		for f in glob(os.path.join(fname, '*.pickle')):
+			datadict['ma_clusters'].append(igraph.read(f))
+
 	return datadict
 
 def inspect(dir):
-	from glob import glob
 	dir = os.path.join(dir,'*.npy')
 	return [os.path.split(f)[-1][:-4] for f in glob(dir)]

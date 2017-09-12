@@ -16,8 +16,9 @@
 # Copyright 2015 Ravi Peters
 
 import numpy as np
+import os
 
-def read(infile, move_to_origin=False, limit_points=0, delimiter=' '):
+def read(infile, move_to_origin=False, limit_points=0, delimiter=' ', with_rgb=False, rgb_divider=1):
 	"""collect vertex coordinates from ascii input file"""
 	ox,oy,oz = (0,0,0)
 	datadict = {}
@@ -29,14 +30,15 @@ def read(infile, move_to_origin=False, limit_points=0, delimiter=' '):
     
 	with open(infile) as f:
 		datadict['coords'] = np.empty((linecount,3), dtype=np.float32)
+		if with_rgb:
+			datadict['colors'] = np.empty((linecount,4), dtype=np.float32)
 		for i, line in enumerate(f):
+			if limit_points != 0 and i > limit_points:
+				break
 			columns = line.split(delimiter)
 			x = float(columns[0])
 			y = float(columns[1])
 			z = float(columns[2])
-
-			if limit_points != 0 and i > limit_points:
-				break
 
 			if move_to_origin and i==0:
 				ox,oy,oz = float(x), float(y), float(z)
@@ -47,4 +49,26 @@ def read(infile, move_to_origin=False, limit_points=0, delimiter=' '):
 
 			datadict['coords'][i] = x-ox,y-oy,z-oz
 
+			if with_rgb:
+				datadict['colors'][i][0] = float(columns[3])/rgb_divider
+				datadict['colors'][i][1] = float(columns[4])/rgb_divider
+				datadict['colors'][i][2] = float(columns[5])/rgb_divider
+				datadict['colors'][i][3] = 1.0
+
 	return datadict
+
+def write(dir, datadict, keys=[]):
+	if not os.path.exists(dir):
+	    os.makedirs(dir)
+
+	for key,val in list(datadict.items()):
+		if key == 'ma_segment_graph':
+			continue
+		elif key in keys or len(keys)==0:
+			fname = os.path.join(dir,key) + '.xyz'
+			with open(fname, 'w') as fo:
+				for item in val:
+					line = ' '.join([str(i) for i in item]) + '\n'
+					fo.write(line)
+
+
