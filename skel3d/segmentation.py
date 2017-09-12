@@ -50,6 +50,7 @@ class RegionGrower(object):
 			'only_interior':False,
 			'method':'bisec',
 			'mincount':10,
+			'maxcount':1000,
 			'spokecross_thres':5.0,
 			'mask':None
 		}
@@ -183,7 +184,7 @@ class RegionGrower(object):
 	
 	def valid_candidate_bisectheta(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
-		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate)
+		return self.valid_candidate_bisec(seed, candidate) and self.valid_candidate_theta(seed, candidate)# and kwargs['point_count'] < self.p['maxcount']
 	
 	def valid_candidate_bisecthetacnt(self, seed, candidate, **kwargs):
 		"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
@@ -295,12 +296,14 @@ def perform_segmentation_bisec(mah, **kwargs):
 	mah.D['ma_segment'] = np.zeros(R.m, dtype=np.int64)
 	graph2segmentlist(g, mah.D['ma_segment'])
 	
+	print("Constructing graph...Computing Adjacency/flip relations")
 	adj_dict, flip_dict = find_relations(mah, kwargs['infile'])
 	
+	print("Constructing graph...Computing Adjacency/flip relations...adding edges")
 	for start_id, end_id, count in mah.D['seg_link_adj']:
 		e = g.add_edge(start_id, end_id, adj_count=count, is_fliprel = (start_id, end_id) in flip_dict)
 
-
+	print("Constructing graph...Computing Adjacency/flip relations...adding edges...segment aggregates")
 	compute_segment_aggregate(g, mah.D, 'ma_coords')
 	compute_segment_aggregate(g, mah.D, 'ma_bisec')
 	compute_segment_aggregate(g, mah.D, 'ma_theta')
@@ -308,6 +311,7 @@ def perform_segmentation_bisec(mah, **kwargs):
 
 	# mah.D['ma_bisecdiff'] = R.ma_bisecdiff
 
+	print("Writing to disk")
 	npy.write(kwargs['infile'], mah.D, ['ma_segment', 'ma_segment_graph'])
 	
 	return g
