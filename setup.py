@@ -8,5 +8,5 @@ setup(
     # extras_require = {
     #     'LAS':  ["laspy"]
     #},
-    scripts = ['scripts/segment.py', 'scripts/cluster.py']
+    scripts = ['scripts/segment.py', 'scripts/segment_bo.py', 'scripts/cluster.py']
 )
