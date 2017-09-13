@@ -46,6 +46,7 @@ class RegionGrower(object):
 			'bisecdiff_thres':5.0,
 			'theta_thres':10.0,
 			'secspokecnt_thres':10,
+			'balloverlap_thres':10,
 			'k':10,
 			'only_interior':False,
 			'method':'bisec',
@@ -64,6 +65,7 @@ class RegionGrower(object):
 		self.p_thetathres_1 = (self.p['theta_thres'] / 180.0) * math.pi # during bisect growing
 		self.p_thetathres_2 = (self.p['theta_thres'] / 180.0) * math.pi # during theta growing
 		self.p_k = self.p['k']
+		self.p_balloverlap_thres = self.p['balloverlap_thres']
 		self.p_mincount = self.p['mincount']
 		self.p_spokecross_thres = math.cos((self.p['spokecross_thres'] / 180.0) * math.pi)
 
@@ -82,11 +84,13 @@ class RegionGrower(object):
 			self.m = mah.m*2
 			self.ma_bisec = mah.D['ma_bisec']
 			self.ma_theta = mah.D['ma_theta']
+			self.ma_radii = mah.D['ma_radii']
 		else:
 			self.ma_coords = mah.D['ma_coords'][self.p['mask']]
 			self.m = len(self.ma_coords)
 			self.ma_bisec = mah.D['ma_bisec'][self.p['mask']]
 			self.ma_theta = mah.D['ma_theta'][self.p['mask']]
+			self.ma_radii = mah.D['ma_radii'][self.p['mask']]
 
 		self.neighbours_dist, self.neighbours_idx = get_neighbours_ma(self.ma_coords, self.p_k)
 
@@ -101,6 +105,8 @@ class RegionGrower(object):
 			self.valid_candidate = self.valid_candidate_bisecthetacnt
 		elif self.p['method'] == 'spokecross':
 			self.valid_candidate = self.valid_candidate_spokecross
+		elif self.p['method'] == 'balloverlap':
+			self.valid_candidate = self.valid_candidate_balloverlap
 		else:
 			self.valid_candidate = self.p['method'] # provide a function
 		print(self.p['method'])
@@ -206,6 +212,10 @@ class RegionGrower(object):
 
 	def valid_candidate_spokecross(self, seed, candidate, **kwargs):
 		return np.dot(self.ma_spokecross[seed], self.ma_spokecross[candidate]) > self.p_spokecross_thres
+	
+	def valid_candidate_balloverlap(self, seed, candidate, **kwargs):
+		d = np.linalg.norm(self.ma_coords[seed] - self.ma_coords[candidate])
+		return (self.ma_radii[seed] + self.ma_radii[candidate]) / d > self.p_balloverlap_thres
 
 	# def valid_candidate_secspokecnt(self, seed, candidate):
 	# 	"""candidate is valid if angle between bisectors of seed and candidate is below preset threshold"""
