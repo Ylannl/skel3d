@@ -19,6 +19,7 @@ import os
 from glob import glob
 import numpy as np
 import igraph
+import pickle
 
 def write(dir, datadict, keys=[], dtype=np.float32):
 	if not os.path.exists(dir):
@@ -28,6 +29,9 @@ def write(dir, datadict, keys=[], dtype=np.float32):
 		if key == 'ma_segment_graph':
 			if type(datadict[key]) is igraph.Graph:
 				datadict[key].write_pickle(os.path.join(dir, key+'.pickle'))
+		elif key == 'ma_segment_lidx':
+			if type(datadict[key]) is list:
+				pickle.dump(datadict[key], open(os.path.join(dir, key+'.pickle'), 'wb'))
 		elif key == 'ma_clusters':
 			clusterdir = os.path.join(dir, 'ma_clusters')
 			if not os.path.exists(clusterdir):
@@ -39,7 +43,11 @@ def write(dir, datadict, keys=[], dtype=np.float32):
 				cluster.write_pickle(os.path.join(clusterdir, 'ma_cluster_'+str(i)+'.pickle'))
 		elif key in keys or len(keys)==0:
 			fname = os.path.join(dir,key)
-			np.save(fname, val.astype(dtype)) # maybe we should respect the dtype of the array here...
+			try:
+				np.save(fname, val.astype(dtype)) # maybe we should respect the dtype of the array here...
+			except Exception as a:
+				print(e)
+
 
 def read(dir, keys=[]):
 	assert os.path.exists(dir)
@@ -56,6 +64,10 @@ def read(dir, keys=[]):
 	fname = os.path.join(dir,'ma_segment_graph.pickle')
 	if os.path.exists(fname):
 		datadict['ma_segment_graph'] = igraph.read(fname)
+
+	fname = os.path.join(dir,'ma_segment_lidx.pickle')
+	if os.path.exists(fname):
+		datadict['ma_segment_lidx'] = pickle.load(open(fname, 'rb'))
 
 	fname = os.path.join(dir, 'ma_clusters')
 	if os.path.exists(fname):
