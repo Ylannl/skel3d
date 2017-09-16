@@ -39,6 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--balloverlap_thres', help='Balloverlap threshold', default=2.0, type=float)
     parser.add_argument('-r', '--max_r', help='Filter regions with a maximum radius greater than this value in model coordinates', default=100, type=float)
     parser.add_argument('-s', '--minavg_theta', help='Filter regions with a mean separation angle smaller than this value in radians', default=2, type=float)
+	parser.add_argument('-c', '--mincount', help='Minimum number of points in a segment', default=2, type=int)
     args = parser.parse_args()
 
     D = npy.read(args.infile)
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     R = RegionGrower(mah, method='balloverlap', **args.__dict__)
     seedorder = list( np.random.permutation(R.m) )
     R.apply_region_growing_algorithm(seedorder)
-    # R.unmark_small_clusters()
+    R.unmark_small_clusters()
     mah.D['ma_segment']= R.ma_segment
     mah.D['ma_segment_lidx']= list_region_idx(mah)
     npy.write(args.infile, mah.D, ['ma_segment', 'ma_segment_lidx'])
