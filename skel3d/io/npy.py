@@ -21,7 +21,7 @@ import numpy as np
 import igraph
 import pickle
 
-def write(dir, datadict, keys=[], dtype=np.float32):
+def write(dir, datadict, keys=[], fdtype=np.float32):
 	if not os.path.exists(dir):
 	    os.makedirs(dir)
 
@@ -30,7 +30,7 @@ def write(dir, datadict, keys=[], dtype=np.float32):
 			if type(datadict[key]) is igraph.Graph:
 				datadict[key].write_pickle(os.path.join(dir, key+'.pickle'))
 		elif key == 'ma_segment_lidx':
-			if type(datadict[key]) is list:
+			if type(datadict[key]) is dict:
 				pickle.dump(datadict[key], open(os.path.join(dir, key+'.pickle'), 'wb'))
 		elif key == 'ma_clusters':
 			clusterdir = os.path.join(dir, 'ma_clusters')
@@ -43,6 +43,9 @@ def write(dir, datadict, keys=[], dtype=np.float32):
 				cluster.write_pickle(os.path.join(clusterdir, 'ma_cluster_'+str(i)+'.pickle'))
 		elif key in keys or len(keys)==0:
 			fname = os.path.join(dir,key)
+			if key in ['ma_segment']: dtype = np.int
+			else: dtype = fdtype
+			
 			try:
 				np.save(fname, val.astype(dtype)) # maybe we should respect the dtype of the array here...
 			except Exception as a:

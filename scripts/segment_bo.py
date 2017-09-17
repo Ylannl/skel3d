@@ -14,12 +14,12 @@ INFILE = "/Users/ravi/git/masbcpp/rdam_blokken_npy"
 def list_region_idx(mah):
     region_numbers = np.unique(mah.D['ma_segment'])
 
-    L = []
+    D = {}
     for region_number in region_numbers:
         idx = np.where(mah.D['ma_segment']==region_number)
-        L.append(idx[0])
+        D[region_number] = idx[0]
 
-    return L
+    return D
 
 def filter_regions(mah, max_r, minavg_theta):
     region_numbers = np.unique(mah.D['ma_segment'])
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--balloverlap_thres', help='Balloverlap threshold', default=2.0, type=float)
     parser.add_argument('-r', '--max_r', help='Filter regions with a maximum radius greater than this value in model coordinates', default=100, type=float)
     parser.add_argument('-s', '--minavg_theta', help='Filter regions with a mean separation angle smaller than this value in radians', default=2, type=float)
-	parser.add_argument('-c', '--mincount', help='Minimum number of points in a segment', default=2, type=int)
+    parser.add_argument('-c', '--mincount', help='Minimum number of points in a segment', default=2, type=int)
     args = parser.parse_args()
 
     D = npy.read(args.infile)
