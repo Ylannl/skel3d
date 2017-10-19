@@ -22,8 +22,9 @@ except ImportError:
 	print("Cannot read las files without laspy module")
 	raise
 
-def read(infile, move_to_origin=True):
+def read(infile, move_to_origin=True, only_class=2):
 	inFile = laspy.file.File(infile)
+	f = inFile.Classification == only_class
 
 	datadict = {}
 	datadict['offset'] = np.zeros(3, dtype=np.double)
@@ -33,7 +34,7 @@ def read(infile, move_to_origin=True):
 		datadict['offset'][0] = min_[0] + (max_[0]-min_[0])/2
 		datadict['offset'][1] = min_[1] + (max_[1]-min_[1])/2
 		datadict['offset'][2] = min_[2] + (max_[2]-min_[2])/2
-	datadict['coords'] = np.column_stack([ np.array(a, dtype=np.float32) for a in [inFile.x-datadict['offset'][0], inFile.y-datadict['offset'][1], inFile.z-datadict['offset'][2]] ])
+	datadict['coords'] = np.column_stack([ np.array(a, dtype=np.float32) for a in [inFile.x[f]-datadict['offset'][0], inFile.y[f]-datadict['offset'][1], inFile.z[f]-datadict['offset'][2]] ])
 	
 	return datadict
 
