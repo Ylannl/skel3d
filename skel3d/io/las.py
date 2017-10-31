@@ -22,10 +22,12 @@ except ImportError:
 	print("Cannot read las files without laspy module")
 	raise
 
-def read(infile, move_to_origin=True, only_class=2):
+def read(infile, move_to_origin=True, only_class=None):
 	inFile = laspy.file.File(infile)
-	f = inFile.Classification == only_class
-
+	if not only_class is None:
+		f = inFile.Classification == only_class
+	else:
+		f = np.ones(inFile.Classification.shape,dtype=bool)
 	datadict = {}
 	datadict['offset'] = np.zeros(3, dtype=np.double)
 	if move_to_origin:
